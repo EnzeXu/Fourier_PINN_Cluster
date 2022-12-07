@@ -1,0 +1,18 @@
+#!/bin/bash -l
+
+#SBATCH --job-name="theta_24_0"
+#SBATCH --partition=gpu
+#SBATCH --nodes=1
+
+#SBATCH --time=2-00:00:00
+#SBATCH --gres=gpu:1
+#SBATCH --mem=64GB
+#SBATCH --mail-user=xue20@wfu.edu
+#SBATCH --mail-type=BEGIN,END,FAIL
+
+#SBATCH --output="jobs_oe/theta_24_0-%j.o"
+#SBATCH --error="jobs_oe/theta_24_0-%j.e"
+
+echo $(pwd) > "jobs/pwd.txt"
+source /deac/csc/chenGrp/software/tensorflow/bin/activate
+python model_PP_Theta.py --log_path logs/theta_24_0.txt --main_path . --layer 24 --seed 0
