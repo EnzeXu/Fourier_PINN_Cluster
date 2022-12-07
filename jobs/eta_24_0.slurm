@@ -3,7 +3,7 @@
 #SBATCH --job-name="eta_24_0"
 #SBATCH --partition=gpu
 #SBATCH --nodes=1
-#SBATCH --constraint=skylake
+
 #SBATCH --time=2-00:00:00
 #SBATCH --gres=gpu:1
 #SBATCH --mem=64GB
