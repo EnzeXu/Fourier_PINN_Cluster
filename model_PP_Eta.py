@@ -21,8 +21,8 @@ class Parameters:
 
 
 class TrainArgs:
-    iteration = 100
-    epoch_step = 5  # 1000
+    iteration = 500000
+    epoch_step = 1000  # 1000
     test_step = epoch_step * 10
     initial_lr = 0.01
     main_path = "/content/drive/My Drive/Workspace/Fourier_PINN_Stop_Condition/"
@@ -118,11 +118,11 @@ class ResNetBasicBlock(nn.Module):
         residual = self.shortcut(x)
         x1 = self.conv1(x)
         x = x1
-        x = nn.functional.gelu(x)
+        x = self.activate(x)  # nn.functional.gelu(x)
 
         x1 = self.conv2(x)
         x = x1 + residual
-        x = nn.functional.gelu(x)
+        x = self.activate(x)  # nn.functional.gelu(x)
 
         # residual = x
         # if self.should_apply_shortcut:
@@ -224,8 +224,8 @@ class FourierModel(nn.Module):
         # self.conv15 = SpectralConv1d(self.config)
 
         # conv_blocks = [SpectralConv1d(self.config) for i in range(self.config.layer)]
-        # self.res_net = ResNetLayer(block=ResNetBasicBlock, n=(self.config.layer // 2), config=self.config)
-        self.res_net = ResNetLayer8(config=self.config)
+        self.res_net = ResNetLayer(block=ResNetBasicBlock, n=(self.config.layer // 2), config=self.config)
+        # self.res_net = ResNetLayer8(config=self.config)
         # self.w0 = nn.Conv1d(self.config.width, self.config.width, 1)
         # self.w1 = nn.Conv1d(self.config.width, self.config.width, 1)
         # self.w2 = nn.Conv1d(self.config.width, self.config.width, 1)
@@ -424,7 +424,7 @@ class FourierModel(nn.Module):
                     with open(train_info_path_loss, "wb") as f:
                         pickle.dump(train_info, f)
 
-                    if self.early_stop():
+                    if epoch == self.config.args.iteration or self.early_stop():
                         myprint(str(train_info), self.config.args.log_path)
                         break
 
