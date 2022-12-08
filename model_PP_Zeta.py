@@ -21,8 +21,8 @@ class Parameters:
 
 
 class TrainArgs:
-    iteration = 500000
-    epoch_step = 1000  # 1000
+    iteration = 100
+    epoch_step = 10  # 1000
     test_step = epoch_step * 10
     initial_lr = 0.01
     main_path = ""
@@ -184,6 +184,8 @@ class FourierModel(nn.Module):
         self.y_tmp = None
         self.epoch_tmp = None
         self.loss_record_tmp = None
+        self.real_loss_record_tmp = None
+        self.time_record_tmp = None
 
         self.figure_save_path_folder = "{0}/saves/figure/{1}_{2}/".format(self.config.args.main_path,
                                                                           self.config.model_name, self.time_string)
@@ -332,6 +334,8 @@ class FourierModel(nn.Module):
                     self.y_tmp = y
                     self.epoch_tmp = epoch
                     self.loss_record_tmp = loss_record
+                    self.real_loss_record_tmp = real_loss_record
+                    self.time_record_tmp = time_record
                     self.test_model()
                     # save_path_loss = "{}/{}_{}_loss.npy".format(self.train_save_path_folder, self.config.model_name, self.time_string)
                     # np.save(save_path_loss, np.asarray(loss_record))
@@ -345,14 +349,16 @@ class FourierModel(nn.Module):
                         "activation_id": self.config.activation_id,
                         "epoch": self.config.args.iteration,
                         "epoch_stop": self.epoch_tmp,
+                        "loss_length": len(loss_record),
                         "loss": np.asarray(loss_record),
                         "real_loss": np.asarray(real_loss_record),
                         "time": np.asarray(time_record),
                         "y_predict": y[0, :, :].cpu().detach().numpy(),
-                        "y_truth": self.config.truth,
+                        "y_truth": np.asarray(self.config.truth),
                         "y_shape": self.config.truth.shape,
-                        "config": self.config,
+                        # "config": self.config,
                         "time_string": self.time_string,
+                        "initial_lr": self.config.args.initial_lr,
                     }
                     train_info_path_loss = "{}/{}_{}_info.npy".format(self.train_save_path_folder,
                                                                       self.config.model_name, self.time_string)
@@ -361,6 +367,7 @@ class FourierModel(nn.Module):
 
                     if epoch == self.config.args.iteration or self.early_stop():
                         myprint(str(train_info), self.config.args.log_path)
+                        self.write_finish_log()
                         break
 
     def test_model(self):
@@ -405,6 +412,20 @@ class FourierModel(nn.Module):
 
         myprint("Figure is saved to {}".format(save_path), self.config.args.log_path)
         # self.draw_loss_multi(self.loss_record_tmp, [1.0, 0.5, 0.25, 0.125])
+
+    def write_finish_log(self):
+        with open("saves/record.txt", "a") as f:
+            f.write("{0}\t{1}\t{2}\t{3:.2f}min\t{4}\t{5:.6f}\t{6:.6f}\t{7}\t{8}\n".format(
+                self.config.model_name,
+                self.time_string,
+                self.config.seed,
+                self.time_record_tmp[-1] / 60.0,
+                self.config.args.iteration,
+                sum(self.loss_record_tmp[-10:]) / 10,
+                sum(self.real_loss_record_tmp[-10:]) / 10,
+                self.config.activation,
+                self.config.activation_id,
+            ))
 
     @staticmethod
     def draw_loss_multi(loss_list, last_rate_list):
