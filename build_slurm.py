@@ -43,9 +43,9 @@ if __name__ == "__main__":
     dic["layer"] = 4
     for one_plan in plans:
         for seed in range(2):
-            dic["log_path"] = "logs/{}.txt".format("zeta_{}_{}".format(one_plan[0], seed))
+            dic["log_path"] = "logs/{}.txt".format("zeta_{}{}_{}".format(one_plan[0], "-{}".format(one_plan[1]) if one_plan[0] == "plan2" else "", seed))
             dic["seed"] = seed
             dic["activation"] = one_plan[0]
             dic["activation_id"] = one_plan[1]
-            one_slurm("zeta_{}_{}".format(one_plan[0], seed), "model_PP_Zeta.py", dic)
+            one_slurm("zeta_{}{}_{}".format(one_plan[0], "-{}".format(one_plan[1]) if one_plan[0] == "plan2" else "", seed), "model_PP_Zeta.py", dic)
     pass
