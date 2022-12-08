@@ -21,8 +21,8 @@ class Parameters:
 
 
 class TrainArgs:
-    iteration = 100
-    epoch_step = 10  # 1000
+    iteration = 500000
+    epoch_step = 1000  # 1000
     test_step = epoch_step * 10
     initial_lr = 0.01
     main_path = ""
@@ -415,7 +415,7 @@ class FourierModel(nn.Module):
 
     def write_finish_log(self):
         with open("saves/record.txt", "a") as f:
-            f.write("{0}\t{1}\t{2}\t{3:.2f}min\t{4}\t{5:.6f}\t{6:.6f}\t{7}\t{8}\n".format(
+            f.write("{0}\t{1}\tseed={2}\t{3:.2f}min\titer={4}\tll={5:.6f}\tlrl={6:.6f}\tactivation={7}\tactivation_id={8}\n".format(
                 self.config.model_name,
                 self.time_string,
                 self.config.seed,
