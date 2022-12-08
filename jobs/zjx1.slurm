@@ -14,4 +14,4 @@
 
 echo $(pwd) > "jobs/pwd.txt"
 source /deac/csc/chenGrp/software/tensorflow/bin/activate
-python model_PP_Eta_w.py
+python model_pp_Eta_w.py
