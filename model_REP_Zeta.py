@@ -14,14 +14,15 @@ from utils import *
 
 
 class Parameters:
-    beta = 0.01
-    gamma = 0.05
-    N = 100.0
+    beta = 10
+    rho = 1e-6
+    gamma = 1
+    n = 3
 
 
 class TrainArgs:
-    iteration = 10000
-    epoch_step = 100  # 1000
+    iteration = 100000
+    epoch_step = 1000  # 1000
     test_step = epoch_step * 10
     initial_lr = 0.001
     main_path = ""
@@ -33,20 +34,20 @@ class TrainArgs:
 
 class Config:
     def __init__(self):
-        self.model_name = "SIR_Fourier_Zeta"
-        self.curve_names = ["S", "I", "R"]
+        self.model_name = "REP_Fourier_Zeta"
+        self.curve_names = ["m_lacI", "m_tetR", "m_cI", "p_cI", "p_lacI", "p_tetR"]
         self.params = Parameters
         self.args = TrainArgs
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.seed = -1
         self.layer = -1
 
-        self.T = 100
-        self.T_unit = 1e-1
+        self.T = 20
+        self.T_unit = 1e-2
         self.T_N = int(self.T / self.T_unit)
 
-        self.prob_dim = 3
-        self.y0 = np.asarray([50.0, 40.0, 10.0])
+        self.prob_dim = 6
+        self.y0 = np.asarray([9.0983668, 0.90143886, 0.15871683, 7.2439572, 2.85342356, 0.15983291])
         self.t = np.asarray([i * self.T_unit for i in range(self.T_N)])
         self.t_torch = torch.tensor(self.t, dtype=torch.float32).to(self.device)
         self.x = torch.tensor(np.asarray([[[i * self.T_unit] * self.prob_dim for i in range(self.T_N)]]),
@@ -61,10 +62,14 @@ class Config:
         self.activation_id = -1
 
     def pend(self, y, t):
+        k = self.params
         dydt = np.asarray([
-            - self.params.beta * y[0] * y[1],
-            self.params.beta * y[0] * y[1] - self.params.gamma * y[1],
-            self.params.gamma * y[1]
+            k.beta * ( k.rho + 1 / (1 + y[5] ** k.n) ) - y[0],
+            k.beta * ( k.rho + 1 / (1 + y[3] ** k.n) ) - y[1],
+            k.beta * ( k.rho + 1 / (1 + y[4] ** k.n) ) - y[2],
+            k.gamma * ( y[0] - y[3] ),
+            k.gamma * ( y[1] - y[4] ),
+            k.gamma * ( y[2] - y[5] )
         ])
         return dydt
 
@@ -166,6 +171,8 @@ class Layers(nn.Module):
         x = self.blocks(x)
         return x
 
+def penalty_func(x):
+    return 1 * (- torch.tanh((x - 1.5)) + 1)# return 1 * (- torch.tanh((x - 2.5)) + 1)
 
 class FourierModel(nn.Module):
     def __init__(self, config):
@@ -195,7 +202,7 @@ class FourierModel(nn.Module):
             os.makedirs(self.figure_save_path_folder)
         if not os.path.exists(self.train_save_path_folder):
             os.makedirs(self.train_save_path_folder)
-        self.default_colors = ["red", "blue", "green", "orange", "cyan", "purple", "pink", "indigo", "brown", "grey"]
+        self.default_colors = ["red", "blue", "green", "pink", "cyan", "lime", "pink", "indigo", "brown", "grey", "indigo", "olive"]
 
         myprint("using {}".format(str(self.config.device)), self.config.args.log_path)
         myprint("iteration = {}".format(self.config.args.iteration), self.config.args.log_path)
@@ -268,31 +275,46 @@ class FourierModel(nn.Module):
         torch.backends.cudnn.deterministic = True
 
     def ode_gradient(self, x, y):
-        S = y[0, :, 0]
-        I = y[0, :, 1]
-        R = y[0, :, 2]
-        S_t = torch.gradient(S, spacing=(self.config.t_torch,))[0]
-        I_t = torch.gradient(I, spacing=(self.config.t_torch,))[0]
-        R_t = torch.gradient(R, spacing=(self.config.t_torch,))[0]
-        f_S = S_t - (- self.config.params.beta * S * I)
-        f_I = I_t - (self.config.params.beta * S * I - self.config.params.gamma * I)
-        f_R = R_t - (self.config.params.gamma * I)
-        return f_S, f_I, f_R
+        k = self.config.params
+
+        m_lacl = y[0, :, 0]
+        m_tetR = y[0, :, 1]
+        m_cl = y[0, :, 2]
+        p_cl = y[0, :, 3]
+        p_lacl = y[0, :, 4]
+        p_tetR = y[0, :, 5]
+
+        m_lacl_t = torch.gradient(m_lacl, spacing=(self.config.t_torch,))[0]
+        m_tetR_t = torch.gradient(m_tetR, spacing=(self.config.t_torch,))[0]
+        m_cl_t = torch.gradient(m_cl, spacing=(self.config.t_torch,))[0]
+        p_cl_t = torch.gradient(p_cl, spacing=(self.config.t_torch,))[0]
+        p_lacl_t = torch.gradient(p_lacl, spacing=(self.config.t_torch,))[0]
+        p_tetR_t = torch.gradient(p_tetR, spacing=(self.config.t_torch,))[0]
+
+        f_m_lacl = m_lacl_t - (k.beta * ( k.rho + 1 / (1 + p_tetR ** k.n) ) - m_lacl)
+        f_m_tetR = m_tetR_t - (k.beta * ( k.rho + 1 / (1 + p_cl ** k.n) ) - m_tetR)
+        f_m_cl = m_cl_t - (k.beta * ( k.rho + 1 / (1 + p_lacl ** k.n) ) - m_cl)
+        f_p_cl = p_cl_t - (k.gamma * ( m_lacl - p_cl ))
+        f_p_lacl = p_lacl_t - (k.gamma * ( m_tetR - p_lacl ))
+        f_p_tetR = p_tetR_t - (k.gamma * ( m_cl - p_tetR ))
+
+
+        return f_m_lacl, f_m_tetR, f_m_cl, f_p_cl, f_p_lacl, f_p_tetR
 
     def loss(self, y):
         y0_pred = y[0, 0, :]
         y0_true = torch.tensor(self.config.y0, dtype=torch.float32).to(self.config.device)
 
-        ode_1, ode_2, ode_3 = self.ode_gradient(self.config.x, y)
+        ode_1, ode_2, ode_3, ode_4, ode_5, ode_6 = self.ode_gradient(self.config.x, y)
         zeros_1D = torch.zeros([self.config.T_N]).to(self.config.device)
         zeros_nD = torch.zeros([self.config.T_N, self.config.prob_dim]).to(self.config.device)
 
         loss1 = self.criterion(y0_pred, y0_true)
-        loss2 = 10 * (
-                    self.criterion(ode_1, zeros_1D) + self.criterion(ode_2, zeros_1D) + self.criterion(ode_3, zeros_1D))
-        loss3 = self.criterion(torch.abs(y - 0), y - 0) + self.criterion(torch.abs(self.config.params.N - y),
-                                                                         self.config.params.N - y)
-        loss4 = self.criterion(y[0, :, 0] + y[0, :, 1] + y[0, :, 2] - self.config.params.N, zeros_1D)
+        loss2 = 10 * (self.criterion(ode_1, zeros_1D) + self.criterion(ode_2, zeros_1D) + self.criterion(ode_3,
+                                                                                                         zeros_1D) + self.criterion(
+            ode_4, zeros_1D) + self.criterion(ode_5, zeros_1D) + self.criterion(ode_6, zeros_1D))
+        loss3 = self.criterion(torch.abs(y - 0), y - 0) + self.criterion(torch.abs(10 - y), 10 - y)
+        loss4 = 0 * sum([penalty_func(torch.var(y[0, :, i])) for i in range(self.config.prob_dim)])
         # loss4 = self.criterion(1 / u_0, pt_all_zeros_3)
         # loss5 = self.criterion(torch.abs(u_0 - v_0), u_0 - v_0)
 
