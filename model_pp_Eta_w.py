@@ -153,9 +153,9 @@ class FourierModel(nn.Module):
         self.epoch_tmp = None
         self.loss_record_tmp = None
 
-        self.figure_save_path_folder = "/data0/zhaojianxiang/experiment_input/img_w/pred-{}.png".format(self.config.args.main_path,
+        self.figure_save_path_folder = "{0}/saves/figure/{1}_{2}/".format(self.config.args.main_path,
                                                                           self.config.model_name, self.time_string)
-        self.train_save_path_folder = "/data0/zhaojianxiang/experiment_input/model_w/fourier_2-{}.pt".format(self.config.args.main_path,
+        self.train_save_path_folder = "{0}/saves/train/{1}_{2}/".format(self.config.args.main_path,
                                                                         self.config.model_name, self.time_string)
         if not os.path.exists(self.figure_save_path_folder):
             os.makedirs(self.figure_save_path_folder)
