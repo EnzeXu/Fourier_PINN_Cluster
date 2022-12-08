@@ -14,5 +14,5 @@
 #SBATCH --error="jobs_oe/theta_16_0-%j.e"
 
 echo $(pwd) > "jobs/pwd.txt"
-source /deac/csc/chenGrp/software/tensorflow/bin/activate
+source venv/bin/activate
 python model_PP_Theta.py --log_path logs/theta_16_0.txt --main_path . --layer 16 --seed 0
