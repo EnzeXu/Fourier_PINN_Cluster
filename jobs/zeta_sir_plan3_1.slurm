@@ -1,8 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name="zeta_sir_plan3_1"
-#SBATCH --partition=medium
+#SBATCH --partition=gpu
+#SBATCH --constraint=cascade
 #SBATCH --nodes=1
 #SBATCH --time=2-00:00:00
+#SBATCH --gres=gpu:1
 #SBATCH --mem=8GB
 #SBATCH --ntasks-per-node=8
 #SBATCH --mail-user=xue20@wfu.edu

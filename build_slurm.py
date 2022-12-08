@@ -90,7 +90,7 @@ def one_time_build_sir_zeta():
             dic["activation_id"] = one_plan[1]
             one_slurm(
                 "zeta_sir_{}{}_{}".format(one_plan[0], "-{}".format(one_plan[1]) if one_plan[0] == "plan2" else "", seed),
-                "model_SIR_Zeta.py", dic, draft_cpu)
+                "model_SIR_Zeta.py", dic, draft)
 
 def one_time_build_rep_zeta():
     plans = [
@@ -114,8 +114,9 @@ def one_time_build_rep_zeta():
             dic["activation_id"] = one_plan[1]
             one_slurm(
                 "zeta_rep_{}{}_{}".format(one_plan[0], "-{}".format(one_plan[1]) if one_plan[0] == "plan2" else "", seed),
-                "model_REP_Zeta.py", dic, draft_cpu)
+                "model_REP_Zeta.py", dic, draft)
 
 if __name__ == "__main__":
     one_time_build_rep_zeta()
+    one_time_build_sir_zeta()
     pass

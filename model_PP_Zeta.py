@@ -121,7 +121,7 @@ class ActivationBlock(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.activate_list = ["sin", "tanh", "relu", "gelu", "softplus"]
-        self.activates = [activation_func(item) for item in self.activate_list]
+        self.activates = [activation_func(item).to(config.device) for item in self.activate_list]
         self.activate_weights_raw = nn.Parameter(torch.rand(len(self.activate_list)))
         # self.softmax = nn.Softmax(dim=0).to(config.device)
         assert config.activation in ["plan1", "plan2", "plan3"]
