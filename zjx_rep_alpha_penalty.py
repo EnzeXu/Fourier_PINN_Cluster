@@ -1,18 +1,7 @@
 import os
 
-# os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
 import torch
-
-
-#
-# print(torch.cuda.is_available())  # 查看cuda是否可用
-#
-# print(torch.cuda.device_count())  # 返回GPU数目
-#
-# torch.cuda.get_device_name(0)  # 返回GPU名称，设备索引默认从0开始
-#
-# print(torch.cuda.current_device())  # 返回当前设备索引
 
 import numpy as np
 import time
@@ -30,47 +19,48 @@ from utils import draw_two_dimension, MultiSubplotDraw
 
 
 class Parameters:
-    alpha = 1.00
-    beta = 3.00
-    gamma = 0.30
-    e = 0.333 * 0.30
+    beta = 10
+    rho = 1e-6
+    gamma = 1
+    n = 3
 
 
 class TrainArgs:
-    iteration = 1000000
-    epoch_step = 1000
-    test_step = epoch_step * 100
+    iteration = 110000
+    epoch_step = 1000  # 1000
+    test_step = epoch_step * 10
     initial_lr = 0.001
     main_path = "."
-
-    early_stop = True
+    log_path = None
+    early_stop = False
     early_stop_period = test_step // 2
     early_stop_tolerance = 0.01
 
 
 class Config:
     def __init__(self):
-        self.model_name = "PP_Fourier_Eta"
-        self.curve_names = ["U", "V"]
+        self.model_name = "zjx_rep_alpha_penalty"
+        self.curve_names = ["m_lacI", "m_tetR", "m_cI", "p_cI", "p_lacI", "p_tetR"]
         self.params = Parameters
         self.args = TrainArgs
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.seed = 1
+        self.seed = 0
+        self.layer = 4
 
         self.T = 20
-        self.T_unit = 1e-3
+        self.T_unit = 1e-2
         self.T_N = int(self.T / self.T_unit)
 
-        self.prob_dim = 2
-        self.y0 = np.asarray([64.73002741, 6.13106793])
+        self.prob_dim = 6
+        self.y0 = np.asarray([9.0983668, 0.90143886, 0.15871683, 7.2439572, 2.85342356, 0.15983291])
         self.t = np.asarray([i * self.T_unit for i in range(self.T_N)])
         self.t_torch = torch.tensor(self.t, dtype=torch.float32).to(self.device)
         # self.x = torch.tensor(np.asarray([[[i * self.T_unit] * self.prob_dim for i in range(self.T_N)]]), dtype=torch.float32).to(self.device)
 
+        omega = 1.4938150574984748
 
-        self.x = torch.tensor(
-            np.asarray([[[ i * self.T_unit] for i in range(self.T_N)]]),
-            dtype=torch.float32).to(self.device)
+        self.x = torch.tensor(np.asarray([[[i * self.T_unit] * 1 for i in range(self.T_N)]]),
+                              dtype=torch.float32).to(self.device)
         # print(self.x.shape)
         self.truth = odeint(self.pend, self.y0, self.t)
 
@@ -78,27 +68,20 @@ class Config:
         self.width = 16
         self.fc_map_dim = 128
 
+        self.activation = ""
+        self.activation_id = -1
+
     def pend(self, y, t):
+        k = self.params
         dydt = np.asarray([
-            self.params.alpha * y[0] - self.params.gamma * y[0] * y[1],
-            - self.params.beta * y[1] + self.params.e * y[0] * y[1]
+            k.beta * ( k.rho + 1 / (1 + y[5] ** k.n) ) - y[0],
+            k.beta * ( k.rho + 1 / (1 + y[3] ** k.n) ) - y[1],
+            k.beta * ( k.rho + 1 / (1 + y[4] ** k.n) ) - y[2],
+            k.gamma * ( y[0] - y[3] ),
+            k.gamma * ( y[1] - y[4] ),
+            k.gamma * ( y[2] - y[5] )
         ])
         return dydt
-
-
-# config = Config()
-# tt = config.t
-# uu = config.truth[:, 0]
-# vv = config.truth[:, 1]
-# u_mins = []
-# u_maxs = []
-# v_mins = []
-# v_maxs = []
-#
-# #plt.plot(tt, uu)
-# #plt.plot(tt, vv)
-# #plt.show()
-# #plt.close()
 
 
 
@@ -124,6 +107,8 @@ class SpectralConv1d(nn.Module):
         x = torch.fft.irfft(out_ft, n=x.size(-1))
         return x
 
+def penalty_func(x):
+    return 1 * (- torch.tanh((x - 1.5)) + 1)# return 1 * (- torch.tanh((x - 2.5)) + 1)
 
 class FourierModel(nn.Module):
     def __init__(self, config):
@@ -148,10 +133,12 @@ class FourierModel(nn.Module):
         self.fc2 = nn.Linear(self.config.fc_map_dim, self.config.prob_dim)
 
         self.criterion = torch.nn.MSELoss().to(self.config.device)  # "sum"
-        self.omega = torch.nn.Parameter(torch.Tensor([1.4938150574984748]))
+
         self.y_tmp = None
         self.epoch_tmp = None
         self.loss_record_tmp = None
+        self.real_loss_record_tmp = None
+        self.time_record_tmp = None
 
         self.figure_save_path_folder = "{0}/saves/figure/{1}_{2}/".format(self.config.args.main_path,
                                                                           self.config.model_name, self.time_string)
@@ -161,7 +148,7 @@ class FourierModel(nn.Module):
             os.makedirs(self.figure_save_path_folder)
         if not os.path.exists(self.train_save_path_folder):
             os.makedirs(self.train_save_path_folder)
-        self.default_colors = ["red", "blue", "green", "orange", "cyan", "purple", "pink", "indigo", "brown", "grey"]
+        self.default_colors = ["red", "blue", "green", "orange", "cyan", "purple", "pink", "indigo", "brown", "grey", "indigo", "olive"]
 
         print("using {}".format(str(self.config.device)))
         print("iteration = {}".format(self.config.args.iteration))
@@ -211,7 +198,6 @@ class FourierModel(nn.Module):
             return True
 
     def forward(self, x):
-        x = torch.sin(self.omega * x) *10
         # print("cp1", x.shape)
         x = self.fc0(x)
         # print("cp2", x.shape)
@@ -239,6 +225,7 @@ class FourierModel(nn.Module):
         x1 = self.conv3(x)
         x2 = self.w3(x)
         x = x1 + x2
+        x = F.gelu(x)
         # print("cp7", x.shape)
         x = x.permute(0, 2, 1)
         # print("cp8", x.shape)
@@ -262,34 +249,55 @@ class FourierModel(nn.Module):
         torch.backends.cudnn.deterministic = True
 
     def ode_gradient(self, x, y):
-        u = y[0, :, 0]
-        v = y[0, :, 1]
-        u_t = torch.gradient(u, spacing=(self.config.t_torch,))[0]
-        v_t = torch.gradient(v, spacing=(self.config.t_torch,))[0]
-        return u_t - (self.config.params.alpha - self.config.params.gamma * v) * u, v_t - (
-                    self.config.params.e * u - self.config.params.beta) * v
+        k = self.config.params
+
+        m_lacl = y[0, :, 0]
+        m_tetR = y[0, :, 1]
+        m_cl = y[0, :, 2]
+        p_cl = y[0, :, 3]
+        p_lacl = y[0, :, 4]
+        p_tetR = y[0, :, 5]
+
+        m_lacl_t = torch.gradient(m_lacl, spacing=(self.config.t_torch,))[0]
+        m_tetR_t = torch.gradient(m_tetR, spacing=(self.config.t_torch,))[0]
+        m_cl_t = torch.gradient(m_cl, spacing=(self.config.t_torch,))[0]
+        p_cl_t = torch.gradient(p_cl, spacing=(self.config.t_torch,))[0]
+        p_lacl_t = torch.gradient(p_lacl, spacing=(self.config.t_torch,))[0]
+        p_tetR_t = torch.gradient(p_tetR, spacing=(self.config.t_torch,))[0]
+
+        f_m_lacl = m_lacl_t - (k.beta * (k.rho + 1 / (1 + p_tetR ** k.n)) - m_lacl)
+        f_m_tetR = m_tetR_t - (k.beta * (k.rho + 1 / (1 + p_cl ** k.n)) - m_tetR)
+        f_m_cl = m_cl_t - (k.beta * (k.rho + 1 / (1 + p_lacl ** k.n)) - m_cl)
+        f_p_cl = p_cl_t - (k.gamma * (m_lacl - p_cl))
+        f_p_lacl = p_lacl_t - (k.gamma * (m_tetR - p_lacl))
+        f_p_tetR = p_tetR_t - (k.gamma * (m_cl - p_tetR))
+
+        return f_m_lacl, f_m_tetR, f_m_cl, f_p_cl, f_p_lacl, f_p_tetR
 
     def loss(self, y):
         y0_pred = y[0, 0, :]
         y0_true = torch.tensor(self.config.y0, dtype=torch.float32).to(self.config.device)
 
-        ode_1, ode_2 = self.ode_gradient(self.config.x, y)
-        zeros_1D = torch.tensor([0.0] * self.config.T_N).to(self.config.device)
+        ode_1, ode_2, ode_3, ode_4, ode_5, ode_6 = self.ode_gradient(self.config.x, y)
+        zeros_1D = torch.zeros([self.config.T_N]).to(self.config.device)
+        zeros_nD = torch.zeros([self.config.T_N, self.config.prob_dim]).to(self.config.device)
 
         loss1 = self.criterion(y0_pred, y0_true)
-        loss2 = 10 * (self.criterion(ode_1, zeros_1D) + self.criterion(ode_2, zeros_1D))
-        loss3 = self.criterion(torch.abs(y[:, :, 0] - 9), y[:, :, 0] - 9) + self.criterion(torch.abs(y[:, :, 1]),
-                                                                                           y[:, :, 1])
+        loss2 = 10 * (self.criterion(ode_1, zeros_1D) + self.criterion(ode_2, zeros_1D) + self.criterion(ode_3,
+                                                                                                         zeros_1D) + self.criterion(
+            ode_4, zeros_1D) + self.criterion(ode_5, zeros_1D) + self.criterion(ode_6, zeros_1D))
+        loss3 = self.criterion(torch.abs(y - 0), y - 0) + self.criterion(torch.abs(10 - y), 10 - y)
+        loss4 = 0 * sum([penalty_func(torch.var(y[0, :, i])) for i in range(self.config.prob_dim)])
         # loss4 = self.criterion(1 / u_0, pt_all_zeros_3)
         # loss5 = self.criterion(torch.abs(u_0 - v_0), u_0 - v_0)
 
-        loss = loss1 + loss2 + loss3
-        loss_list = [loss1, loss2, loss3]
+        loss = loss1 + loss2 + loss3 + loss4
+        loss_list = [loss1, loss2, loss3, loss4]
         return loss, loss_list
 
     def train_model(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.config.args.initial_lr, weight_decay=0)
-        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: 1 / (epoch / 2000 + 1))
+        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: 1 / (epoch / 10000 + 1))
         self.train()
 
         start_time = time.time()
@@ -328,6 +336,8 @@ class FourierModel(nn.Module):
                     self.y_tmp = y
                     self.epoch_tmp = epoch
                     self.loss_record_tmp = loss_record
+                    self.real_loss_record_tmp = real_loss_record
+                    self.time_record_tmp = time_record
                     self.test_model()
                     # save_path_loss = "{}/{}_{}_loss.npy".format(self.train_save_path_folder, self.config.model_name, self.time_string)
                     # np.save(save_path_loss, np.asarray(loss_record))
@@ -338,13 +348,14 @@ class FourierModel(nn.Module):
                         "seed": self.config.seed,
                         "epoch": self.config.args.iteration,
                         "epoch_stop": self.epoch_tmp,
+                        "loss_length": len(loss_record),
                         "loss": np.asarray(loss_record),
                         "real_loss": np.asarray(real_loss_record),
                         "time": np.asarray(time_record),
                         "y_predict": y[0, :, :].cpu().detach().numpy(),
                         "y_truth": self.config.truth,
                         "y_shape": self.config.truth.shape,
-                        "config": self.config,
+                        # "config": self.config,
                         "time_string": self.time_string,
                     }
                     train_info_path_loss = "{}/{}_{}_info.npy".format(self.train_save_path_folder,
@@ -352,8 +363,9 @@ class FourierModel(nn.Module):
                     with open(train_info_path_loss, "wb") as f:
                         pickle.dump(train_info, f)
 
-                    if self.early_stop():
-                        print(train_info)
+                    if epoch == self.config.args.iteration or self.early_stop():
+                        # myprint(str(train_info), self.config.args.log_path)
+                        self.write_finish_log()
                         break
 
     def test_model(self):
@@ -362,75 +374,22 @@ class FourierModel(nn.Module):
         y_draw_truth = self.config.truth.swapaxes(0, 1)
         save_path = "{}/{}_{}_epoch={}.png".format(self.figure_save_path_folder, self.config.model_name,
                                                    self.time_string, self.epoch_tmp)
-        # draw_two_dimension(
-        #     y_lists=np.concatenate([y_draw, y_draw_truth], axis=0),
-        #     x_list=x_draw,
-        #     color_list=self.default_colors[: 2 * self.config.prob_dim],
-        #     legend_list=self.config.curve_names + ["{}_true".format(item) for item in self.config.curve_names],
-        #     line_style_list=["solid"] * self.config.prob_dim + ["dashed"] * self.config.prob_dim,
-        #     fig_title="{}_{}_epoch={}".format(self.config.model_name, self.time_string, self.epoch_tmp),
-        #     fig_size=(8, 6),
-        #     show_flag=True,
-        #     save_flag=True,
-        #     save_path=save_path,
-        #     save_dpi=300
-        # )
         draw_two_dimension(
             y_lists=np.concatenate([y_draw, y_draw_truth], axis=0),
             x_list=x_draw,
-            # color_list=self.default_colors[: 2 * self.config.prob_dim],
-            # legend_list=self.config.curve_names + ["{}_true".format(item) for item in self.config.curve_names],
-            # line_style_list=["solid"] * self.config.prob_dim + ["dashed"] * self.config.prob_dim,
-            # fig_title="{}_{}_epoch={}".format(self.config.model_name, self.time_string, self.epoch_tmp),
+            color_list=self.default_colors[: 2 * self.config.prob_dim],
+            legend_list=self.config.curve_names + ["{}_true".format(item) for item in self.config.curve_names],
+            line_style_list=["solid"] * self.config.prob_dim + ["dashed"] * self.config.prob_dim,
+            fig_title="{}_{}_epoch={}".format(self.config.model_name, self.time_string, self.epoch_tmp),
             fig_size=(8, 6),
-            # show_flag=True,
-            # save_flag=True,
-            # save_path=save_path,
-            save_dpi=300,
-            color_list=["red", "blue", "pink", "cyan"],
-            # legend_list=["$U_{pred}$", "$V_{pred}$", "$U_{true}$", "$V_{true}$"],
-            # legend_list=["u", "v", "ut", "vt"],
-            line_style_list=["solid", "solid", "dashed", "dashed"],
-            # fig_title="PP - 2000000 iterations",
-            # fig_size=(8, 6),
-            # legend_loc="upper left",
-            show_flag=True,
+            show_flag=False,
             save_flag=True,
             save_path=save_path,
-            fig_x_label=None,
-            fig_y_label=None,
-            x_ticks_set_flag=True,
-            x_ticks=range(0, 21, 5),
-            x_label_size=20,
-            y_label_size=20,
-            number_label_size=20,
+            save_dpi=300,
+            legend_loc="center right",
         )
-        save_path_model = "{}/{}_{}_model.pt".format(self.figure_save_path_folder, self.config.model_name,
-                                                     self.time_string)
-        torch.save(self.state_dict(), save_path_model)
-
-        """
-        color_list=["red", "blue", "pink", "cyan"],
-    # legend_list=["$U_{pred}$", "$V_{pred}$", "$U_{true}$", "$V_{true}$"],
-    # legend_list=["u", "v", "ut", "vt"], 
-    line_style_list=["solid", "solid", "dashed", "dashed"],
-    # fig_title="PP - 2000000 iterations",
-    fig_size=(8, 6),
-    # legend_loc="upper left",
-    show_flag=True,
-    save_flag=True,
-    save_path=main_path + "paper_plots/pp_pinn.png",
-    fig_x_label=None,
-    fig_y_label=None,
-    x_ticks_set_flag=True,
-    x_ticks=range(0, 21, 5),
-    x_label_size=20,
-    y_label_size=20,
-    number_label_size=20,
-    save_dpi=300,
-        """
         print("Figure is saved to {}".format(save_path))
-        self.draw_loss_multi(self.loss_record_tmp, [1.0, 0.5, 0.25])
+        # self.draw_loss_multi(self.loss_record_tmp, [1.0, 0.5, 0.25, 0.125])
 
     @staticmethod
     def draw_loss_multi(loss_list, last_rate_list):
@@ -449,14 +408,23 @@ class FourierModel(nn.Module):
             )
         m.draw()
 
-
+    def write_finish_log(self):
+        with open("saves/record.txt", "a") as f:
+            f.write("{0}\t{1}\tseed={2}\t{3:.2f}min\titer={4}\tll={5:.6f}\tlrl={6:.6f}\n".format(
+                self.config.model_name,
+                self.time_string,
+                self.config.seed,
+                self.time_record_tmp[-1] / 60.0,
+                self.config.args.iteration,
+                sum(self.loss_record_tmp[-10:]) / 10,
+                sum(self.real_loss_record_tmp[-10:]) / 10,
+            ))
 
 
 
 if __name__ == "__main__":
     config = Config()
     model = FourierModel(config).to(config.device)
-    print(model)
     model.train_model()
 
 

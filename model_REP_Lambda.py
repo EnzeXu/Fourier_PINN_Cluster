@@ -14,18 +14,18 @@ from utils import *
 
 
 class Parameters:
-    alpha = 1.00
-    beta = 3.00
-    gamma = 0.30
-    e = 0.333 * 0.30
+    beta = 10
+    rho = 1e-6
+    gamma = 1
+    n = 3
 
 
 class TrainArgs:
-    iteration = 500000
+    iteration = 110000
     epoch_step = 1000  # 1000
     test_step = epoch_step * 10
-    initial_lr = 0.01
-    main_path = ""
+    initial_lr = 0.001
+    main_path = "."
     log_path = None
     early_stop = False
     early_stop_period = test_step // 2
@@ -34,23 +34,23 @@ class TrainArgs:
 
 class Config:
     def __init__(self):
-        self.model_name = "PP_Fourier_Zeta"
-        self.curve_names = ["U", "V"]
+        self.model_name = "REP_Fourier_Lambda"
+        self.curve_names = ["m_lacI", "m_tetR", "m_cI", "p_cI", "p_lacI", "p_tetR"]
         self.params = Parameters
         self.args = TrainArgs
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.seed = 1
+        self.seed = 0
         self.layer = -1
 
         self.T = 20
-        self.T_unit = 1e-3
+        self.T_unit = 1e-2
         self.T_N = int(self.T / self.T_unit)
 
-        self.prob_dim = 2
-        self.y0 = np.asarray([64.73002741, 6.13106793])
+        self.prob_dim = 6
+        self.y0 = np.asarray([9.0983668, 0.90143886, 0.15871683, 7.2439572, 2.85342356, 0.15983291])
         self.t = np.asarray([i * self.T_unit for i in range(self.T_N)])
         self.t_torch = torch.tensor(self.t, dtype=torch.float32).to(self.device)
-        self.x = torch.tensor(np.asarray([[[i * self.T_unit] * self.prob_dim for i in range(self.T_N)]]),
+        self.x = torch.tensor(np.asarray([[[i * self.T_unit] * 1 for i in range(self.T_N)]]),
                               dtype=torch.float32).to(self.device)
         self.truth = odeint(self.pend, self.y0, self.t)
 
@@ -60,11 +60,17 @@ class Config:
 
         self.activation = ""
         self.activation_id = -1
+        self.strategy = -1
 
     def pend(self, y, t):
+        k = self.params
         dydt = np.asarray([
-            self.params.alpha * y[0] - self.params.gamma * y[0] * y[1],
-            - self.params.beta * y[1] + self.params.e * y[0] * y[1]
+            k.beta * (k.rho + 1 / (1 + y[5] ** k.n)) - y[0],
+            k.beta * (k.rho + 1 / (1 + y[3] ** k.n)) - y[1],
+            k.beta * (k.rho + 1 / (1 + y[4] ** k.n)) - y[2],
+            k.gamma * (y[0] - y[3]),
+            k.gamma * (y[1] - y[4]),
+            k.gamma * (y[2] - y[5])
         ])
         return dydt
 
@@ -99,10 +105,20 @@ def get_now_string():
 class MySin(nn.Module):
     def __init__(self):
         super().__init__()
-        self.omega = nn.Parameter(torch.rand([1]))
+        self.omega = nn.Parameter(torch.tensor([1.4938150574984748]))
 
     def forward(self, x):
         return torch.sin(self.omega * x)
+
+
+class MySoftplus(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.beta = 1
+
+    def forward(self, x):
+        return nn.Softplus(beta=self.beta)(x)
+
 
 
 def activation_func(activation):
@@ -113,7 +129,8 @@ def activation_func(activation):
         "selu": nn.SELU(),
         "sin": MySin(),
         "tanh": nn.Tanh(),
-        "softplus": nn.Softplus(),
+        "softplus": MySoftplus(),
+        "elu": nn.ELU(),
         "none": nn.Identity(),
     })[activation]
 
@@ -122,58 +139,74 @@ class ActivationBlock(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.config = config
-        self.activate_list = ["sin", "tanh", "relu", "gelu", "softplus"]
-        self.activates = [activation_func(item).to(config.device) for item in self.activate_list]
+        self.activate_list = ["sin", "tanh", "relu", "gelu", "softplus", "elu"]
+        self.activates = nn.ModuleList([activation_func(item).to(config.device) for item in self.activate_list])
         self.activate_weights_raw = nn.Parameter(torch.rand(len(self.activate_list)).to(self.config.device), requires_grad=True)
-        self.softmax = nn.Softmax(dim=0)
+        # self.softmax = nn.Softmax(dim=0)
 
         # print("initial weights:", self.softmax(self.activate_weights_raw.clone()).detach().cpu().numpy())
         # self.softmax = nn.Softmax(dim=0).to(config.device)
-        assert config.activation in ["plan1", "plan2", "plan3"]
-        if config.activation == "plan1":
-            self.activate_weights = torch.tensor(np.asarray([1.0 / len(self.activate_list)] * len(self.activate_list))).to(config.device)
-        elif config.activation == "plan2":
-            assert config.activation_id in range(1, len(self.activate_list) + 1)
-            self.activate_weights = torch.tensor(np.asarray([float(i + 1 == config.activation_id) for i in range(len(self.activate_list))])).to(config.device)
+
+        # self.activate_weights = self.softmax(self.activate_weights_raw)
+        self.activate_weights = my_softmax(self.activate_weights_raw)
+        assert self.config.strategy in [0, 1, 2]
+        if self.config.strategy == 0:
+            self.balance_weights = torch.tensor([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]).to(self.config.device)
+        elif self.config.strategy == 1:
+            self.balance_weights = torch.tensor([10.0, 10.0, 1.0, 1.0, 1.0, 1.0]).to(self.config.device)
         else:
-            self.activate_weights = self.softmax(self.activate_weights_raw.clone())
-            # print("self.activate_weights device = {}".format(self.activate_weights.device))
+            self.balance_weights = nn.Parameter(torch.tensor([10.0, 10.0, 1.0, 1.0, 1.0, 1.0]).to(self.config.device), requires_grad=True)
+        # print("self.activate_weights device = {}".format(self.activate_weights.device))
 
     def forward(self, x):
         # print("now weights:", self.softmax(self.activate_weights_raw.clone()).detach().cpu().numpy())
-        activation_res = sum([self.activate_weights[i] * self.activates[i](x) for i in range(len(self.activate_list))])
+        activation_res = 0.0
+        for i in range(len(self.activate_list)):
+            tmp_sum = self.activate_weights[i] * self.activates[i](x) * self.balance_weights[i]
+            # print("{}: {} / ".format(self.activate_list[i], torch.mean(tmp_sum).item()), end="")
+            activation_res += tmp_sum
+        # print()
+        # activation_res = sum([self.activate_weights[i] * self.activates[i](x) for i in range(len(self.activate_list))])
         return activation_res
 
+#
+# class BasicBlock(nn.Module):
+#     def __init__(self, config):
+#         super().__init__()
+#         self.config = config
+#         self.conv = SpectralConv1d(self.config).to(self.config.device)
+#         self.cnn = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
+#         self.activate_block = ActivationBlock(self.config).to(self.config.device)
+#
+#     def forward(self, x):
+#         x1 = self.conv(x)
+#         x2 = self.cnn(x)
+#         x = x1 + x2
+#         x = self.activate_block(x)
+#         return x
+#
+#
+# class Layers(nn.Module):
+#     def __init__(self, config, n=1):
+#         super().__init__()
+#         self.config = config
+#         self.activate = ActivationBlock(self.config).to(self.config.device)
+#         self.blocks = nn.Sequential(
+#             *[BasicBlock(self.config).to(self.config.device) for _ in range(n)]
+#         )
+#
+#     def forward(self, x):
+#         x = self.blocks(x)
+#         return x
 
-class BasicBlock(nn.Module):
-    def __init__(self, config):
-        super().__init__()
-        self.config = config
-        self.conv = SpectralConv1d(self.config).to(self.config.device)
-        self.cnn = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
-        self.activate_block = ActivationBlock(self.config).to(self.config.device)
+def my_softmax(x):
+    exponent_vector = torch.exp(x)
+    sum_of_exponents = torch.sum(exponent_vector)
+    softmax_vector = exponent_vector / sum_of_exponents
+    return softmax_vector
 
-    def forward(self, x):
-        x1 = self.conv(x)
-        x2 = self.cnn(x)
-        x = x1 + x2
-        x = self.activate_block(x)
-        return x
-
-
-class Layers(nn.Module):
-    def __init__(self, config, n=1):
-        super().__init__()
-        self.config = config
-        self.activate = ActivationBlock(self.config).to(self.config.device)
-        self.blocks = nn.Sequential(
-            *[BasicBlock(self.config).to(self.config.device) for _ in range(n)]
-        )
-
-    def forward(self, x):
-        x = self.blocks(x)
-        return x
-
+def penalty_func(x):
+    return 1 * (- torch.tanh((x - 1.5)) + 1)# return 1 * (- torch.tanh((x - 2.5)) + 1)
 
 class FourierModel(nn.Module):
     def __init__(self, config):
@@ -182,8 +215,21 @@ class FourierModel(nn.Module):
         self.config = config
         self.setup_seed(self.config.seed)
 
-        self.fc0 = nn.Linear(self.config.prob_dim, self.config.width)  # input channel is 2: (a(x), x)
-        self.layers = Layers(config=self.config, n=self.config.layer).to(self.config.device)
+        self.fc0 = nn.Linear(1, self.config.width)  # input channel is 2: (a(x), x)
+        # self.layers = Layers(config=self.config, n=self.config.layer).to(self.config.device)
+        self.conv1 = SpectralConv1d(self.config).to(self.config.device)
+        self.conv2 = SpectralConv1d(self.config).to(self.config.device)
+        self.conv3 = SpectralConv1d(self.config).to(self.config.device)
+        self.conv4 = SpectralConv1d(self.config).to(self.config.device)
+        self.cnn1 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
+        self.cnn2 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
+        self.cnn3 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
+        self.cnn4 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
+        self.activate_block1 = ActivationBlock(self.config).to(self.config.device)
+        self.activate_block2 = ActivationBlock(self.config).to(self.config.device)
+        self.activate_block3 = ActivationBlock(self.config).to(self.config.device)
+        self.activate_block4 = ActivationBlock(self.config).to(self.config.device)
+
         self.fc1 = nn.Linear(self.config.width, self.config.fc_map_dim)
         self.fc2 = nn.Linear(self.config.fc_map_dim, self.config.prob_dim)
 
@@ -203,7 +249,7 @@ class FourierModel(nn.Module):
             os.makedirs(self.figure_save_path_folder)
         if not os.path.exists(self.train_save_path_folder):
             os.makedirs(self.train_save_path_folder)
-        self.default_colors = ["red", "blue", "green", "orange", "cyan", "purple", "pink", "indigo", "brown", "grey"]
+        self.default_colors = ["red", "blue", "green", "orange", "cyan", "purple", "pink", "indigo", "brown", "grey", "indigo", "olive"]
 
         myprint("using {}".format(str(self.config.device)), self.config.args.log_path)
         myprint("iteration = {}".format(self.config.args.iteration), self.config.args.log_path)
@@ -259,7 +305,26 @@ class FourierModel(nn.Module):
         x = self.fc0(x)
         x = x.permute(0, 2, 1)
 
-        x = self.layers(x)
+        # x = self.layers(x)
+        x1 = self.conv1(x)
+        x2 = self.cnn1(x)
+        x = x1 + x2
+        x = self.activate_block1(x)
+
+        x1 = self.conv2(x)
+        x2 = self.cnn2(x)
+        x = x1 + x2
+        x = self.activate_block2(x)
+
+        x1 = self.conv3(x)
+        x2 = self.cnn3(x)
+        x = x1 + x2
+        x = self.activate_block3(x)
+
+        x1 = self.conv4(x)
+        x2 = self.cnn4(x)
+        x = x1 + x2
+        x = self.activate_block4(x)
 
         x = x.permute(0, 2, 1)
         x = self.fc1(x)
@@ -276,29 +341,51 @@ class FourierModel(nn.Module):
         torch.backends.cudnn.deterministic = True
 
     def ode_gradient(self, x, y):
-        u = y[0, :, 0]
-        v = y[0, :, 1]
-        u_t = torch.gradient(u, spacing=(self.config.t_torch,))[0]
-        v_t = torch.gradient(v, spacing=(self.config.t_torch,))[0]
-        return u_t - (self.config.params.alpha - self.config.params.gamma * v) * u, v_t - (
-                    self.config.params.e * u - self.config.params.beta) * v
+        k = self.config.params
+
+        m_lacl = y[0, :, 0]
+        m_tetR = y[0, :, 1]
+        m_cl = y[0, :, 2]
+        p_cl = y[0, :, 3]
+        p_lacl = y[0, :, 4]
+        p_tetR = y[0, :, 5]
+
+        m_lacl_t = torch.gradient(m_lacl, spacing=(self.config.t_torch,))[0]
+        m_tetR_t = torch.gradient(m_tetR, spacing=(self.config.t_torch,))[0]
+        m_cl_t = torch.gradient(m_cl, spacing=(self.config.t_torch,))[0]
+        p_cl_t = torch.gradient(p_cl, spacing=(self.config.t_torch,))[0]
+        p_lacl_t = torch.gradient(p_lacl, spacing=(self.config.t_torch,))[0]
+        p_tetR_t = torch.gradient(p_tetR, spacing=(self.config.t_torch,))[0]
+
+        f_m_lacl = m_lacl_t - (k.beta * ( k.rho + 1 / (1 + p_tetR ** k.n) ) - m_lacl)
+        f_m_tetR = m_tetR_t - (k.beta * ( k.rho + 1 / (1 + p_cl ** k.n) ) - m_tetR)
+        f_m_cl = m_cl_t - (k.beta * ( k.rho + 1 / (1 + p_lacl ** k.n) ) - m_cl)
+        f_p_cl = p_cl_t - (k.gamma * ( m_lacl - p_cl ))
+        f_p_lacl = p_lacl_t - (k.gamma * ( m_tetR - p_lacl ))
+        f_p_tetR = p_tetR_t - (k.gamma * ( m_cl - p_tetR ))
+
+
+        return f_m_lacl, f_m_tetR, f_m_cl, f_p_cl, f_p_lacl, f_p_tetR
 
     def loss(self, y):
         y0_pred = y[0, 0, :]
         y0_true = torch.tensor(self.config.y0, dtype=torch.float32).to(self.config.device)
 
-        ode_1, ode_2 = self.ode_gradient(self.config.x, y)
-        zeros_1D = torch.tensor([0.0] * self.config.T_N).to(self.config.device)
+        ode_1, ode_2, ode_3, ode_4, ode_5, ode_6 = self.ode_gradient(self.config.x, y)
+        zeros_1D = torch.zeros([self.config.T_N]).to(self.config.device)
+        zeros_nD = torch.zeros([self.config.T_N, self.config.prob_dim]).to(self.config.device)
 
         loss1 = self.criterion(y0_pred, y0_true)
-        loss2 = 10 * (self.criterion(ode_1, zeros_1D) + self.criterion(ode_2, zeros_1D))
-        loss3 = self.criterion(torch.abs(y[:, :, 0] - 9), y[:, :, 0] - 9) + self.criterion(torch.abs(y[:, :, 1]),
-                                                                                           y[:, :, 1])
+        loss2 = 10 * (self.criterion(ode_1, zeros_1D) + self.criterion(ode_2, zeros_1D) + self.criterion(ode_3,
+                                                                                                         zeros_1D) + self.criterion(
+            ode_4, zeros_1D) + self.criterion(ode_5, zeros_1D) + self.criterion(ode_6, zeros_1D))
+        loss3 = self.criterion(torch.abs(y - 0), y - 0) + self.criterion(torch.abs(10 - y), 10 - y)
+        loss4 = 0 * sum([penalty_func(torch.var(y[0, :, i])) for i in range(self.config.prob_dim)])
         # loss4 = self.criterion(1 / u_0, pt_all_zeros_3)
         # loss5 = self.criterion(torch.abs(u_0 - v_0), u_0 - v_0)
 
-        loss = loss1 + loss2 + loss3
-        loss_list = [loss1, loss2, loss3]
+        loss = loss1 + loss2 + loss3 + loss4
+        loss_list = [loss1, loss2, loss3, loss4]
         return loss, loss_list
 
     def train_model(self):
@@ -356,6 +443,7 @@ class FourierModel(nn.Module):
                         "layer": self.config.layer,
                         "activation": self.config.activation,
                         "activation_id": self.config.activation_id,
+                        "strategy": self.config.strategy,
                         "epoch": self.config.args.iteration,
                         "epoch_stop": self.epoch_tmp,
                         "loss_length": len(loss_record),
@@ -368,16 +456,48 @@ class FourierModel(nn.Module):
                         # "config": self.config,
                         "time_string": self.time_string,
                         "initial_lr": self.config.args.initial_lr,
+                        "weights_raw": np.asarray([
+                            self.activate_block1.activate_weights_raw.cpu().detach().numpy(),
+                            self.activate_block2.activate_weights_raw.cpu().detach().numpy(),
+                            self.activate_block3.activate_weights_raw.cpu().detach().numpy(),
+                            self.activate_block4.activate_weights_raw.cpu().detach().numpy(),
+                        ]),
+                        "weights": np.asarray([
+                            self.activate_block1.activate_weights.cpu().detach().numpy(),
+                            self.activate_block2.activate_weights.cpu().detach().numpy(),
+                            self.activate_block3.activate_weights.cpu().detach().numpy(),
+                            self.activate_block4.activate_weights.cpu().detach().numpy(),
+                        ]),
+                        "balance_weights": np.asarray([
+                            self.activate_block1.balance_weights.cpu().detach().numpy(),
+                            self.activate_block2.balance_weights.cpu().detach().numpy(),
+                            self.activate_block3.balance_weights.cpu().detach().numpy(),
+                            self.activate_block4.balance_weights.cpu().detach().numpy(),
+                        ]),
+                        "sin_weight": np.asarray([
+                            self.activate_block1.activates[0].omega.cpu().detach().numpy(),
+                            self.activate_block2.activates[0].omega.cpu().detach().numpy(),
+                            self.activate_block3.activates[0].omega.cpu().detach().numpy(),
+                            self.activate_block4.activates[0].omega.cpu().detach().numpy(),
+                        ]),
                     }
                     train_info_path_loss = "{}/{}_{}_info.npy".format(self.train_save_path_folder,
                                                                       self.config.model_name, self.time_string)
+                    model_save_path = "{}/{}_{}_last.pt".format(self.train_save_path_folder,
+                                                                      self.config.model_name, self.time_string)
                     with open(train_info_path_loss, "wb") as f:
                         pickle.dump(train_info, f)
+                    torch.save({
+                        "model_state_dict": self.state_dict(),
+                        "info": train_info,
+                    }, model_save_path)
 
                     if epoch == self.config.args.iteration or self.early_stop():
                         myprint(str(train_info), self.config.args.log_path)
                         self.write_finish_log()
                         break
+
+                    myprint(str(train_info), self.config.args.log_path)
 
     def test_model(self):
         y_draw = self.y_tmp[0].cpu().detach().numpy().swapaxes(0, 1)
@@ -388,43 +508,23 @@ class FourierModel(nn.Module):
         draw_two_dimension(
             y_lists=np.concatenate([y_draw, y_draw_truth], axis=0),
             x_list=x_draw,
-            # color_list=self.default_colors[: 2 * self.config.prob_dim],
-            # legend_list=self.config.curve_names + ["{}_true".format(item) for item in self.config.curve_names],
-            # line_style_list=["solid"] * self.config.prob_dim + ["dashed"] * self.config.prob_dim,
-            # fig_title="{}_{}_epoch={}".format(self.config.model_name, self.time_string, self.epoch_tmp),
+            color_list=self.default_colors[: 2 * self.config.prob_dim],
+            legend_list=self.config.curve_names + ["{}_true".format(item) for item in self.config.curve_names],
+            line_style_list=["solid"] * self.config.prob_dim + ["dashed"] * self.config.prob_dim,
+            fig_title="{}_{}_epoch={}".format(self.config.model_name, self.time_string, self.epoch_tmp),
             fig_size=(8, 6),
-            # show_flag=True,
-            # save_flag=True,
-            # save_path=save_path,
-            save_dpi=300,
-            color_list=["red", "blue", "pink", "cyan"],
-            # legend_list=["$U_{pred}$", "$V_{pred}$", "$U_{true}$", "$V_{true}$"],
-            # legend_list=["u", "v", "ut", "vt"],
-            line_style_list=["solid", "solid", "dashed", "dashed"],
-            # fig_title="PP - 2000000 iterations",
-            # fig_size=(8, 6),
-            # legend_loc="upper left",
             show_flag=False,
             save_flag=True,
             save_path=save_path,
-            fig_x_label=None,
-            fig_y_label=None,
-            x_ticks_set_flag=True,
-            x_ticks=range(0, 21, 5),
-            x_label_size=20,
-            y_label_size=20,
-            number_label_size=20,
+            save_dpi=300,
+            legend_loc="center right",
         )
-        save_path_model = "{}/{}_{}_model.pt".format(self.figure_save_path_folder, self.config.model_name,
-                                                     self.time_string)
-        torch.save(self.state_dict(), save_path_model)
-
-        myprint("Figure is saved to {}".format(save_path), self.config.args.log_path)
+        print("Figure is saved to {}".format(save_path))
         # self.draw_loss_multi(self.loss_record_tmp, [1.0, 0.5, 0.25, 0.125])
 
     def write_finish_log(self):
         with open("saves/record.txt", "a") as f:
-            f.write("{0}\t{1}\tseed={2}\t{3:.2f}min\titer={4}\tll={5:.6f}\tlrl={6:.6f}\tactivation={7}\tactivation_id={8}\n".format(
+            f.write("{0}\t{1}\tseed={2}\t{3:.2f}min\titer={4}\tll={5:.6f}\tlrl={6:.6f}\tactivation={7}\tactivation_id={8}\tstrategy={9}\n".format(
                 self.config.model_name,
                 self.time_string,
                 self.config.seed,
@@ -434,6 +534,7 @@ class FourierModel(nn.Module):
                 sum(self.real_loss_record_tmp[-10:]) / 10,
                 self.config.activation,
                 self.config.activation_id,
+                self.config.strategy,
             ))
 
     @staticmethod
@@ -460,6 +561,7 @@ def run(args):
     config.layer = args.layer
     config.activation = args.activation
     config.activation_id = args.activation_id
+    config.strategy = args.strategy
     config.args.main_path = args.main_path
     config.args.log_path = args.log_path
     model = FourierModel(config).to(config.device)
@@ -471,8 +573,9 @@ if __name__ == "__main__":
     parser.add_argument("--log_path", type=str, default="logs/1.txt", help="log path")
     parser.add_argument("--main_path", default="./", help="main_path")
     parser.add_argument("--seed", type=int, default=0, help="seed")
-    parser.add_argument("--activation", type=str, help="activation plan")
+    parser.add_argument("--activation", default="plan3", type=str, help="activation plan")
     parser.add_argument("--activation_id", type=int, default=-1, help="activation plan id (only used when activation = 'plan2')")
+    parser.add_argument("--strategy", type=int, default=-1, help="0=ones 1=fixed 2=adaptive")
     parser.add_argument("--layer", type=int, default=8, help="number of layer")
     opt = parser.parse_args()
     opt.overall_start = get_now_string()
