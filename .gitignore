@@ -1,4 +1,6 @@
 *.ipynb
+venv/*
+test/*
 .DS_Store
 .idea/*
 __pycache__/*

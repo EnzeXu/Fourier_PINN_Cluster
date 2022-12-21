@@ -97,20 +97,23 @@ def get_now_string():
 
 
 class MySin(nn.Module):
-    def __init__(self):
+    def __init__(self, device):
         super().__init__()
+        self.omega = nn.Parameter(torch.rand([1])).to(device)
 
     def forward(self, x):
-        return torch.sin(x)
+        # print("self.omega.device", self.omega.device)
+        # print("x.device", x.device)
+        return torch.sin(self.omega * x)
 
 
-def activation_func(activation):
+def activation_func(activation, device):
     return nn.ModuleDict({
         "relu": nn.ReLU(),
         "gelu": nn.GELU(),
         "leaky_relu": nn.LeakyReLU(negative_slope=0.01, inplace=True),
         "selu": nn.SELU(inplace=True),
-        "sin": MySin(),
+        "sin": MySin(device),
         "tanh": nn.Tanh(),
         "softplus": nn.Softplus(),
         "none": nn.Identity(),
@@ -121,8 +124,8 @@ class ActivationBlock(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.activate_list = ["sin", "tanh", "relu", "gelu", "softplus"]
-        self.activates = [activation_func(item) for item in self.activate_list]
-        self.activate_weights_raw = nn.Parameter(torch.rand(len(self.activate_list)))
+        self.activates = [activation_func(item, config.device) for item in self.activate_list]
+        self.activate_weights_raw = nn.Parameter(torch.rand(len(self.activate_list)).to(config.device))
         # self.softmax = nn.Softmax(dim=0).to(config.device)
         assert config.activation in ["plan1", "plan2", "plan3"]
         if config.activation == "plan1":
@@ -131,7 +134,7 @@ class ActivationBlock(nn.Module):
             assert config.activation_id in range(1, len(self.activate_list) + 1)
             self.activate_weights = torch.tensor(np.asarray([float(i + 1 == config.activation_id) for i in range(len(self.activate_list))])).to(config.device)
         else:
-            self.activate_weights = nn.functional.softmax(self.activate_weights_raw, dim=0)
+            self.activate_weights = nn.functional.softmax(self.activate_weights_raw.clone(), dim=0)
 
     def forward(self, x):
         return sum([self.activate_weights[i] * self.activates[i](x) for i in range(len(self.activate_list))])
@@ -141,9 +144,9 @@ class BasicBlock(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.config = config
-        self.conv = SpectralConv1d(self.config)
-        self.cnn = nn.Conv1d(self.config.width, self.config.width, 1)
-        self.activate_block = ActivationBlock(self.config)
+        self.conv = SpectralConv1d(self.config).to(self.config.device)
+        self.cnn = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
+        self.activate_block = ActivationBlock(self.config).to(self.config.device)
 
     def forward(self, x):
         x1 = self.conv(x)
@@ -157,9 +160,9 @@ class Layers(nn.Module):
     def __init__(self, config, n=1):
         super().__init__()
         self.config = config
-        self.activate = ActivationBlock(self.config)
+        self.activate = ActivationBlock(self.config).to(self.config.device)
         self.blocks = nn.Sequential(
-            *[BasicBlock(self.config) for _ in range(n)]
+            *[BasicBlock(self.config).to(self.config.device) for _ in range(n)]
         )
 
     def forward(self, x):
@@ -175,7 +178,7 @@ class FourierModel(nn.Module):
         self.setup_seed(self.config.seed)
 
         self.fc0 = nn.Linear(self.config.prob_dim, self.config.width)  # input channel is 2: (a(x), x)
-        self.layers = Layers(config=self.config, n=self.config.layer)
+        self.layers = Layers(config=self.config, n=self.config.layer).to(self.config.device)
         self.fc1 = nn.Linear(self.config.width, self.config.fc_map_dim)
         self.fc2 = nn.Linear(self.config.fc_map_dim, self.config.prob_dim)
 

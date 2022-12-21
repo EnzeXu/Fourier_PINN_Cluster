@@ -36,13 +36,71 @@ python {1} {2}
 
 
 def one_slurm(job_name, python_name, kwargs, draft=draft):
-    with open("jobs/{}.slurm".format(job_name), "w") as f:
+    full_path = "jobs/{}.slurm".format(job_name)
+    print("build {}".format(full_path))
+    with open(full_path, "w") as f:
         f.write(draft.format(
             job_name,
             python_name,
             " ".join(["--{0} {1}".format(one_key, kwargs[one_key]) for one_key in kwargs])
         ))
 
+def one_time_build_pp_lambda():
+    plans = [
+        [0],
+        [1],
+        [2],
+    ]
+    dic = dict()
+    dic["main_path"] = "."
+    dic["layer"] = 4
+    for one_plan in plans:
+        for seed in range(2):
+            dic["log_path"] = "logs/{}.txt".format(
+                "lambda_pp_s{}_{}".format(one_plan[0], seed))
+            dic["seed"] = seed
+            dic["strategy"] = one_plan[0]
+            one_slurm(
+                "lambda_pp_s{}_{}".format(one_plan[0], seed),
+                "model_PP_Lambda.py", dic)
+
+def one_time_build_sir_lambda():
+    plans = [
+        [0],
+        [1],
+        [2],
+    ]
+    dic = dict()
+    dic["main_path"] = "."
+    dic["layer"] = 4
+    for one_plan in plans:
+        for seed in range(2):
+            dic["log_path"] = "logs/{}.txt".format(
+                "lambda_sir_s{}_{}".format(one_plan[0], seed))
+            dic["seed"] = seed
+            dic["strategy"] = one_plan[0]
+            one_slurm(
+                "lambda_sir_s{}_{}".format(one_plan[0], seed),
+                "model_SIR_Lambda.py", dic)
+
+def one_time_build_rep_lambda():
+    plans = [
+        [0],
+        [1],
+        [2],
+    ]
+    dic = dict()
+    dic["main_path"] = "."
+    dic["layer"] = 4
+    for one_plan in plans:
+        for seed in range(2):
+            dic["log_path"] = "logs/{}.txt".format(
+                "lambda_rep_s{}_{}".format(one_plan[0], seed))
+            dic["seed"] = seed
+            dic["strategy"] = one_plan[0]
+            one_slurm(
+                "lambda_rep_s{}_{}".format(one_plan[0], seed),
+                "model_REP_Lambda.py", dic)
 
 def one_time_build_pp_zeta():
     plans = [
@@ -117,6 +175,9 @@ def one_time_build_rep_zeta():
                 "model_REP_Zeta.py", dic, draft)
 
 if __name__ == "__main__":
-    one_time_build_rep_zeta()
-    one_time_build_sir_zeta()
+    # one_time_build_rep_zeta()
+    # one_time_build_sir_zeta()
+    one_time_build_rep_lambda()
     pass
+
+

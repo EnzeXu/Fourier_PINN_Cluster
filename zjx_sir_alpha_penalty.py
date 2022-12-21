@@ -1,3 +1,8 @@
+import os
+
+
+import torch
+
 import numpy as np
 import time
 import torch
@@ -5,27 +10,26 @@ import random
 import pickle
 import sys
 import os
-
+import torch.nn.functional as F
+import matplotlib.pyplot as plt
 from torch import nn, optim, autograd
 from scipy.integrate import odeint
-import argparse
 
-from utils import *
+from utils import draw_two_dimension, MultiSubplotDraw
 
 
 class Parameters:
-    beta = 10
-    rho = 1e-6
-    gamma = 1
-    n = 3
+    beta = 0.01
+    gamma = 0.05
+    N = 100.0
 
 
 class TrainArgs:
-    iteration = 100000
-    epoch_step = 100  # 1000
+    iteration = 20000
+    epoch_step = 200  # 1000
     test_step = epoch_step * 10
     initial_lr = 0.001
-    main_path = ""
+    main_path = "."
     log_path = None
     early_stop = False
     early_stop_period = test_step // 2
@@ -34,24 +38,29 @@ class TrainArgs:
 
 class Config:
     def __init__(self):
-        self.model_name = "REP_Fourier_Zeta"
-        self.curve_names = ["m_lacI", "m_tetR", "m_cI", "p_cI", "p_lacI", "p_tetR"]
+        self.model_name = "zjx_sir_alpha_penalty"
+        self.curve_names = ["S", "I", "R"]
         self.params = Parameters
         self.args = TrainArgs
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.seed = -1
-        self.layer = -1
+        self.seed = 1
+        self.layer = 4
 
-        self.T = 20
-        self.T_unit = 1e-2
+        self.T = 100
+        self.T_unit = 1e-1
         self.T_N = int(self.T / self.T_unit)
 
-        self.prob_dim = 6
-        self.y0 = np.asarray([9.0983668, 0.90143886, 0.15871683, 7.2439572, 2.85342356, 0.15983291])
+        self.prob_dim = 3
+        self.y0 = np.asarray([50.0, 40.0, 10.0])
         self.t = np.asarray([i * self.T_unit for i in range(self.T_N)])
         self.t_torch = torch.tensor(self.t, dtype=torch.float32).to(self.device)
-        self.x = torch.tensor(np.asarray([[[i * self.T_unit] * self.prob_dim for i in range(self.T_N)]]),
+        # self.x = torch.tensor(np.asarray([[[i * self.T_unit] * self.prob_dim for i in range(self.T_N)]]), dtype=torch.float32).to(self.device)
+
+        omega = 1.4938150574984748
+
+        self.x = torch.tensor(np.asarray([[[i * self.T_unit] * 1 for i in range(self.T_N)]]),
                               dtype=torch.float32).to(self.device)
+        # print(self.x.shape)
         self.truth = odeint(self.pend, self.y0, self.t)
 
         self.modes = 64  # Number of Fourier modes to multiply, at most floor(N/2) + 1
@@ -62,16 +71,13 @@ class Config:
         self.activation_id = -1
 
     def pend(self, y, t):
-        k = self.params
         dydt = np.asarray([
-            k.beta * ( k.rho + 1 / (1 + y[5] ** k.n) ) - y[0],
-            k.beta * ( k.rho + 1 / (1 + y[3] ** k.n) ) - y[1],
-            k.beta * ( k.rho + 1 / (1 + y[4] ** k.n) ) - y[2],
-            k.gamma * ( y[0] - y[3] ),
-            k.gamma * ( y[1] - y[4] ),
-            k.gamma * ( y[2] - y[5] )
+            - self.params.beta * y[0] * y[1],
+            self.params.beta * y[0] * y[1] - self.params.gamma * y[1],
+            self.params.gamma * y[1]
         ])
         return dydt
+
 
 
 class SpectralConv1d(nn.Module):
@@ -80,7 +86,7 @@ class SpectralConv1d(nn.Module):
         self.config = config
         self.in_channels = self.config.width
         self.out_channels = self.config.width
-        self.scale = 1.0 / (self.in_channels * self.out_channels)
+        self.scale = 1 / (self.in_channels * self.out_channels)
         self.weights = nn.Parameter(
             self.scale * torch.rand(self.in_channels, self.out_channels, self.config.modes, dtype=torch.cfloat))
 
@@ -97,96 +103,17 @@ class SpectralConv1d(nn.Module):
         return x
 
 
-def get_now_string():
-    return time.strftime("%Y%m%d_%H%M%S", time.localtime(time.time()))
-
-
-class MySin(nn.Module):
-    def __init__(self, device):
-        super().__init__()
-        self.omega = nn.Parameter(torch.rand([1])).to(device)
-
-    def forward(self, x):
-        return torch.sin(self.omega * x)
-
-
-def activation_func(activation, device):
-    return nn.ModuleDict({
-        "relu": nn.ReLU(),
-        "gelu": nn.GELU(),
-        "leaky_relu": nn.LeakyReLU(negative_slope=0.01, inplace=True),
-        "selu": nn.SELU(inplace=True),
-        "sin": MySin(device),
-        "tanh": nn.Tanh(),
-        "softplus": nn.Softplus(),
-        "none": nn.Identity(),
-    })[activation]
-
-
-class ActivationBlock(nn.Module):
-    def __init__(self, config):
-        super().__init__()
-        self.activate_list = ["sin", "tanh", "relu", "gelu", "softplus"]
-        self.activates = [activation_func(item, config.device) for item in self.activate_list]
-        self.activate_weights_raw = nn.Parameter(torch.rand(len(self.activate_list)).to(config.device))
-        # self.softmax = nn.Softmax(dim=0).to(config.device)
-        assert config.activation in ["plan1", "plan2", "plan3"]
-        if config.activation == "plan1":
-            self.activate_weights = torch.tensor(np.asarray([1.0 / len(self.activate_list)] * len(self.activate_list))).to(config.device)
-        elif config.activation == "plan2":
-            assert config.activation_id in range(1, len(self.activate_list) + 1)
-            self.activate_weights = torch.tensor(np.asarray([float(i + 1 == config.activation_id) for i in range(len(self.activate_list))])).to(config.device)
-        else:
-            self.activate_weights = nn.functional.softmax(self.activate_weights_raw.clone(), dim=0)
-
-    def forward(self, x):
-        return sum([self.activate_weights[i] * self.activates[i](x) for i in range(len(self.activate_list))])
-
-
-# class BasicBlock(nn.Module):
-#     def __init__(self, config):
-#         super().__init__()
-#         self.config = config
-#         self.conv = SpectralConv1d(self.config)
-#         self.cnn = nn.Conv1d(self.config.width, self.config.width, 1)
-#         self.activate_block = ActivationBlock(self.config)
-#
-#     def forward(self, x):
-#         x1 = self.conv(x)
-#         x2 = self.cnn(x)
-#         x = x1 + x2
-#         x = self.activate_block(x)
-#         return x
-
-
-# class Layers(nn.Module):
-#     def __init__(self, config, n=1):
-#         super().__init__()
-#         self.config = config
-#         self.activate = ActivationBlock(self.config)
-#         self.blocks = nn.Sequential(
-#             *[BasicBlock(self.config) for _ in range(n)]
-#         )
-#
-#     def forward(self, x):
-#         x = self.blocks(x)
-#         return x
-
-
-
-def penalty_func(x):
-    return 1 * (- torch.tanh((x - 1.5)) + 1)# return 1 * (- torch.tanh((x - 2.5)) + 1)
 
 class FourierModel(nn.Module):
     def __init__(self, config):
         super(FourierModel, self).__init__()
-        self.time_string = get_now_string()
+        self.time_string = time.strftime("%Y%m%d_%H%M%S", time.localtime(time.time()))
         self.config = config
         self.setup_seed(self.config.seed)
 
-        self.fc0 = nn.Linear(self.config.prob_dim, self.config.width)  # input channel is 2: (a(x), x)
+        self.fc0 = nn.Linear(1 , self.config.width)  # input channel is 2: (a(x), x)
+        # self.fc0 = nn.Linear(self.config.prob_dim, self.config.width)  # input channel is 2: (a(x), x)
 
-        # self.layers = Layers(config=self.config, n=self.config.layer)
         self.conv0 = SpectralConv1d(self.config)
         self.conv1 = SpectralConv1d(self.config)
         self.conv2 = SpectralConv1d(self.config)
@@ -200,7 +127,6 @@ class FourierModel(nn.Module):
         self.fc2 = nn.Linear(self.config.fc_map_dim, self.config.prob_dim)
 
         self.criterion = torch.nn.MSELoss().to(self.config.device)  # "sum"
-        self.activate = ActivationBlock(self.config)
 
         self.y_tmp = None
         self.epoch_tmp = None
@@ -216,17 +142,14 @@ class FourierModel(nn.Module):
             os.makedirs(self.figure_save_path_folder)
         if not os.path.exists(self.train_save_path_folder):
             os.makedirs(self.train_save_path_folder)
-        self.default_colors = ["red", "blue", "green", "pink", "cyan", "lime", "pink", "indigo", "brown", "grey", "indigo", "olive"]
+        self.default_colors = ["red", "blue", "green", "orange", "cyan", "purple", "pink", "indigo", "brown", "grey"]
 
-        myprint("using {}".format(str(self.config.device)), self.config.args.log_path)
-        myprint("iteration = {}".format(self.config.args.iteration), self.config.args.log_path)
-        myprint("epoch_step = {}".format(self.config.args.epoch_step), self.config.args.log_path)
-        myprint("test_step = {}".format(self.config.args.test_step), self.config.args.log_path)
-        myprint("model_name = {}".format(self.config.model_name), self.config.args.log_path)
-        myprint("time_string = {}".format(self.time_string), self.config.args.log_path)
-        myprint("seed = {}".format(self.config.seed), self.config.args.log_path)
-        myprint("num_layer = {}".format(self.config.layer), self.config.args.log_path)
-        myprint("early stop: {}".format("On" if self.config.args.early_stop else "Off"), self.config.args.log_path)
+        print("using {}".format(str(self.config.device)))
+        print("iteration = {}".format(self.config.args.iteration))
+        print("epoch_step = {}".format(self.config.args.epoch_step))
+        print("test_step = {}".format(self.config.args.test_step))
+        print("model_name = {}".format(self.config.model_name))
+        print("time_string = {}".format(self.time_string))
         self.truth_loss()
 
     def truth_loss(self):
@@ -235,7 +158,7 @@ class FourierModel(nn.Module):
         tl, tl_list = self.loss(y_truth)
         loss_print_part = " ".join(
             ["Loss_{0:d}:{1:.8f}".format(i + 1, loss_part.item()) for i, loss_part in enumerate(tl_list)])
-        myprint("Ground truth has loss: Loss:{0:.8f} {1}".format(tl.item(), loss_print_part), self.config.args.log_path)
+        print("Ground truth has loss: Loss:{0:.8f} {1}".format(tl.item(), loss_print_part))
 
     #  MSE-loss of predicted value against truth
     def real_loss(self, y):
@@ -249,53 +172,67 @@ class FourierModel(nn.Module):
             self.loss_record_tmp[- 2 * self.config.args.early_stop_period: - self.config.args.early_stop_period])
         sum_new = sum(self.loss_record_tmp[- self.config.args.early_stop_period:])
         if (sum_new - sum_old) / sum_old < - self.config.args.early_stop_tolerance:
-            myprint("[Early Stop] epoch [{0:d}:{1:d}] -> [{1:d}:{2:d}] reduces {3:.4f} (tolerance = {4:.4f})".format(
+            print("[Early Stop] epoch [{0:d}:{1:d}] -> [{1:d}:{2:d}] reduces {3:.4f} (tolerance = {4:.4f})".format(
                 len(self.loss_record_tmp) - 2 * self.config.args.early_stop_period,
                 len(self.loss_record_tmp) - self.config.args.early_stop_period,
                 len(self.loss_record_tmp),
                 (sum_old - sum_new) / sum_old,
                 self.config.args.early_stop_tolerance
-            ), self.config.args.log_path)
+            ))
             return False
         else:
-            myprint("[Early Stop] epoch [{0:d}:{1:d}] -> [{1:d}:{2:d}] reduces {3:.4f} (tolerance = {4:.4f})".format(
+            print("[Early Stop] epoch [{0:d}:{1:d}] -> [{1:d}:{2:d}] reduces {3:.4f} (tolerance = {4:.4f})".format(
                 len(self.loss_record_tmp) - 2 * self.config.args.early_stop_period,
                 len(self.loss_record_tmp) - self.config.args.early_stop_period,
                 len(self.loss_record_tmp),
                 (sum_old - sum_new) / sum_old,
                 self.config.args.early_stop_tolerance
-            ), self.config.args.log_path)
-            myprint("[Early Stop] Early Stop!", self.config.args.log_path)
+            ))
+            print("[Early Stop] Early Stop!")
             return True
 
     def forward(self, x):
+        # print("cp1", x.shape)
         x = self.fc0(x)
+        # print("cp2", x.shape)
         x = x.permute(0, 2, 1)
+        # print("cp3", x.shape)
 
         x1 = self.conv0(x)
+        # print("cp4", x1.shape)
         x2 = self.w0(x)
+        # print("cp5", x2.shape)
         x = x1 + x2
-        x = self.activate(x)
+        x = F.gelu(x)
+        # print("cp6", x.shape)
 
         x1 = self.conv1(x)
         x2 = self.w1(x)
         x = x1 + x2
-        x = self.activate(x)
+        x = F.gelu(x)
 
         x1 = self.conv2(x)
         x2 = self.w2(x)
         x = x1 + x2
-        x = self.activate(x)
+        x = F.gelu(x)
 
         x1 = self.conv3(x)
         x2 = self.w3(x)
         x = x1 + x2
-        x = self.activate(x)
+        x = F.gelu(x)
 
+        # print("cp7", x.shape)
         x = x.permute(0, 2, 1)
+        # print("cp8", x.shape)
         x = self.fc1(x)
-        x = nn.functional.gelu(x)
+        # print("cp9", x.shape)
+        x = F.gelu(x)
+        # print("cp10", x.shape)
+
         x = self.fc2(x)
+        # print("cp11", x.shape)
+
+        # print(x.shape)
         return x
 
     @staticmethod
@@ -307,46 +244,31 @@ class FourierModel(nn.Module):
         torch.backends.cudnn.deterministic = True
 
     def ode_gradient(self, x, y):
-        k = self.config.params
-
-        m_lacl = y[0, :, 0]
-        m_tetR = y[0, :, 1]
-        m_cl = y[0, :, 2]
-        p_cl = y[0, :, 3]
-        p_lacl = y[0, :, 4]
-        p_tetR = y[0, :, 5]
-
-        m_lacl_t = torch.gradient(m_lacl, spacing=(self.config.t_torch,))[0]
-        m_tetR_t = torch.gradient(m_tetR, spacing=(self.config.t_torch,))[0]
-        m_cl_t = torch.gradient(m_cl, spacing=(self.config.t_torch,))[0]
-        p_cl_t = torch.gradient(p_cl, spacing=(self.config.t_torch,))[0]
-        p_lacl_t = torch.gradient(p_lacl, spacing=(self.config.t_torch,))[0]
-        p_tetR_t = torch.gradient(p_tetR, spacing=(self.config.t_torch,))[0]
-
-        f_m_lacl = m_lacl_t - (k.beta * ( k.rho + 1 / (1 + p_tetR ** k.n) ) - m_lacl)
-        f_m_tetR = m_tetR_t - (k.beta * ( k.rho + 1 / (1 + p_cl ** k.n) ) - m_tetR)
-        f_m_cl = m_cl_t - (k.beta * ( k.rho + 1 / (1 + p_lacl ** k.n) ) - m_cl)
-        f_p_cl = p_cl_t - (k.gamma * ( m_lacl - p_cl ))
-        f_p_lacl = p_lacl_t - (k.gamma * ( m_tetR - p_lacl ))
-        f_p_tetR = p_tetR_t - (k.gamma * ( m_cl - p_tetR ))
-
-
-        return f_m_lacl, f_m_tetR, f_m_cl, f_p_cl, f_p_lacl, f_p_tetR
+        S = y[0, :, 0]
+        I = y[0, :, 1]
+        R = y[0, :, 2]
+        S_t = torch.gradient(S, spacing=(self.config.t_torch,))[0]
+        I_t = torch.gradient(I, spacing=(self.config.t_torch,))[0]
+        R_t = torch.gradient(R, spacing=(self.config.t_torch,))[0]
+        f_S = S_t - (- self.config.params.beta * S * I)
+        f_I = I_t - (self.config.params.beta * S * I - self.config.params.gamma * I)
+        f_R = R_t - (self.config.params.gamma * I)
+        return f_S, f_I, f_R
 
     def loss(self, y):
         y0_pred = y[0, 0, :]
         y0_true = torch.tensor(self.config.y0, dtype=torch.float32).to(self.config.device)
 
-        ode_1, ode_2, ode_3, ode_4, ode_5, ode_6 = self.ode_gradient(self.config.x, y)
+        ode_1, ode_2, ode_3 = self.ode_gradient(self.config.x, y)
         zeros_1D = torch.zeros([self.config.T_N]).to(self.config.device)
         zeros_nD = torch.zeros([self.config.T_N, self.config.prob_dim]).to(self.config.device)
 
         loss1 = self.criterion(y0_pred, y0_true)
-        loss2 = 10 * (self.criterion(ode_1, zeros_1D) + self.criterion(ode_2, zeros_1D) + self.criterion(ode_3,
-                                                                                                         zeros_1D) + self.criterion(
-            ode_4, zeros_1D) + self.criterion(ode_5, zeros_1D) + self.criterion(ode_6, zeros_1D))
-        loss3 = self.criterion(torch.abs(y - 0), y - 0) + self.criterion(torch.abs(10 - y), 10 - y)
-        loss4 = 0 * sum([penalty_func(torch.var(y[0, :, i])) for i in range(self.config.prob_dim)])
+        loss2 = 10 * (
+                self.criterion(ode_1, zeros_1D) + self.criterion(ode_2, zeros_1D) + self.criterion(ode_3, zeros_1D))
+        loss3 = self.criterion(torch.abs(y - 0), y - 0) + self.criterion(torch.abs(self.config.params.N - y),
+                                                                         self.config.params.N - y)
+        loss4 = self.criterion(y[0, :, 0] + y[0, :, 1] + y[0, :, 2] - self.config.params.N, zeros_1D)
         # loss4 = self.criterion(1 / u_0, pt_all_zeros_3)
         # loss5 = self.criterion(torch.abs(u_0 - v_0), u_0 - v_0)
 
@@ -356,7 +278,7 @@ class FourierModel(nn.Module):
 
     def train_model(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.config.args.initial_lr, weight_decay=0)
-        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda e: 1 / (e / 10000 + 1))
+        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: 1 / (epoch / 10000 + 1))
         self.train()
 
         start_time = time.time()
@@ -373,8 +295,7 @@ class FourierModel(nn.Module):
             loss_record.append(loss.item())
             real_loss = self.real_loss(y)
             real_loss_record.append(real_loss.item())
-
-            loss.backward(retain_graph=True)
+            loss.backward()
             optimizer.step()
             scheduler.step()
 
@@ -384,11 +305,12 @@ class FourierModel(nn.Module):
             if epoch % self.config.args.epoch_step == 0:
                 loss_print_part = " ".join(
                     ["Loss_{0:d}:{1:.6f}".format(i + 1, loss_part.item()) for i, loss_part in enumerate(loss_list)])
-                myprint(
-                    "Epoch [{0:05d}/{1:05d}] Loss:{2:.6f} {3} Lr:{4:.6f} Time:{5:.6f}s ({6:.2f}min in total, {7:.2f}min remains)".format(
+                print(
+                    "Epoch [{0:05d}/{1:05d}] Loss:{2:.6f} {3} Lr:{4:.6f} real_loss:{5:.3f} Time:{6:.6f}s ({7:.2f}min in total, {8:.2f}min remains)".format(
                         epoch, self.config.args.iteration, loss.item(), loss_print_part,
-                        optimizer.param_groups[0]["lr"], now_time - start_time, (now_time - start_time_0) / 60.0,
-                        (now_time - start_time_0) / 60.0 / epoch * (self.config.args.iteration - epoch)), self.config.args.log_path)
+                        optimizer.param_groups[0]["lr"], real_loss ,
+                        now_time - start_time, (now_time - start_time_0) / 60.0,
+                        (now_time - start_time_0) / 60.0 / epoch * (self.config.args.iteration - epoch)))
                 start_time = now_time
 
                 if epoch % self.config.args.test_step == 0:
@@ -401,13 +323,10 @@ class FourierModel(nn.Module):
                     # save_path_loss = "{}/{}_{}_loss.npy".format(self.train_save_path_folder, self.config.model_name, self.time_string)
                     # np.save(save_path_loss, np.asarray(loss_record))
 
-                    myprint("saving training info ...", self.config.args.log_path)
+                    print("saving training info ...")
                     train_info = {
                         "model_name": self.config.model_name,
                         "seed": self.config.seed,
-                        "layer": self.config.layer,
-                        "activation": self.config.activation,
-                        "activation_id": self.config.activation_id,
                         "epoch": self.config.args.iteration,
                         "epoch_stop": self.epoch_tmp,
                         "loss_length": len(loss_record),
@@ -415,11 +334,10 @@ class FourierModel(nn.Module):
                         "real_loss": np.asarray(real_loss_record),
                         "time": np.asarray(time_record),
                         "y_predict": y[0, :, :].cpu().detach().numpy(),
-                        "y_truth": np.asarray(self.config.truth),
+                        "y_truth": self.config.truth,
                         "y_shape": self.config.truth.shape,
                         # "config": self.config,
                         "time_string": self.time_string,
-                        "initial_lr": self.config.args.initial_lr,
                     }
                     train_info_path_loss = "{}/{}_{}_info.npy".format(self.train_save_path_folder,
                                                                       self.config.model_name, self.time_string)
@@ -427,7 +345,7 @@ class FourierModel(nn.Module):
                         pickle.dump(train_info, f)
 
                     if epoch == self.config.args.iteration or self.early_stop():
-                        myprint(str(train_info), self.config.args.log_path)
+                        # myprint(str(train_info), self.config.args.log_path)
                         self.write_finish_log()
                         break
 
@@ -454,24 +372,10 @@ class FourierModel(nn.Module):
         print("Figure is saved to {}".format(save_path))
         # self.draw_loss_multi(self.loss_record_tmp, [1.0, 0.5, 0.25, 0.125])
 
-    def write_finish_log(self):
-        with open("saves/record.txt", "a") as f:
-            f.write("{0}\t{1}\tseed={2}\t{3:.2f}min\titer={4}\tll={5:.6f}\tlrl={6:.6f}\tactivation={7}\tactivation_id={8}\n".format(
-                self.config.model_name,
-                self.time_string,
-                self.config.seed,
-                self.time_record_tmp[-1] / 60.0,
-                self.config.args.iteration,
-                sum(self.loss_record_tmp[-10:]) / 10,
-                sum(self.real_loss_record_tmp[-10:]) / 10,
-                self.config.activation,
-                self.config.activation_id,
-            ))
-
     @staticmethod
     def draw_loss_multi(loss_list, last_rate_list):
         m = MultiSubplotDraw(row=1, col=len(last_rate_list), fig_size=(8 * len(last_rate_list), 6),
-                             tight_layout_flag=True, show_flag=False, save_flag=False, save_path=None)
+                             tight_layout_flag=True, show_flag=True, save_flag=False, save_path=None)
         for one_rate in last_rate_list:
             m.add_subplot(
                 y_lists=[loss_list[-int(len(loss_list) * one_rate):]],
@@ -485,31 +389,23 @@ class FourierModel(nn.Module):
             )
         m.draw()
 
+    def write_finish_log(self):
+        with open("saves/record.txt", "a") as f:
+            f.write("{0}\t{1}\tseed={2}\t{3:.2f}min\titer={4}\tll={5:.6f}\tlrl={6:.6f}\n".format(
+                self.config.model_name,
+                self.time_string,
+                self.config.seed,
+                self.time_record_tmp[-1] / 60.0,
+                self.config.args.iteration,
+                sum(self.loss_record_tmp[-10:]) / 10,
+                sum(self.real_loss_record_tmp[-10:]) / 10,
+            ))
 
-def run(args):
+
+
+if __name__ == "__main__":
     config = Config()
-    config.seed = args.seed
-    config.layer = args.layer
-    config.activation = args.activation
-    config.activation_id = args.activation_id
-    config.args.main_path = args.main_path
-    config.args.log_path = args.log_path
     model = FourierModel(config).to(config.device)
     model.train_model()
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--log_path", type=str, default="logs/1.txt", help="log path")
-    parser.add_argument("--main_path", default="./", help="main_path")
-    parser.add_argument("--seed", type=int, default=0, help="seed")
-    parser.add_argument("--activation", type=str, help="activation plan")
-    parser.add_argument("--activation_id", type=int, default=-1, help="activation plan id (only used when activation = 'plan2')")
-    parser.add_argument("--layer", type=int, default=8, help="number of layer")
-    opt = parser.parse_args()
-    opt.overall_start = get_now_string()
-
-    myprint("log_path: {}".format(opt.log_path), opt.log_path)
-    myprint("cuda is available: {}".format(torch.cuda.is_available()), opt.log_path)
-
-    run(opt)
