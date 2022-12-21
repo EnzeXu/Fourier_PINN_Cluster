@@ -86,8 +86,8 @@ results_info_dict_SIR = [
     ["zjx_sir_alpha_penalty", "alpha", "20221215_013529", "lime"],
     ["SIR_Fourier_Lambda", "plan3 - scale=ones (seed=0)", "20221214_200815", "r"],
     ["SIR_Fourier_Lambda", "plan3 - scale=ones (seed=1)", "20221214_202254", "r"],
-    ["SIR_Fourier_Lambda", "plan3 - scale=fixed (seed=0)", "20221214_203729", "g"],
-    ["SIR_Fourier_Lambda", "plan3 - scale=fixed (seed=1)", "20221214_205208", "g"],
+    # ["SIR_Fourier_Lambda", "plan3 - scale=fixed (seed=0)", "20221214_203729", "g"],
+    # ["SIR_Fourier_Lambda", "plan3 - scale=fixed (seed=1)", "20221214_205208", "g"],
     # ["SIR_Fourier_Lambda", "plan3 - scale=adaptive (seed=0)", "20221214_210643", "b"],
     # ["SIR_Fourier_Lambda", "plan3 - scale=adaptive (seed=1)", "20221214_212241", "b"],
 ]
