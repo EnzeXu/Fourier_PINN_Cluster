@@ -22,7 +22,7 @@ results_info_dict_zjx = [
 ]
 
 results_info_dict_REP = [
-    ["zjx_rep_alpha_penalty", "alpha", "20221215_013835", "lime"],
+    ["zjx_rep_alpha_penalty", "baseline", "20221215_013835", "lime"],
     ["REP_Fourier_Lambda", "plan3 - scale=ones (seed=0)", "20221214_220113", "r"],
     ["REP_Fourier_Lambda", "plan3 - scale=ones (seed=1)", "20221214_220713", "r"],
     # # ["REP_Fourier_Lambda", "plan3 - scale=fixed (seed=0)", "20221214_234356", "g"],
@@ -49,10 +49,10 @@ results_info_dict_REP = [
 # ]
 
 results_info_dict_PP = [
-    ["zjx_alpha_penalty", "alpha", "20221215_013100", "lime"],
-    ["zjx_alpha_penalty", "alpha", "20221215_025825", "lime"],
-    ["zjx_alpha_penalty", "alpha", "20221215_025832", "lime"],
-    ["zjx_alpha_penalty", "alpha", "20221215_035158", "lime"],
+    ["zjx_alpha_penalty", "baseline (seed=0)", "20221215_013100", "lime"],
+    ["zjx_alpha_penalty", "baseline (seed=1)", "20221215_025825", "lime"],
+    ["zjx_alpha_penalty", "baseline (seed=2)", "20221215_025832", "lime"],
+    ["zjx_alpha_penalty", "baseline (seed=3)", "20221215_035158", "lime"],
     ["PP_Fourier_Lambda", "plan3 - scale=ones (seed=0)", "20221214_150347", "r"],
     ["PP_Fourier_Lambda", "plan3 - scale=ones (seed=1)", "20221214_150352", "r"],
     # ["PP_Fourier_Lambda", "plan3 - scale=fixed (seed=0)", "20221214_155843", "g"],
@@ -83,7 +83,7 @@ results_info_dict_PP = [
 #     ["zjx_combine", "combine", "20221213_050025", "gold"],
 # ]
 results_info_dict_SIR = [
-    ["zjx_sir_alpha_penalty", "alpha", "20221215_013529", "lime"],
+    ["zjx_sir_alpha_penalty", "baseline", "20221215_013529", "lime"],
     ["SIR_Fourier_Lambda", "plan3 - scale=ones (seed=0)", "20221214_200815", "r"],
     ["SIR_Fourier_Lambda", "plan3 - scale=ones (seed=1)", "20221214_202254", "r"],
     # ["SIR_Fourier_Lambda", "plan3 - scale=fixed (seed=0)", "20221214_203729", "g"],
@@ -107,6 +107,12 @@ results_info_dict_SIR = [
 #     ["SIR_Fourier_Zeta", "plan3 (seed=0)", "20221213_144751", "lime"],
 #     ["SIR_Fourier_Zeta", "plan3 (seed=1)", "20221213_145031", "lime"],
 # ]
+
+results_info_dict_CC1 = [
+    ["CC1_Fourier_Lambda", "baseline ", "20221221_014506", "lime"],
+    ["CC1_Fourier_Lambda", "plan3 - scale=ones (seed=0)", "20221221_004205", "r"],
+    ["CC1_Fourier_Lambda", "plan3 - scale=ones (seed=3)", "20221221_003518", "r"],
+]
 
 def read_one(path):
     with open(path, "rb") as f:
@@ -175,7 +181,7 @@ def one_time_draw_results_structured(info_dict, save_path, diff_start_list, diff
 if __name__ == "__main__":
     # read_one("saves/train/PP_Fourier_Eta_20221207_152440/PP_Fourier_Eta_20221207_152440_info.npy")
     print("helloworld!")
-    one_time_draw_results_structured(results_info_dict_PP, ["test/test_pp_real_scale.png", "test/test_pp_scale.png"], [0, 100000, 290000], [299000, 299000, 299000], ks=1000)
-    one_time_draw_results_structured(results_info_dict_REP, ["test/test_rep_real_scale.png", "test/test_rep_train_scale.png"], [0, 10000, 100000], [105000, 105000, 105000], ks=3000)
-    one_time_draw_results_structured(results_info_dict_SIR, ["test/test_sir_real_scale.png", "test/test_sir_train_scale.png"], [0, 2000, 15000], [16000, 16000, 16000], ks=2000)
+    one_time_draw_results_structured(results_info_dict_PP, ["test/test_pp_real_scale.png", "test/test_pp_scale.png"], [1000, 100000, 290000], [299000, 299000, 299000], ks=1000)
+    one_time_draw_results_structured(results_info_dict_REP, ["test/test_rep_real_scale.png", "test/test_rep_train_scale.png"], [3000, 10000, 100000], [105000, 105000, 105000], ks=3000)
+    one_time_draw_results_structured(results_info_dict_SIR, ["test/test_sir_real_scale.png", "test/test_sir_train_scale.png"], [1000, 4000, 15000], [16000, 16000, 16000], ks=2000)
     pass
