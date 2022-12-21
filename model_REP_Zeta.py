@@ -22,7 +22,7 @@ class Parameters:
 
 class TrainArgs:
     iteration = 100000
-    epoch_step = 1000  # 1000
+    epoch_step = 100  # 1000
     test_step = epoch_step * 10
     initial_lr = 0.001
     main_path = ""
@@ -142,34 +142,34 @@ class ActivationBlock(nn.Module):
         return sum([self.activate_weights[i] * self.activates[i](x) for i in range(len(self.activate_list))])
 
 
-class BasicBlock(nn.Module):
-    def __init__(self, config):
-        super().__init__()
-        self.config = config
-        self.conv = SpectralConv1d(self.config)
-        self.cnn = nn.Conv1d(self.config.width, self.config.width, 1)
-        self.activate_block = ActivationBlock(self.config)
+# class BasicBlock(nn.Module):
+#     def __init__(self, config):
+#         super().__init__()
+#         self.config = config
+#         self.conv = SpectralConv1d(self.config)
+#         self.cnn = nn.Conv1d(self.config.width, self.config.width, 1)
+#         self.activate_block = ActivationBlock(self.config)
+#
+#     def forward(self, x):
+#         x1 = self.conv(x)
+#         x2 = self.cnn(x)
+#         x = x1 + x2
+#         x = self.activate_block(x)
+#         return x
 
-    def forward(self, x):
-        x1 = self.conv(x)
-        x2 = self.cnn(x)
-        x = x1 + x2
-        x = self.activate_block(x)
-        return x
 
-
-class Layers(nn.Module):
-    def __init__(self, config, n=1):
-        super().__init__()
-        self.config = config
-        self.activate = ActivationBlock(self.config)
-        self.blocks = nn.Sequential(
-            *[BasicBlock(self.config) for _ in range(n)]
-        )
-
-    def forward(self, x):
-        x = self.blocks(x)
-        return x
+# class Layers(nn.Module):
+#     def __init__(self, config, n=1):
+#         super().__init__()
+#         self.config = config
+#         self.activate = ActivationBlock(self.config)
+#         self.blocks = nn.Sequential(
+#             *[BasicBlock(self.config) for _ in range(n)]
+#         )
+#
+#     def forward(self, x):
+#         x = self.blocks(x)
+#         return x
 
 def penalty_func(x):
     return 1 * (- torch.tanh((x - 1.5)) + 1)# return 1 * (- torch.tanh((x - 2.5)) + 1)
@@ -182,11 +182,20 @@ class FourierModel(nn.Module):
         self.setup_seed(self.config.seed)
 
         self.fc0 = nn.Linear(self.config.prob_dim, self.config.width)  # input channel is 2: (a(x), x)
-        self.layers = Layers(config=self.config, n=self.config.layer)
+        # self.layers = Layers(config=self.config, n=self.config.layer)
+        self.conv0 = SpectralConv1d(self.config)
+        self.conv1 = SpectralConv1d(self.config)
+        self.conv2 = SpectralConv1d(self.config)
+        self.conv3 = SpectralConv1d(self.config)
+        self.w0 = nn.Conv1d(self.config.width, self.config.width, 1)
+        self.w1 = nn.Conv1d(self.config.width, self.config.width, 1)
+        self.w2 = nn.Conv1d(self.config.width, self.config.width, 1)
+        self.w3 = nn.Conv1d(self.config.width, self.config.width, 1)
         self.fc1 = nn.Linear(self.config.width, self.config.fc_map_dim)
         self.fc2 = nn.Linear(self.config.fc_map_dim, self.config.prob_dim)
 
         self.criterion = torch.nn.MSELoss().to(self.config.device)  # "sum"
+        self.activate = ActivationBlock(self.config)
 
         self.y_tmp = None
         self.epoch_tmp = None
@@ -258,7 +267,25 @@ class FourierModel(nn.Module):
         x = self.fc0(x)
         x = x.permute(0, 2, 1)
 
-        x = self.layers(x)
+        x1 = self.conv0(x)
+        x2 = self.w0(x)
+        x = x1 + x2
+        x = self.activate(x)
+
+        x1 = self.conv1(x)
+        x2 = self.w1(x)
+        x = x1 + x2
+        x = self.activate(x)
+
+        x1 = self.conv2(x)
+        x2 = self.w2(x)
+        x = x1 + x2
+        x = self.activate(x)
+
+        x1 = self.conv3(x)
+        x2 = self.w3(x)
+        x = x1 + x2
+        x = self.activate(x)
 
         x = x.permute(0, 2, 1)
         x = self.fc1(x)
