@@ -570,7 +570,7 @@ class FourierModel(nn.Module):
 
     def write_finish_log(self):
         with open("saves/record.txt", "a") as f:
-            f.write("{0}\t{1}\tseed={2}\t{3:.2f}min\titer={4}\tll={5:.6f}\tlrl={6:.6f}\tactivation={7}\tactivation_id={8}\tstrategy={9}\n".format(
+            f.write("{0}\t{1}\tseed={2}\t{3:.2f}min\titer={4}\tll={5:.6f}\tlrl={6:.6f}\tinit={7}\tactivation={8}\tactivation_id={9}\tstrategy={10}\n".format(
                 self.config.model_name,
                 self.time_string,
                 self.config.seed,
@@ -578,6 +578,7 @@ class FourierModel(nn.Module):
                 self.config.args.iteration,
                 sum(self.loss_record_tmp[-10:]) / 10,
                 sum(self.real_loss_record_tmp[-10:]) / 10,
+                self.config.init,
                 self.config.activation,
                 self.config.activation_id,
                 self.config.strategy,
