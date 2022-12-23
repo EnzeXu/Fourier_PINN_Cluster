@@ -142,14 +142,24 @@ def one_time_build_cc1_lambda():
     plans = [
         ["none", 0, 5],
         ["none", 5, 10],
+        ["none", 10, 15],
+        ["none", 15, 20],
         ["xavier_uniform", 0, 5],
         ["xavier_uniform", 5, 10],
+        ["xavier_uniform", 10, 15],
+        ["xavier_uniform", 15, 20],
         ["xavier_normal", 0, 5],
         ["xavier_normal", 5, 10],
+        ["xavier_normal", 10, 15],
+        ["xavier_normal", 15, 20],
         ["kaiming_uniform", 0, 5],
         ["kaiming_uniform", 5, 10],
+        ["kaiming_uniform", 10, 15],
+        ["kaiming_uniform", 15, 20],
         ["kaiming_normal", 0, 5],
         ["kaiming_normal", 5, 10],
+        ["kaiming_normal", 10, 15],
+        ["kaiming_normal", 15, 20],
     ]
     dic = dict()
     dic["main_path"] = "."
