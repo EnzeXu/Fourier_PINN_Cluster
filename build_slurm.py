@@ -17,6 +17,26 @@ source /deac/csc/chenGrp/software/tensorflow/bin/activate
 python {1} {2}
 """
 
+draft_head = """#!/bin/bash
+#SBATCH --job-name="{0}"
+#SBATCH --partition=gpu
+#SBATCH --constraint=cascade
+#SBATCH --nodes=1
+#SBATCH --time=2-00:00:00
+#SBATCH --gres=gpu:1
+#SBATCH --mem=8GB
+#SBATCH --ntasks-per-node=8
+#SBATCH --mail-user=xue20@wfu.edu
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --output="jobs_oe/{0}-%j.o"
+#SBATCH --error="jobs_oe/{0}-%j.e"
+
+echo $(pwd) > "jobs/pwd.txt"
+source /deac/csc/chenGrp/software/tensorflow/bin/activate
+"""
+
+draft_normal = "python {0} {1}\n"
+
 draft_cpu = """#!/bin/bash
 #SBATCH --job-name="{0}"
 #SBATCH --partition=medium
@@ -44,6 +64,22 @@ def one_slurm(job_name, python_name, kwargs, draft=draft):
             python_name,
             " ".join(["--{0} {1}".format(one_key, kwargs[one_key]) for one_key in kwargs])
         ))
+
+def one_slurm_multi_seed(job_name, python_name, kwargs, seed_start, seed_end, draft_head=draft_head, draft_normal=draft_normal):
+    full_path = "jobs/{}_{}-{}.slurm".format(job_name, seed_start, seed_end)
+    print("build {}".format(full_path))
+    with open(full_path, "w") as f:
+        f.write(draft_head.format(
+            job_name
+        ))
+        for one_seed in range(seed_start, seed_end):
+            kwargs["seed"] = one_seed
+            kwargs["log_path"] = "logs/{}.txt".format(
+                "lambda_cc1_{}_{}".format(kwargs["init"], one_seed))
+            f.write(draft_normal.format(
+                python_name,
+                " ".join(["--{0} {1}".format(one_key, kwargs[one_key]) for one_key in kwargs])
+            ))
 
 def one_time_build_pp_lambda():
     plans = [
@@ -101,6 +137,29 @@ def one_time_build_rep_lambda():
             one_slurm(
                 "lambda_rep_s{}_{}".format(one_plan[0], seed),
                 "model_REP_Lambda.py", dic)
+
+def one_time_build_cc1_lambda():
+    plans = [
+        ["none", 0, 5],
+        ["none", 5, 10],
+        ["xavier_uniform", 0, 5],
+        ["xavier_uniform", 5, 10],
+        ["xavier_normal", 0, 5],
+        ["xavier_normal", 5, 10],
+        ["kaiming_uniform", 0, 5],
+        ["kaiming_uniform", 5, 10],
+        ["kaiming_normal", 0, 5],
+        ["kaiming_normal", 5, 10],
+    ]
+    dic = dict()
+    dic["main_path"] = "."
+    dic["layer"] = 4
+    for one_plan in plans:
+        # dic["seed"] = seed
+        dic["init"] = one_plan[0]
+        one_slurm_multi_seed(
+            "lambda_cc1_{}".format(one_plan[0]),
+            "model_CC1_Lambda.py", dic, one_plan[1], one_plan[2])
 
 def one_time_build_pp_zeta():
     plans = [
@@ -177,7 +236,7 @@ def one_time_build_rep_zeta():
 if __name__ == "__main__":
     # one_time_build_rep_zeta()
     # one_time_build_sir_zeta()
-    one_time_build_rep_lambda()
+    one_time_build_cc1_lambda()
     pass
 
 
