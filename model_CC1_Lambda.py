@@ -606,6 +606,7 @@ def run(args):
     config = Config()
     config.seed = args.seed
     config.layer = args.layer
+    config.init = args.init
     config.activation = args.activation
     config.activation_id = args.activation_id
     config.strategy = args.strategy
