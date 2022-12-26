@@ -569,15 +569,16 @@ class FourierModel(nn.Module):
         # self.draw_loss_multi(self.loss_record_tmp, [1.0, 0.5, 0.25, 0.125])
 
     def write_finish_log(self):
+        loss_average_length = 100
         with open("saves/record.txt", "a") as f:
-            f.write("{0}\t{1}\tseed={2}\t{3:.2f}min\titer={4}\tll={5:.6f}\tlrl={6:.6f}\tinit={7}\tactivation={8}\tactivation_id={9}\tstrategy={10}\n".format(
+            f.write("{0}\t{1}\tseed={2}\t{3:.2f}min\titer={4}\tll={5:.12f}\tlrl={6:.12f}\tinit={7}\tactivation={8}\tactivation_id={9}\tstrategy={10}\n".format(
                 self.config.model_name,
                 self.time_string,
                 self.config.seed,
                 self.time_record_tmp[-1] / 60.0,
                 self.config.args.iteration,
-                sum(self.loss_record_tmp[-10:]) / 10,
-                sum(self.real_loss_record_tmp[-10:]) / 10,
+                sum(self.loss_record_tmp[-loss_average_length:]) / loss_average_length,
+                sum(self.real_loss_record_tmp[-loss_average_length:]) / loss_average_length,
                 self.config.init,
                 self.config.activation,
                 self.config.activation_id,
