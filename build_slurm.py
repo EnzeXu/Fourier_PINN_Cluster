@@ -226,6 +226,23 @@ def one_time_build_cc1_lambda_final():
             "lambda_cc1_final_{}_{{}}".format(one_plan[0]),
         )
 
+def one_time_build_turing_lambda_final():
+    plans = [
+        ["plan3"],
+        ["original"],
+    ]
+    dic = dict()
+    dic["main_path"] = "."
+    dic["layer"] = 4
+    for one_plan in plans:
+        # dic["seed"] = seed
+        dic["init"] = "none"
+        dic["activation"] = one_plan[0]
+        one_slurm_multi_seed(
+            "lambda_turing_final_{}".format(one_plan[0]),
+            "model_Turing_Lambda.py", dic, 0, 10,
+            "lambda_turing_final_{}_{{}}".format(one_plan[0]),
+        )
 
 def one_time_build_pp_zeta():
     plans = [
@@ -305,7 +322,8 @@ if __name__ == "__main__":
     # one_time_build_cc1_lambda()
     # one_time_build_sir_lambda_final()
     # one_time_build_rep_lambda_final()
-    one_time_build_cc1_lambda_final()
+    # one_time_build_cc1_lambda_final()
+    one_time_build_turing_lambda_final()
     pass
 
 
