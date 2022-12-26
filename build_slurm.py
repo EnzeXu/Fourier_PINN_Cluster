@@ -219,6 +219,7 @@ def one_time_build_cc1_lambda_final():
     for one_plan in plans:
         # dic["seed"] = seed
         dic["init"] = "none"
+        dic["activation"] = one_plan[0]
         one_slurm_multi_seed(
             "lambda_cc1_final_{}".format(one_plan[0]),
             "model_CC1_Lambda.py", dic, 0, 20,
