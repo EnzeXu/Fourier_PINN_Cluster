@@ -283,7 +283,7 @@ class FNO3d(nn.Module):
         # print("cp9", x.shape)
         x = self.fc1(x)
         # print("cp10", x.shape)
-        x = F.gelu(x)
+        x = torch.nn.functional.gelu(x)
         # print("cp11", x.shape)
         x = self.fc2(x)
         # print("cp12", x.shape)
