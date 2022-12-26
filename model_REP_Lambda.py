@@ -159,6 +159,8 @@ class ActivationBlock(nn.Module):
         # print("self.activate_weights device = {}".format(self.activate_weights.device))
 
     def forward(self, x):
+        if self.config.activation == "original":
+            return nn.functional.gelu(x)
         # print("now weights:", self.softmax(self.activate_weights_raw.clone()).detach().cpu().numpy())
         activation_res = 0.0
         for i in range(len(self.activate_list)):

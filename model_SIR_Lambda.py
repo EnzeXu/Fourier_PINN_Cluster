@@ -154,6 +154,8 @@ class ActivationBlock(nn.Module):
         # print("self.activate_weights device = {}".format(self.activate_weights.device))
 
     def forward(self, x):
+        if self.config.activation == "original":
+            return nn.functional.gelu(x)
         # print("now weights:", self.softmax(self.activate_weights_raw.clone()).detach().cpu().numpy())
         activation_res = 0.0
         for i in range(len(self.activate_list)):
@@ -555,7 +557,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=0, help="seed")
     parser.add_argument("--activation", default="plan3", type=str, help="activation plan")
     parser.add_argument("--activation_id", type=int, default=-1, help="activation plan id (only used when activation = 'plan2')")
-    parser.add_argument("--strategy", type=int, default=-1, help="0=ones 1=fixed 2=adaptive")
+    parser.add_argument("--strategy", type=int, default=0, help="0=ones 1=fixed 2=adaptive")
     parser.add_argument("--layer", type=int, default=8, help="number of layer")
     opt = parser.parse_args()
     opt.overall_start = get_now_string()

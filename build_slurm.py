@@ -65,7 +65,7 @@ def one_slurm(job_name, python_name, kwargs, draft=draft):
             " ".join(["--{0} {1}".format(one_key, kwargs[one_key]) for one_key in kwargs])
         ))
 
-def one_slurm_multi_seed(job_name, python_name, kwargs, seed_start, seed_end, draft_head=draft_head, draft_normal=draft_normal):
+def one_slurm_multi_seed(job_name, python_name, kwargs, seed_start, seed_end, log_path_base, draft_head=draft_head, draft_normal=draft_normal):
     full_path = "jobs/{}_{}-{}.slurm".format(job_name, seed_start, seed_end)
     print("build {}".format(full_path))
     with open(full_path, "w") as f:
@@ -75,7 +75,7 @@ def one_slurm_multi_seed(job_name, python_name, kwargs, seed_start, seed_end, dr
         for one_seed in range(seed_start, seed_end):
             kwargs["seed"] = one_seed
             kwargs["log_path"] = "logs/{}.txt".format(
-                "lambda_cc1_{}_{}".format(kwargs["init"], one_seed))
+                log_path_base.format(one_seed))
             f.write(draft_normal.format(
                 python_name,
                 " ".join(["--{0} {1}".format(one_key, kwargs[one_key]) for one_key in kwargs])
@@ -118,6 +118,23 @@ def one_time_build_sir_lambda():
             one_slurm(
                 "lambda_sir_s{}_{}".format(one_plan[0], seed),
                 "model_SIR_Lambda.py", dic)
+
+def one_time_build_sir_lambda_final():
+    plans = [
+        ["plan3"],
+        ["original"],
+    ]
+    dic = dict()
+    dic["main_path"] = "."
+    dic["layer"] = 4
+    for one_plan in plans:
+        # dic["seed"] = seed
+        dic["activation"] = one_plan[0]
+        one_slurm_multi_seed(
+            "lambda_sir_final_{}".format(one_plan[0]),
+            "model_SIR_Lambda.py", dic, 0, 10,
+            "lambda_sir_final_{}_{{}}".format(one_plan[0]),
+        )
 
 def one_time_build_rep_lambda():
     plans = [
@@ -169,7 +186,9 @@ def one_time_build_cc1_lambda():
         dic["init"] = one_plan[0]
         one_slurm_multi_seed(
             "lambda_cc1_{}".format(one_plan[0]),
-            "model_CC1_Lambda.py", dic, one_plan[1], one_plan[2])
+            "model_CC1_Lambda.py", dic, one_plan[1], one_plan[2],
+            "lambda_cc1_{}_{{}}".format(one_plan[0]),
+        )
 
 def one_time_build_pp_zeta():
     plans = [
@@ -246,7 +265,8 @@ def one_time_build_rep_zeta():
 if __name__ == "__main__":
     # one_time_build_rep_zeta()
     # one_time_build_sir_zeta()
-    one_time_build_cc1_lambda()
+    # one_time_build_cc1_lambda()
+    one_time_build_sir_lambda_final()
     pass
 
 
