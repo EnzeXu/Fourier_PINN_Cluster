@@ -236,7 +236,7 @@ def one_time_build_turing_lambda_final():
     dic["layer"] = 4
     for one_plan in plans:
         # dic["seed"] = seed
-        dic["init"] = "none"
+        # dic["init"] = "none"
         dic["activation"] = one_plan[0]
         one_slurm_multi_seed(
             "lambda_turing_final_{}".format(one_plan[0]),
