@@ -28,7 +28,7 @@ class Parameters:
 
 
 class TrainArgs:
-    iteration = 10#10000
+    iteration = 1#5000
     epoch_step = 1#500  # 1000
     test_step = epoch_step * 10
     initial_lr = 0.001
@@ -486,7 +486,7 @@ class FourierModel(nn.Module):
 
     #  MSE-loss of predicted value against truth
     def real_loss(self, y):
-        real_loss = self.criterion(y[0, :, :], torch.tensor(self.config.truth[:, :]).to(self.config.device))
+        real_loss = self.criterion(y[0, :, :], torch.tensor(self.config.truth[:, :]))
         return real_loss
 
     def early_stop(self):
