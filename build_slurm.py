@@ -177,40 +177,40 @@ def one_time_build_rep_lambda_final():
             "lambda_rep_final_a={}_p={}_{{}}".format(one_plan[0], one_plan[1]) if not one_plan[2] else "lambda_rep_final_pinn_{}",
         )
 
-def one_time_build_cc1_lambda():
-    plans = [
-        ["none", 0, 5],
-        ["none", 5, 10],
-        ["none", 10, 15],
-        ["none", 15, 20],
-        ["xavier_uniform", 0, 5],
-        ["xavier_uniform", 5, 10],
-        ["xavier_uniform", 10, 15],
-        ["xavier_uniform", 15, 20],
-        ["xavier_normal", 0, 5],
-        ["xavier_normal", 5, 10],
-        ["xavier_normal", 10, 15],
-        ["xavier_normal", 15, 20],
-        ["kaiming_uniform", 0, 5],
-        ["kaiming_uniform", 5, 10],
-        ["kaiming_uniform", 10, 15],
-        ["kaiming_uniform", 15, 20],
-        ["kaiming_normal", 0, 5],
-        ["kaiming_normal", 5, 10],
-        ["kaiming_normal", 10, 15],
-        ["kaiming_normal", 15, 20],
-    ]
-    dic = dict()
-    dic["main_path"] = "."
-    dic["layer"] = 4
-    for one_plan in plans:
-        # dic["seed"] = seed
-        dic["init"] = one_plan[0]
-        one_slurm_multi_seed(
-            "lambda_cc1_{}".format(one_plan[0]),
-            "model_CC1_Lambda.py", dic, one_plan[1], one_plan[2],
-            "lambda_cc1_{}_{{}}".format(one_plan[0]),
-        )
+# def one_time_build_cc1_lambda():
+#     plans = [
+#         ["none", 0, 5],
+#         ["none", 5, 10],
+#         ["none", 10, 15],
+#         ["none", 15, 20],
+#         ["xavier_uniform", 0, 5],
+#         ["xavier_uniform", 5, 10],
+#         ["xavier_uniform", 10, 15],
+#         ["xavier_uniform", 15, 20],
+#         ["xavier_normal", 0, 5],
+#         ["xavier_normal", 5, 10],
+#         ["xavier_normal", 10, 15],
+#         ["xavier_normal", 15, 20],
+#         ["kaiming_uniform", 0, 5],
+#         ["kaiming_uniform", 5, 10],
+#         ["kaiming_uniform", 10, 15],
+#         ["kaiming_uniform", 15, 20],
+#         ["kaiming_normal", 0, 5],
+#         ["kaiming_normal", 5, 10],
+#         ["kaiming_normal", 10, 15],
+#         ["kaiming_normal", 15, 20],
+#     ]
+#     dic = dict()
+#     dic["main_path"] = "."
+#     dic["layer"] = 4
+#     for one_plan in plans:
+#         # dic["seed"] = seed
+#         dic["init"] = one_plan[0]
+#         one_slurm_multi_seed(
+#             "lambda_cc1_{}".format(one_plan[0]),
+#             "model_CC1_Lambda.py", dic, one_plan[1], one_plan[2],
+#             "lambda_cc1_{}_{{}}".format(one_plan[0]),
+#         )
 
 
 def one_time_build_cc1_lambda_final():
@@ -231,7 +231,7 @@ def one_time_build_cc1_lambda_final():
         dic["pinn"] = one_plan[2]
         one_slurm_multi_seed(
             "lambda_cc1_final_a={}_p={}".format(one_plan[0], one_plan[1]) if not one_plan[2] else "lambda_cc1_final_pinn",
-            "model_CC1_Lambda.py", dic, 0, 20,
+            "model_CC1_Lambda.py", dic, 0, 40,
             "lambda_cc1_final_a={}_p={}_{{}}".format(one_plan[0], one_plan[1]) if not one_plan[2] else "lambda_cc1_final_pinn_{}",
         )
 
@@ -331,7 +331,7 @@ if __name__ == "__main__":
     # one_time_build_cc1_lambda()
     # one_time_build_sir_lambda_final()
     one_time_build_rep_lambda_final()
-    # one_time_build_cc1_lambda_final()
+    one_time_build_cc1_lambda_final()
     # one_time_build_turing_lambda_final()
 
     pass
