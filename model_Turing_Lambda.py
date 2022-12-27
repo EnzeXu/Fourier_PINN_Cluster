@@ -49,6 +49,7 @@ class Config:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.seed = 0
         self.layer = -1
+        self.pinn = 0
 
         self.T_before = 30
         self.noise_rate = 0.05
@@ -94,7 +95,7 @@ class Config:
         self.width = 32  # 20
 
         self.activation = ""
-        self.activation_id = -1
+        self.penalty = -1
         self.strategy = -1
 
     def pend(self, t, y):
@@ -688,7 +689,7 @@ class FourierModel(nn.Module):
                         "seed": self.config.seed,
                         "layer": self.config.layer,
                         "activation": self.config.activation,
-                        "activation_id": self.config.activation_id,
+                        "penalty": self.config.penalty,
                         "strategy": self.config.strategy,
                         "epoch": self.config.args.iteration,
                         "epoch_stop": self.epoch_tmp,
@@ -901,16 +902,17 @@ class FourierModel(nn.Module):
         m.draw()
 
 
-def run(args):
+def run(args, model_class):
     config = Config()
     config.seed = args.seed
     config.layer = args.layer
     config.activation = args.activation
-    config.activation_id = args.activation_id
+    config.penalty = args.penalty
+    config.pinn = args.pinn
     config.strategy = args.strategy
     config.args.main_path = args.main_path
     config.args.log_path = args.log_path
-    model = FourierModel(config).to(config.device)
+    model = model_class(config).to(config.device)
     model.train_model()
 
 
@@ -919,17 +921,21 @@ if __name__ == "__main__":
     parser.add_argument("--log_path", type=str, default="logs/1.txt", help="log path")
     parser.add_argument("--main_path", default="./", help="main_path")
     parser.add_argument("--seed", type=int, default=0, help="seed")
-    # parser.add_argument("--init", type=str, default="none", help="init: none/xavier_uniform/xavier_normal/kaiming_uniform/kaiming_normal")
+    parser.add_argument("--pinn", type=int, default=0, help="0=off 1=on")
     parser.add_argument("--activation", default="plan3", type=str, help="activation plan")
-    parser.add_argument("--activation_id", type=int, default=-1, help="activation plan id (only used when activation = 'plan2')")
+    parser.add_argument("--penalty", type=int, default=1, help="0=off 1=on")
     parser.add_argument("--strategy", type=int, default=0, help="0=ones 1=fixed 2=adaptive")
-    parser.add_argument("--layer", type=int, default=4, help="number of layer")
+    parser.add_argument("--layer", type=int, default=8, help="number of layer")
     opt = parser.parse_args()
     opt.overall_start = get_now_string()
 
     myprint("log_path: {}".format(opt.log_path), opt.log_path)
     myprint("cuda is available: {}".format(torch.cuda.is_available()), opt.log_path)
+
     try:
-        run(opt)
+        if not opt.pinn:
+            run(opt, FourierModel)
+        else:
+            run(opt, PINNModel)
     except Exception as e:
         print("[Error]", e)
