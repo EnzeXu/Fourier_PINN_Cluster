@@ -210,20 +210,24 @@ def one_time_build_cc1_lambda():
 
 def one_time_build_cc1_lambda_final():
     plans = [
-        ["plan3"],
-        ["original"],
+        # activation / penalty / pinn
+        ["plan3", 0, 1],
+        ["plan3", 0, 0],
+        ["plan3", 1, 0],
+        ["original", 0, 0],
+        ["original", 1, 0],
     ]
     dic = dict()
     dic["main_path"] = "."
     dic["layer"] = 4
     for one_plan in plans:
-        # dic["seed"] = seed
-        dic["init"] = "none"
         dic["activation"] = one_plan[0]
+        dic["penalty"] = one_plan[1]
+        dic["pinn"] = one_plan[2]
         one_slurm_multi_seed(
-            "lambda_cc1_final_{}".format(one_plan[0]),
+            "lambda_cc1_final_a={}_p={}".format(one_plan[0], one_plan[1]) if not one_plan[2] else "lambda_cc1_final_pinn",
             "model_CC1_Lambda.py", dic, 0, 20,
-            "lambda_cc1_final_{}_{{}}".format(one_plan[0]),
+            "lambda_cc1_final_a={}_p={}_{{}}".format(one_plan[0], one_plan[1]) if not one_plan[2] else "lambda_cc1_final_pinn_{}",
         )
 
 def one_time_build_turing_lambda_final():
@@ -322,8 +326,9 @@ if __name__ == "__main__":
     # one_time_build_cc1_lambda()
     # one_time_build_sir_lambda_final()
     # one_time_build_rep_lambda_final()
-    # one_time_build_cc1_lambda_final()
-    one_time_build_turing_lambda_final()
+    one_time_build_cc1_lambda_final()
+    # one_time_build_turing_lambda_final()
+
     pass
 
 
