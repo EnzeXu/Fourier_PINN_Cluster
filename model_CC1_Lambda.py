@@ -580,20 +580,22 @@ class FourierModel(nn.Module):
     def write_finish_log(self):
         loss_average_length = 1000
         with open("saves/record.txt", "a") as f:
-            f.write("{0}\t{1}\tseed={2}\t{3:.2f}min\titer={4}\tloss={5:.12f}\treal_loss_mse={6:.12f}\treal_loss_nmse={7:.12f}\tactivation={8}\tpenalty={9}\tstrategy={10}\tinit={11}\n".format(
-                self.config.model_name,
-                self.time_string,
-                self.config.seed,
-                self.time_record_tmp[-1] / 60.0,
-                self.config.args.iteration,
-                sum(self.loss_record_tmp[-loss_average_length:]) / loss_average_length,
-                sum(self.real_loss_mse_record_tmp[-loss_average_length:]) / loss_average_length,
-                sum(self.real_loss_nmse_record_tmp[-loss_average_length:]) / loss_average_length,
-                self.config.activation,
-                self.config.penalty,
-                self.config.strategy,
-                self.config.init,
-            ))
+            f.write(
+                "{0}\t{1}\tseed={2}\t{3:.2f}min\titer={4}\tloss={5:.12f}\treal_loss_mse={6:.12f}\treal_loss_nmse={7:.12f}\tactivation={8}\tpenalty={9}\tstrategy={10}\tpinn={11}\tinit={12}\n".format(
+                    self.config.model_name,
+                    self.time_string,
+                    self.config.seed,
+                    self.time_record_tmp[-1] / 60.0,
+                    self.config.args.iteration,
+                    sum(self.loss_record_tmp[-loss_average_length:]) / loss_average_length,
+                    sum(self.real_loss_mse_record_tmp[-loss_average_length:]) / loss_average_length,
+                    sum(self.real_loss_nmse_record_tmp[-loss_average_length:]) / loss_average_length,
+                    self.config.activation,
+                    self.config.penalty,
+                    self.config.strategy,
+                    self.config.pinn,
+                    self.config.init,
+                ))
 
     @staticmethod
     def draw_loss_multi(loss_list, last_rate_list):
