@@ -26,12 +26,20 @@ def one_time_build_from_record():
 
 
 def one_time_detail_check(model_name, time_string_list, average_length):
+    print("loss:")
     for one_time_string in time_string_list:
         info_path = "saves/train/{0}_{1}/{0}_{1}_info.npy".format(model_name, one_time_string)
         with open(info_path, "rb") as f:
             info = pickle.load(f)
-        print("{}\t{}".format(
+        print("{}".format(
             sum(info["loss"][-average_length:]) / average_length,
+        ))
+    print("real loss:")
+    for one_time_string in time_string_list:
+        info_path = "saves/train/{0}_{1}/{0}_{1}_info.npy".format(model_name, one_time_string)
+        with open(info_path, "rb") as f:
+            info = pickle.load(f)
+        print("{}".format(
             sum(info["real_loss"][-average_length:]) / average_length,
         ))
     print()
