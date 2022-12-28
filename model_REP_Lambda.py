@@ -331,7 +331,7 @@ class FourierModel(nn.Module):
         x1 = self.conv4(x)
         x2 = self.cnn4(x)
         x = x1 + x2
-        # x = self.activate_block4(x)
+        x = self.activate_block4(x)
 
         x = x.permute(0, 2, 1)
         x = self.fc1(x)

@@ -56,10 +56,10 @@ if __name__ == "__main__":
     # one_time_detail_check("CC1_Fourier_Lambda", cc1_original_time_strings, 1000)
     # print("plan3:")
     # one_time_detail_check("CC1_Fourier_Lambda", cc1_plan3_time_strings, 1000)
-    criterion = torch.nn.MSELoss(reduce=False)
-    a = torch.tensor([1.0, 2.0, 3.0])
-    b = torch.tensor([3.0, 4.0, 5.0])
-    print(criterion(a, b))
+    # criterion = torch.nn.MSELoss(reduce=False)
+    # a = torch.tensor([1.0, 2.0, 3.0])
+    # b = torch.tensor([3.0, 4.0, 5.0])
+    # print(criterion(a, b))
 
 
     # parts = string1.split()
@@ -72,5 +72,5 @@ if __name__ == "__main__":
     # one_time_detail_check("SIR_Fourier_Lambda", sir_origin_time_strings, 10000)
     # print("plan3:")
     # one_time_detail_check("SIR_Fourier_Lambda", sir_plan3_time_strings, 10000)
-    # one_time_build_from_record()
+    one_time_build_from_record()
     pass

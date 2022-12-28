@@ -276,7 +276,7 @@ class FNO3d(nn.Module):
         x1 = self.conv3(x)
         x2 = self.w3(x)
         x = x1 + x2
-        # x = self.activate_block4(x)
+        x = self.activate_block4(x)
         # print("cp7", x.shape)
         # x = x[..., :-self.padding]
         # print("cp8", x.shape)
