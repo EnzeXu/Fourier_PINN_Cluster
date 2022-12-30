@@ -208,8 +208,11 @@ def my_softmax(x):
     softmax_vector = exponent_vector / sum_of_exponents
     return softmax_vector
 
+# def penalty_func(x):
+#     return 1 * (- torch.tanh((x - 1.5)) + 1)# return 1 * (- torch.tanh((x - 2.5)) + 1)
+
 def penalty_func(x):
-    return 1 * (- torch.tanh((x - 1.5)) + 1)# return 1 * (- torch.tanh((x - 2.5)) + 1)
+    return 1 * (- torch.tanh((x - 0.005) * 200) + 1) # 1 * (- torch.tanh((x - 0.004) * 300) + 1)
 
 class FourierModel(nn.Module):
     def __init__(self, config):
@@ -387,7 +390,12 @@ class FourierModel(nn.Module):
                                                                                                          zeros_1D) + self.criterion(
             ode_4, zeros_1D) + self.criterion(ode_5, zeros_1D) + self.criterion(ode_6, zeros_1D))
         loss3 = self.criterion(torch.abs(y - 0), y - 0) + self.criterion(torch.abs(10 - y), 10 - y)
-        loss4 = (1.0 if self.config.penalty else 0.0) * sum([penalty_func(torch.var(y[0, :, i])) for i in range(self.config.prob_dim)])
+        # loss4 = (1.0 if self.config.penalty else 0.0) * sum([penalty_func(torch.var(y[0, :, i])) for i in range(self.config.prob_dim)])
+        y_norm = torch.zeros(self.config.prob_dim).to(self.config.device)
+        for i in range(self.config.prob_dim):
+            y_norm[i] = torch.var(
+                (y[0, :, i] - torch.min(y[0, :, i])) / (torch.max(y[0, :, i]) - torch.min(y[0, :, i])))
+        loss4 = (1.0 if self.config.penalty else 0) * torch.mean(penalty_func(y_norm))
         # loss4 = self.criterion(1 / u_0, pt_all_zeros_3)
         # loss5 = self.criterion(torch.abs(u_0 - v_0), u_0 - v_0)
 
@@ -767,12 +775,12 @@ class PINNModel(nn.Module):
                                                                                                          zeros_1D) + self.criterion(
             ode_4, zeros_1D) + self.criterion(ode_5, zeros_1D) + self.criterion(ode_6, zeros_1D))
         loss3 = self.criterion(torch.abs(y - 0), y - 0) + self.criterion(torch.abs(10 - y), 10 - y)
-        loss4 = (1.0 if self.config.penalty else 0.0) * sum([penalty_func(torch.var(y[0, :, i])) for i in range(self.config.prob_dim)])
+        # loss4 = (1.0 if self.config.penalty else 0.0) * sum([penalty_func(torch.var(y[0, :, i])) for i in range(self.config.prob_dim)])
         # loss4 = self.criterion(1 / u_0, pt_all_zeros_3)
         # loss5 = self.criterion(torch.abs(u_0 - v_0), u_0 - v_0)
 
-        loss = loss1 + loss2 + loss3 + loss4
-        loss_list = [loss1, loss2, loss3, loss4]
+        loss = loss1 + loss2 + loss3
+        loss_list = [loss1, loss2, loss3]
         return loss, loss_list
 
     def train_model(self):
