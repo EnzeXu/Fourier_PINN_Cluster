@@ -236,8 +236,29 @@ def one_time_build_cc1_lambda_final():
         dic["pinn"] = one_plan[2]
         one_slurm_multi_seed(
             "lambda_cc1_final_a={}_p={}".format(one_plan[0], one_plan[1]) if not one_plan[2] else "lambda_cc1_final_pinn",
-            "model_CC1_Lambda.py", dic, 0, 40,
+            "model_CC1_Lambda.py", dic, 0, 10,
             "lambda_cc1_final_a={}_p={}_{{}}".format(one_plan[0], one_plan[1]) if not one_plan[2] else "lambda_cc1_final_pinn_{}",
+        )
+        one_slurm_multi_seed(
+            "lambda_cc1_final_a={}_p={}".format(one_plan[0], one_plan[1]) if not one_plan[
+                2] else "lambda_cc1_final_pinn",
+            "model_CC1_Lambda.py", dic, 10, 20,
+            "lambda_cc1_final_a={}_p={}_{{}}".format(one_plan[0], one_plan[1]) if not one_plan[
+                2] else "lambda_cc1_final_pinn_{}",
+        )
+        one_slurm_multi_seed(
+            "lambda_cc1_final_a={}_p={}".format(one_plan[0], one_plan[1]) if not one_plan[
+                2] else "lambda_cc1_final_pinn",
+            "model_CC1_Lambda.py", dic, 20, 30,
+            "lambda_cc1_final_a={}_p={}_{{}}".format(one_plan[0], one_plan[1]) if not one_plan[
+                2] else "lambda_cc1_final_pinn_{}",
+        )
+        one_slurm_multi_seed(
+            "lambda_cc1_final_a={}_p={}".format(one_plan[0], one_plan[1]) if not one_plan[
+                2] else "lambda_cc1_final_pinn",
+            "model_CC1_Lambda.py", dic, 30, 40,
+            "lambda_cc1_final_a={}_p={}_{{}}".format(one_plan[0], one_plan[1]) if not one_plan[
+                2] else "lambda_cc1_final_pinn_{}",
         )
 
 def one_time_build_turing_lambda_final():
@@ -342,8 +363,8 @@ if __name__ == "__main__":
     # one_time_build_cc1_lambda()
     # one_time_build_sir_lambda_final()
     # one_time_build_rep_lambda_final()
-    # one_time_build_cc1_lambda_final()
-    one_time_build_turing_lambda_final()
+    one_time_build_cc1_lambda_final()
+    # one_time_build_turing_lambda_final()
 
     pass
 
