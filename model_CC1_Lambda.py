@@ -431,7 +431,7 @@ class FourierModel(nn.Module):
         loss2 = 10 * (self.criterion(ode_n, zeros_nD))
         loss3 = self.criterion(torch.abs(y - 0), y - 0) + self.criterion(torch.abs(10 - y), 10 - y)
         y_norm = (y[0] - torch.min(y[0])) / (torch.max(y[0]) - torch.min(y[0]))
-        loss4 = 1e-2 * torch.mean(penalty_func(torch.var(y_norm, dim=0)))
+        loss4 = (1e-2 if self.config.penalty else 0) * torch.mean(penalty_func(torch.var(y_norm, dim=0)))
         # loss4 = self.criterion(1 / u_0, pt_all_zeros_3)
         # loss5 = self.criterion(torch.abs(u_0 - v_0), u_0 - v_0)
 
