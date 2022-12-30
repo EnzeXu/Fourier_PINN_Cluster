@@ -730,7 +730,7 @@ class PINNModel(nn.Module):
         zeros_1D = torch.tensor([0.0] * self.config.T_N).to(self.config.device)
 
         loss1 = self.criterion(y0_pred, y0_true)
-        loss2 = 10 * (self.criterion(ode_1, zeros_1D) + self.criterion(ode_2, zeros_1D))
+        loss2 = 1 * (self.criterion(ode_1, zeros_1D) + self.criterion(ode_2, zeros_1D))
         loss3 = self.criterion(torch.abs(y[:, :, 0] - 9), y[:, :, 0] - 9) + self.criterion(torch.abs(y[:, :, 1]),
                                                                                            y[:, :, 1])
         # loss4 = (1.0 if self.config.penalty else 0.0) * sum([penalty_func(torch.var(y[0, :, i])) for i in range(self.config.prob_dim)])
