@@ -236,7 +236,7 @@ class FourierModel(nn.Module):
         self.fc2 = nn.Linear(self.config.fc_map_dim, self.config.prob_dim)
 
         self.criterion = torch.nn.MSELoss().to(self.config.device)  # "sum"
-        self.criterion_non_reduce = torch.nn.MSELoss(reduce=False).to(self.config.device)
+        self.criterion_non_reduce = torch.nn.MSELoss(reduction="none").to(self.config.device)
 
         self.y_tmp = None
         self.epoch_tmp = None
@@ -365,7 +365,7 @@ class FourierModel(nn.Module):
         zeros_1D = torch.tensor([0.0] * self.config.T_N).to(self.config.device)
 
         loss1 = self.criterion(y0_pred, y0_true)
-        loss2 = 10 * (self.criterion(ode_1, zeros_1D) + self.criterion(ode_2, zeros_1D))
+        loss2 = 1 * (self.criterion(ode_1, zeros_1D) + self.criterion(ode_2, zeros_1D))
         loss3 = self.criterion(torch.abs(y[:, :, 0] - 9), y[:, :, 0] - 9) + self.criterion(torch.abs(y[:, :, 1]),
                                                                                            y[:, :, 1])
         # loss4 = (1.0 if self.config.penalty else 0.0) * sum([penalty_func(torch.var(y[0, :, i])) for i in range(self.config.prob_dim)])
@@ -583,48 +583,8 @@ class PINNModel(nn.Module):
             nn.Linear(50, 1),
         )
 
-        self.fc3 = nn.Sequential(
-            nn.Linear(1, 50),
-            nn.Tanh(),
-            nn.Linear(50, 50),
-            nn.Tanh(),
-            nn.Linear(50, 50),
-            nn.Tanh(),
-            nn.Linear(50, 1),
-        )
-
-        self.fc4 = nn.Sequential(
-            nn.Linear(1, 50),
-            nn.Tanh(),
-            nn.Linear(50, 50),
-            nn.Tanh(),
-            nn.Linear(50, 50),
-            nn.Tanh(),
-            nn.Linear(50, 1),
-        )
-
-        self.fc5 = nn.Sequential(
-            nn.Linear(1, 50),
-            nn.Tanh(),
-            nn.Linear(50, 50),
-            nn.Tanh(),
-            nn.Linear(50, 50),
-            nn.Tanh(),
-            nn.Linear(50, 1),
-        )
-
-        self.fc6 = nn.Sequential(
-            nn.Linear(1, 50),
-            nn.Tanh(),
-            nn.Linear(50, 50),
-            nn.Tanh(),
-            nn.Linear(50, 50),
-            nn.Tanh(),
-            nn.Linear(50, 1),
-        )
-
         self.criterion = torch.nn.MSELoss().to(self.config.device)  # "sum"
-        self.criterion_non_reduce = torch.nn.MSELoss(reduce=False).to(self.config.device)
+        self.criterion_non_reduce = torch.nn.MSELoss(reduction="none").to(self.config.device)
 
         self.y_tmp = None
         self.epoch_tmp = None
@@ -698,11 +658,8 @@ class PINNModel(nn.Module):
     def forward(self, x):
         x1_new = self.fc1(x)
         x2_new = self.fc2(x)
-        x3_new = self.fc3(x)
-        x4_new = self.fc4(x)
-        x5_new = self.fc5(x)
-        x6_new = self.fc6(x)
-        x = torch.cat((x1_new, x2_new, x3_new, x4_new, x5_new, x6_new), -1)
+
+        x = torch.cat((x1_new, x2_new), -1)
         return x
 
     @staticmethod
@@ -728,7 +685,6 @@ class PINNModel(nn.Module):
 
         ode_1, ode_2 = self.ode_gradient(self.config.x, y)
         zeros_1D = torch.tensor([0.0] * self.config.T_N).to(self.config.device)
-
         loss1 = self.criterion(y0_pred, y0_true)
         loss2 = 1 * (self.criterion(ode_1, zeros_1D) + self.criterion(ode_2, zeros_1D))
         loss3 = self.criterion(torch.abs(y[:, :, 0] - 9), y[:, :, 0] - 9) + self.criterion(torch.abs(y[:, :, 1]),
@@ -920,10 +876,14 @@ if __name__ == "__main__":
     myprint("log_path: {}".format(opt.log_path), opt.log_path)
     myprint("cuda is available: {}".format(torch.cuda.is_available()), opt.log_path)
 
-    try:
-        if not opt.pinn:
-            run(opt, FourierModel)
-        else:
-            run(opt, PINNModel)
-    except Exception as e:
-        print("[Error]", e)
+    if not opt.pinn:
+        run(opt, FourierModel)
+    else:
+        run(opt, PINNModel)
+    # try:
+    #     if not opt.pinn:
+    #         run(opt, FourierModel)
+    #     else:
+    #         run(opt, PINNModel)
+    # except Exception as e:
+    #     print("[Error]", e)
