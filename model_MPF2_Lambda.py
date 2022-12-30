@@ -14,27 +14,22 @@ from utils import *
 
 
 class Parameters:
-    MPF = 0.298
-    Kinp = 0.558
-    APCp = 0.591
-    ksycycb = 0.04
-    kde1cycb = 0.02
-    kde2cycb = 0.4
-    kphgwl = 0.2
-    kdp1gwl = 0.08
-    jphgwl = 0.01
-    jdpgwl = 0.01
-    kphapc = 0.2
-    kdpapc = 0.08
-    jphapc = 0.1
-    jdpapc = 0.1
+    k_1_ = 0.01
+    k_2_ = 0.01
+    k_2__ = 10  # k''_2
+    k_25_ = 0.04
+    k_25__ = 100
+    k_Wee = 1.5
+    k_INH = 0.1
+    k_CAK = 1
+    G = 1 + k_INH / k_CAK
 
 
 class TrainArgs:
     iteration = 10000
     epoch_step = 500  # 1000
     test_step = epoch_step * 10
-    initial_lr = 0.001
+    initial_lr = 0.01
     main_path = "."
     log_path = None
     early_stop = False
@@ -44,22 +39,21 @@ class TrainArgs:
 
 class Config:
     def __init__(self):
-        self.model_name = "CC1_Fourier_Lambda"
-        self.curve_names = ["MPF", "Kinp", "APCp"]
+        self.model_name = "MPF2_Fourier_Lambda"
+        self.curve_names = ["u", "v"]
         self.params = Parameters
         self.args = TrainArgs
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.seed = 0
         self.layer = -1
-        self.init = "none"
         self.pinn = 0
 
-        self.T = 100
-        self.T_unit = 2e-1
+        self.T = 200
+        self.T_unit = 1e-1
         self.T_N = int(self.T / self.T_unit)
 
-        self.prob_dim = 3
-        self.y0 = np.asarray([0.18140113, 0.27904593, 0.54060194])
+        self.prob_dim = 2
+        self.y0 = np.asarray([0.03656777, 0.36614645])
         self.t = np.asarray([i * self.T_unit for i in range(self.T_N)])
         self.t_torch = torch.tensor(self.t, dtype=torch.float32).to(self.device)
         self.x = torch.tensor(np.asarray([[[i * self.T_unit] * 1 for i in range(self.T_N)]]),
@@ -77,9 +71,8 @@ class Config:
     def pend(self, y, t):
         k = self.params
         dydt = np.asarray([
-            k.ksycycb -  (k.kde1cycb + k.kde2cycb * y[2]) * y[0],
-            k.kphgwl * y[0] * (1-y[1])/ (k.jphgwl + (1-y[1])) - k.kdp1gwl * y[1] / (k.jdpgwl + y[1]),
-            k.kphapc * y[1] * (1- y[2]) / (k.jphapc + (1- y[2])) - k.kdpapc * y[2] / (k.jdpapc + y[2]),
+            k.k_1_ / k.G - (k.k_2_ + k.k_2__ * y[0] ** 2 + k.k_Wee) * y[0] + (k.k_25_ + k.k_25__ * y[0] ** 2) * (y[1] / k.G - y[0]),
+            k.k_1_ - (k.k_2_ + k.k_2__ * y[0] ** 2) * y[1]
         ])
         return dydt
 
@@ -228,7 +221,7 @@ def my_softmax(x):
     return softmax_vector
 
 def penalty_func(x):
-    return 1 * (- torch.tanh((x - 0.005) * 200) + 1) # 1 * (- torch.tanh((x - 0.004) * 300) + 1)
+    return 1 * (- torch.tanh((x - 1.5)) + 1)# return 1 * (- torch.tanh((x - 2.5)) + 1)
 
 
 class FourierModel(nn.Module):
@@ -257,41 +250,6 @@ class FourierModel(nn.Module):
         self.fc1 = nn.Linear(self.config.width, self.config.fc_map_dim)
         self.fc2 = nn.Linear(self.config.fc_map_dim, self.config.prob_dim)
 
-        assert self.config.init in ["none", "xavier_uniform", "xavier_normal", "kaiming_uniform", "kaiming_normal"]
-        if self.config.init == "xavier_uniform":
-            nn.init.xavier_uniform_(self.cnn1.weight, gain=1.0)
-            nn.init.xavier_uniform_(self.cnn2.weight, gain=1.0)
-            nn.init.xavier_uniform_(self.cnn3.weight, gain=1.0)
-            nn.init.xavier_uniform_(self.cnn4.weight, gain=1.0)
-            nn.init.xavier_uniform_(self.fc0.weight, gain=1.0)
-            nn.init.xavier_uniform_(self.fc1.weight, gain=1.0)
-            nn.init.xavier_uniform_(self.fc2.weight, gain=1.0)
-        elif self.config.init == "xavier_normal":
-            nn.init.xavier_normal_(self.cnn1.weight, gain=1.0)
-            nn.init.xavier_normal_(self.cnn2.weight, gain=1.0)
-            nn.init.xavier_normal_(self.cnn3.weight, gain=1.0)
-            nn.init.xavier_normal_(self.cnn4.weight, gain=1.0)
-            nn.init.xavier_normal_(self.fc0.weight, gain=1.0)
-            nn.init.xavier_normal_(self.fc1.weight, gain=1.0)
-            nn.init.xavier_normal_(self.fc2.weight, gain=1.0)
-        elif self.config.init == "kaiming_uniform":
-            nn.init.kaiming_uniform_(self.cnn1.weight, nonlinearity="conv1d")
-            nn.init.kaiming_uniform_(self.cnn2.weight, nonlinearity="conv1d")
-            nn.init.kaiming_uniform_(self.cnn3.weight, nonlinearity="conv1d")
-            nn.init.kaiming_uniform_(self.cnn4.weight, nonlinearity="conv1d")
-            nn.init.kaiming_uniform_(self.fc0.weight, nonlinearity="linear")
-            nn.init.kaiming_uniform_(self.fc1.weight, nonlinearity="linear")
-            nn.init.kaiming_uniform_(self.fc2.weight, nonlinearity="linear")
-        elif self.config.init == "kaiming_normal":
-            nn.init.kaiming_normal_(self.cnn1.weight, nonlinearity="conv1d")
-            nn.init.kaiming_normal_(self.cnn2.weight, nonlinearity="conv1d")
-            nn.init.kaiming_normal_(self.cnn3.weight, nonlinearity="conv1d")
-            nn.init.kaiming_normal_(self.cnn4.weight, nonlinearity="conv1d")
-            nn.init.kaiming_normal_(self.fc0.weight, nonlinearity="linear")
-            nn.init.kaiming_normal_(self.fc1.weight, nonlinearity="linear")
-            nn.init.kaiming_normal_(self.fc2.weight, nonlinearity="linear")
-        else:
-            pass
 
         self.criterion = torch.nn.MSELoss().to(self.config.device)  # "sum"
         self.criterion_non_reduce = torch.nn.MSELoss(reduce=False).to(self.config.device)
@@ -408,16 +366,22 @@ class FourierModel(nn.Module):
 
     def ode_gradient(self, x, y):
         k = self.config.params
-        MPF = y[0, :, 0]
-        Kinp = y[0, :, 1]
-        APCp = y[0, :, 2]
-        MPF_t = torch.gradient(MPF, spacing=(self.config.t_torch,))[0].reshape([self.config.T_N])
-        Kinp_t = torch.gradient(Kinp, spacing=(self.config.t_torch,))[0].reshape([self.config.T_N])
-        APCp_t = torch.gradient(APCp, spacing=(self.config.t_torch,))[0].reshape([self.config.T_N])
-        f_MPF = k.ksycycb -  (k.kde1cycb + k.kde2cycb * APCp) * MPF - MPF_t
-        f_Kinp = k.kphgwl * MPF * (1 - Kinp)/ (k.jphgwl + (1 - Kinp))- k.kdp1gwl * Kinp / (k.jdpgwl + Kinp) - Kinp_t
-        f_APCp = k.kphapc * Kinp * (1- APCp) / (k.jphapc + (1-APCp)) - k.kdpapc * APCp / (k.jdpapc + APCp) - APCp_t
-        return torch.cat((f_MPF, f_Kinp, f_APCp))
+        u = y[0, :, 0]
+        v = y[0, :, 1]
+        """
+        dydt = np.asarray([
+            k.k_1_ / k.G - (k.k_2_ + k.k_2__ * y[0] ** 2 + k.k_Wee) * y[0] + (k.k_25_ + k.k_25__ * y[0] ** 2) * (y[1] / k.G - y[0]),
+            k.k_1_ - (k.k_2_ + k.k_2__ * y[0] ** 2) * y[1]
+        ])
+        """
+
+        u_t = torch.gradient(u, spacing=(self.config.t_torch,))[0].reshape([self.config.T_N])
+        v_t = torch.gradient(v, spacing=(self.config.t_torch,))[0].reshape([self.config.T_N])
+
+        f_u = k.k_1_ / k.G - (k.k_2_ + k.k_2__ * u ** 2 + k.k_Wee) * u + (k.k_25_ + k.k_25__ * u ** 2) * (v / k.G - u) - u_t
+        f_v = k.k_1_ - (k.k_2_ + k.k_2__ * u ** 2) * v - v_t
+
+        return torch.cat((f_u, f_v))
 
     def loss(self, y):
         y0_pred = y[0, 0, :]
@@ -429,9 +393,8 @@ class FourierModel(nn.Module):
 
         loss1 = self.criterion(y0_pred, y0_true)
         loss2 = 10 * (self.criterion(ode_n, zeros_nD))
-        loss3 = self.criterion(torch.abs(y - 0), y - 0) + self.criterion(torch.abs(10 - y), 10 - y)
-        y_norm = (y[0] - torch.min(y[0])) / (torch.max(y[0]) - torch.min(y[0]))
-        loss4 = 1e-2 * torch.mean(penalty_func(torch.var(y_norm, dim=0)))
+        loss3 = self.criterion(torch.abs(y - 0), y - 0) + self.criterion(torch.abs(0.5 - y), 0.5 - y)
+        loss4 = (1.0 if self.config.penalty else 0.0) * sum([penalty_func(torch.var(y[0, :, i])) for i in range(self.config.prob_dim)])
         # loss4 = self.criterion(1 / u_0, pt_all_zeros_3)
         # loss5 = self.criterion(torch.abs(u_0 - v_0), u_0 - v_0)
 
@@ -441,7 +404,7 @@ class FourierModel(nn.Module):
 
     def train_model(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.config.args.initial_lr, weight_decay=0)
-        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda e: 1 / (e / 200 + 1))
+        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda e: 1 / (e / 1000 + 1))
         self.train()
 
         start_time = time.time()
@@ -655,7 +618,7 @@ class PINNModel(nn.Module):
         )
 
         self.criterion = torch.nn.MSELoss().to(self.config.device)  # "sum"
-        self.criterion_non_reduce = torch.nn.MSELoss(reduce=False).to(self.config.device)
+        self.criterion_non_reduce = torch.nn.MSELoss(reduction="none").to(self.config.device)
 
         self.y_tmp = None
         self.epoch_tmp = None
