@@ -77,7 +77,7 @@ def clear_reformat(string):
 
 
 def draw_paper_figure_loss(**kwargs):
-    assert_keyword_list = ["timestring_dict", "info_path_format_dict", "model_name_short", "kernel_size", "mask_gap", "epoch_max", "y_ticks", "ylim"]
+    assert_keyword_list = ["timestring_dict", "info_path_format_dict", "model_name_short", "kernel_size", "mask_gap", "epoch_max", "y_ticks", "ylim", "y_ticks_format"]
     assert all(item in kwargs for item in assert_keyword_list)
     timestring_dict = kwargs["timestring_dict"]
     info_path_format_dict = kwargs["info_path_format_dict"]
@@ -87,6 +87,7 @@ def draw_paper_figure_loss(**kwargs):
     epoch_max = kwargs["epoch_max"]
     y_ticks = kwargs["y_ticks"]
     ylim = kwargs["ylim"]
+    y_ticks_format = kwargs["y_ticks_format"]
     if "timestring" in kwargs:
         save_timestring = kwargs["timestring"]
     else:
@@ -144,7 +145,7 @@ def draw_paper_figure_loss(**kwargs):
     if ylim is not None:
         plt.ylim(ylim)
     if y_ticks is not None:
-        plt.yticks(y_ticks, ["$10^{0}$" % item for item in y_ticks])
+        plt.yticks(y_ticks, [y_ticks_format % item for item in y_ticks])
 
     plt.legend(loc="upper center", bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=3, fontsize=15)
     plt.tick_params(labelsize=15)
@@ -173,6 +174,7 @@ def one_time_plot_sir():
         epoch_max=20000,
         y_ticks=[-6.0 + 1 * item for item in range(4)],
         ylim=[-6.5, -4.5],
+        y_ticks_format="$10^{%d}$",
     )
 
 def one_time_plot_turing():
@@ -194,6 +196,7 @@ def one_time_plot_turing():
         epoch_max=3000,
         y_ticks=[-1.2 + 0.1 * item for item in range(6)],
         ylim=[-1.25, -0.65],
+        y_ticks_format="$10^{%.1f}$",
     )
 
 def one_time_plot_pp():
