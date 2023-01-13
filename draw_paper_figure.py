@@ -53,16 +53,16 @@ class MyNumpy:
 
 
 str1 = """
-20221228_001505
-20221228_003145
-20221228_004826
-20221228_010505
-20221228_012144
-20221228_013823
-20221228_015504
-20221228_021143
-20221228_022823
-20221228_024501
+20221227_183737
+20221227_185526
+20221227_191325
+20221227_193155
+20221227_194947
+20221227_200731
+20221227_202538
+20221227_204359
+20221227_210139
+20221227_211936
 """
 
 def get_now_string():
@@ -199,6 +199,31 @@ def one_time_plot_turing():
         y_ticks_format="$10^{%.1f}$",
     )
 
+
+def one_time_plot_rep():
+    model_name_short = "REP"
+    draw_paper_figure_loss(
+        timestring_dict={
+            "FNN": ["20221227_182627", "20221227_184011", "20221227_185409", "20221227_190757", "20221227_192158"],
+            "SB-FNN(A)": ["20221227_181943", "20221227_183834", "20221227_185802", "20221227_191618", "20221227_193452", "20221227_195419", "20221227_201329", "20221227_203232", "20221227_205125", "20221227_211010"],
+            "SB-FNN(P)": ["20221227_181432", "20221227_182817", "20221227_184153", "20221227_185538", "20221227_190923", "20221227_192306", "20221227_193643", "20221227_195015", "20221227_200346", "20221227_201730"],
+            "SB-FNN": ["20221227_183737", "20221227_185526", "20221227_191325", "20221227_193155", "20221227_194947", "20221227_200731", "20221227_202538", "20221227_204359", "20221227_210139", "20221227_211936"],
+        },
+        info_path_format_dict={
+            "FNN": "./saves/train/{0}_Fourier_Lambda_{{0}}/{0}_Fourier_Lambda_{{0}}_info.npy".format(model_name_short),
+            "SB-FNN(A)": "./saves/train/{0}_Fourier_Lambda_{{0}}/{0}_Fourier_Lambda_{{0}}_info.npy".format(model_name_short),
+            "SB-FNN(P)": "./saves/train/{0}_Fourier_Lambda_{{0}}/{0}_Fourier_Lambda_{{0}}_info.npy".format(model_name_short),
+            "SB-FNN": "./saves/train/{0}_Fourier_Lambda_{{0}}/{0}_Fourier_Lambda_{{0}}_info.npy".format(model_name_short),
+        },
+        model_name_short=model_name_short,
+        kernel_size=2000,
+        mask_gap=1,
+        epoch_max=20000,
+        y_ticks=None,#[-1.2 + 0.1 * item for item in range(6)],
+        ylim=None,#[-1.25, -0.65],
+        y_ticks_format="$10^{%.1f}$",
+    )
+
 def one_time_plot_pp():
     draw_paper_figure_loss(
         timestring_dict={
@@ -232,8 +257,9 @@ def one_time_plot_pp():
 
 
 if __name__ == "__main__":
-    one_time_plot_turing()
-    one_time_plot_sir()
+    one_time_plot_rep()
+    # one_time_plot_turing()
+    # one_time_plot_sir()
     # a = np.asarray([[1.0,2,3,4,7], [2,3,4,5,6], [3,4,5,6,7], [3,4,5,6,7], [3,4,5,6,5], [4,5,6,7,8], [5,6,7,8,9]])
     # print(MyNumpy.max(a, 1))
     # a = np.asarray([1, 2, 3])
