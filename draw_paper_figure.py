@@ -225,8 +225,8 @@ def one_time_plot_pp():
 
 
 if __name__ == "__main__":
-    # one_time_plot_turing()
-    one_time_plot_sir()
+    one_time_plot_turing()
+    # one_time_plot_sir()
     # a = np.asarray([[1.0,2,3,4,7], [2,3,4,5,6], [3,4,5,6,7], [3,4,5,6,7], [3,4,5,6,5], [4,5,6,7,8], [5,6,7,8,9]])
     # print(MyNumpy.max(a, 1))
     # a = np.asarray([1, 2, 3])
