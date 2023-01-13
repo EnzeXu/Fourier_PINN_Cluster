@@ -144,7 +144,7 @@ def draw_paper_figure_loss(**kwargs):
     if ylim is not None:
         plt.ylim(ylim)
     if y_ticks is not None:
-        plt.yticks(y_ticks, ["$10^{%d}$" % item for item in y_ticks])
+        plt.yticks(y_ticks, ["$10^{0}$" % item for item in y_ticks])
 
     plt.legend(loc="upper center", bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=3, fontsize=15)
     plt.tick_params(labelsize=15)
