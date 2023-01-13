@@ -219,9 +219,9 @@ def one_time_plot_rep():
         kernel_size=2000,
         mask_gap=1,
         epoch_max=20000,
-        y_ticks=None,#[-1.2 + 0.1 * item for item in range(6)],
-        ylim=None,#[-1.25, -0.65],
-        y_ticks_format="$10^{%.1f}$",
+        y_ticks=[-4 + 1 * item for item in range(4)],
+        ylim=[-4.5, -0.5],
+        y_ticks_format="$10^{%d}$",
     )
 
 def one_time_plot_pp():
