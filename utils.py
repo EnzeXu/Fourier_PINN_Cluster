@@ -1,3 +1,4 @@
+from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import time
@@ -466,6 +467,9 @@ def draw_three_dimension(
     plt.clf()
     plt.close()
 
+
+def get_now_string():
+    return datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
 if __name__ == "__main__":
     # T = 10.0

@@ -28,7 +28,7 @@ class Parameters:
 
 
 class TrainArgs:
-    iteration = 3000
+    iteration = 10000  # 3000->10000
     epoch_step = 100  # 1000
     test_step = epoch_step * 10
     initial_lr = 0.001
@@ -302,14 +302,10 @@ class FNO3d(nn.Module):
         return torch.cat((gridx, gridy, gridz), dim=-1).to(device)
 
 
-def get_now_string():
-    return time.strftime("%Y%m%d_%H%M%S", time.localtime(time.time()))
-
-
 class MySin(nn.Module):
     def __init__(self):
         super().__init__()
-        self.omega = nn.Parameter(torch.tensor([1.4938150574984748]))
+        self.omega = nn.Parameter(torch.tensor([1.0]))
 
     def forward(self, x):
         return torch.sin(self.omega * x)

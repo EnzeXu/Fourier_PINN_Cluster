@@ -31,7 +31,7 @@ class Parameters:
 
 
 class TrainArgs:
-    iteration = 10000
+    iteration = 50000  # 10000 -> 50000
     epoch_step = 500  # 1000
     test_step = epoch_step * 10
     initial_lr = 0.001
@@ -118,14 +118,10 @@ class SpectralConv1d(nn.Module):
         return x
 
 
-def get_now_string():
-    return time.strftime("%Y%m%d_%H%M%S", time.localtime(time.time()))
-
-
 class MySin(nn.Module):
     def __init__(self):
         super().__init__()
-        self.omega = nn.Parameter(torch.tensor([1.4938150574984748]))
+        self.omega = nn.Parameter(torch.tensor([1.0]))
 
     def forward(self, x):
         return torch.sin(self.omega * x)
