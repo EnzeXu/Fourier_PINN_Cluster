@@ -279,9 +279,9 @@ def one_time_plot_cc1():
         kernel_size=200,
         mask_gap=1,
         epoch_max=10000,
-        y_ticks=None,#[-4 + 1 * item for item in range(4)],
-        ylim=None,#[-4.5, -0.5],
-        y_ticks_format="$10^{%.1f}$",
+        y_ticks=[-7 + 1 * item for item in range(9)],
+        ylim=[-7.5, 1.5],
+        y_ticks_format="$10^{%d}$",
         ncol=4,
     )
 
