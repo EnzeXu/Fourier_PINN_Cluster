@@ -192,8 +192,8 @@ def one_time_plot_turing():
         kernel_size=500,
         mask_gap=1,
         epoch_max=3000,
-        y_ticks=None,
-        ylim=None,
+        y_ticks=[-1.2 + 0.1 * item for item in range(6)],
+        ylim=[-1.25, -0.65],
     )
 
 def one_time_plot_pp():
