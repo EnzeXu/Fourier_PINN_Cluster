@@ -276,7 +276,7 @@ def one_time_plot_cc1():
             "SB-FNN": "./saves/train/{0}_Fourier_Lambda_{{0}}/{0}_Fourier_Lambda_{{0}}_info.npy".format(model_name_short),
         },
         model_name_short=model_name_short,
-        kernel_size=1000,
+        kernel_size=200,
         mask_gap=1,
         epoch_max=10000,
         y_ticks=None,#[-4 + 1 * item for item in range(4)],
