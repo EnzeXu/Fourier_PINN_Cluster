@@ -77,11 +77,16 @@ def clear_reformat(string):
 
 
 def draw_paper_figure_loss(**kwargs):
-    assert_keyword_list = ["timestring_dict", "info_path_format_dict", "model_name_short"]
+    assert_keyword_list = ["timestring_dict", "info_path_format_dict", "model_name_short", "kernel_size", "mask_gap", "epoch_max", "y_ticks", "ylim"]
     assert all(item in kwargs for item in assert_keyword_list)
     timestring_dict = kwargs["timestring_dict"]
     info_path_format_dict = kwargs["info_path_format_dict"]
     model_name_short = kwargs["model_name_short"]
+    kernel_size = kwargs["kernel_size"]
+    mask_gap = kwargs["mask_gap"]
+    epoch_max = kwargs["epoch_max"]
+    y_ticks = kwargs["y_ticks"]
+    ylim = kwargs["ylim"]
     if "timestring" in kwargs:
         save_timestring = kwargs["timestring"]
     else:
@@ -91,13 +96,13 @@ def draw_paper_figure_loss(**kwargs):
     default_color_list_alpha = ["lime", "pink", "cyan", "gold", "violet"]
 
     save_folder = "./paper_figure/{}_{}/".format(model_name_short, save_timestring)
+    print("saved to {}".format(save_folder))
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
     save_loss_nmse_path = "{}/nmse.png".format(save_folder)
 
     plt.figure(figsize=(8, 6))
-    mask_gap = 100
-    mask = np.asarray([mask_gap * item for item in range(190)])
+    mask = np.asarray([mask_gap * item for item in range((epoch_max - kernel_size // 2) // mask_gap)])
 
     x = None
     for i, one_model_group in enumerate(timestring_dict.keys()):
@@ -110,13 +115,13 @@ def draw_paper_figure_loss(**kwargs):
             with open(info_path, "rb") as f:
                 info = pickle.load(f)
             # print(info["seed"], sum(info["real_loss_nmse"][-5000:])/5000)
-            loss_collect.append(np.expand_dims(smooth_conv(info["real_loss_nmse"], kernel_size=2000), axis=0))
+            loss_collect.append(np.expand_dims(smooth_conv(info["real_loss_nmse"], kernel_size=kernel_size), axis=0))
         ys = np.concatenate(loss_collect)
-        y_mean = np.mean(ys, axis=0)[:-1000][mask]
+        y_mean = np.mean(ys, axis=0)[:-kernel_size//2][mask]
         # y_std = smooth_conv(np.std(ys, axis=0), kernel_size=2000)[:-1000][mask]
 
-        y_max = np.max(ys, axis=0)[:-1000][mask]
-        y_min = np.min(ys, axis=0)[:-1000][mask]
+        y_max = np.max(ys, axis=0)[:-kernel_size//2][mask]
+        y_min = np.min(ys, axis=0)[:-kernel_size//2][mask]
         # y_max = y_mean + y_std
         # y_min = y_mean - y_std
         y_mean = np.log10(y_mean)
@@ -132,10 +137,10 @@ def draw_paper_figure_loss(**kwargs):
         # print(ys.shape)
         plt.plot(x * mask_gap, y_mean, c=default_color_list[i], linewidth=1, label=one_model_group)
         plt.fill_between(x * mask_gap, y_min, y_max, facecolor=default_color_list_alpha[i], alpha=0.2, linewidth=0)  # edgecolor="black",
-
-    # y_ticks = [-6.0 + 1 * item for item in range(4)]
-    # plt.ylim([-6.5, -4.5])
-    # plt.yticks(y_ticks, ["$10^{%d}$" % item for item in y_ticks])
+    if ylim is not None:
+        plt.ylim(ylim)
+    if y_ticks is not None:
+        plt.yticks(y_ticks, ["$10^{%d}$" % item for item in y_ticks])
 
     plt.legend(loc="upper center", bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=3, fontsize=15)
     plt.tick_params(labelsize=15)
@@ -159,6 +164,11 @@ def one_time_plot_sir():
             "SB-FNN(A)": "./saves/train/{0}_Fourier_Lambda_{{0}}/{0}_Fourier_Lambda_{{0}}_info.npy".format(model_name_short),
         },
         model_name_short=model_name_short,
+        kernel_size=2000,
+        mask_gap=100,
+        epoch_max=20000,
+        y_ticks=[-6.0 + 1 * item for item in range(4)],
+        ylim=[-6.5, -4.5],
     )
 
 def one_time_plot_turing():
@@ -175,6 +185,11 @@ def one_time_plot_turing():
             "SB-FNN(A)": "./saves/train/{0}_Fourier_Lambda_{{0}}/{0}_Fourier_Lambda_{{0}}_info.npy".format(model_name_short),
         },
         model_name_short=model_name_short,
+        kernel_size=500,
+        mask_gap=10,
+        epoch_max=3000,
+        y_ticks=None,
+        ylim=None,
     )
 
 def one_time_plot_pp():
@@ -210,8 +225,8 @@ def one_time_plot_pp():
 
 
 if __name__ == "__main__":
-    one_time_plot_turing()
-    # one_time_plot_sir()
+    # one_time_plot_turing()
+    one_time_plot_sir()
     # a = np.asarray([[1.0,2,3,4,7], [2,3,4,5,6], [3,4,5,6,7], [3,4,5,6,7], [3,4,5,6,5], [4,5,6,7,8], [5,6,7,8,9]])
     # print(MyNumpy.max(a, 1))
     # a = np.asarray([1, 2, 3])
