@@ -87,6 +87,7 @@ def draw_paper_figure_loss(**kwargs):
     epoch_max = kwargs["epoch_max"]
     y_ticks = kwargs["y_ticks"]
     ylim = kwargs["ylim"]
+    ncol = kwargs["ncol"]
     y_ticks_format = kwargs["y_ticks_format"]
     if "timestring" in kwargs:
         save_timestring = kwargs["timestring"]
@@ -147,7 +148,7 @@ def draw_paper_figure_loss(**kwargs):
     if y_ticks is not None:
         plt.yticks(y_ticks, [y_ticks_format % item for item in y_ticks])
 
-    plt.legend(loc="upper center", bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=3, fontsize=15)
+    plt.legend(loc="upper center", bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=ncol, fontsize=15)
     plt.tick_params(labelsize=15)
     plt.tight_layout()
     plt.savefig(save_loss_nmse_path, dpi=500)
@@ -175,6 +176,7 @@ def one_time_plot_sir():
         y_ticks=[-6.0 + 1 * item for item in range(4)],
         ylim=[-6.5, -4.5],
         y_ticks_format="$10^{%d}$",
+        ncol=3,
     )
 
 def one_time_plot_turing():
@@ -197,6 +199,7 @@ def one_time_plot_turing():
         y_ticks=[-1.2 + 0.1 * item for item in range(6)],
         ylim=[-1.25, -0.65],
         y_ticks_format="$10^{%.1f}$",
+        ncol=3,
     )
 
 
@@ -222,6 +225,7 @@ def one_time_plot_rep():
         y_ticks=[-4 + 1 * item for item in range(4)],
         ylim=[-4.5, -0.5],
         y_ticks_format="$10^{%d}$",
+        ncol=4,
     )
 
 def one_time_plot_pp():
