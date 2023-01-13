@@ -170,7 +170,7 @@ def one_time_plot_sir():
         },
         model_name_short=model_name_short,
         kernel_size=2000,
-        mask_gap=100,
+        mask_gap=1,
         epoch_max=20000,
         y_ticks=[-6.0 + 1 * item for item in range(4)],
         ylim=[-6.5, -4.5],
