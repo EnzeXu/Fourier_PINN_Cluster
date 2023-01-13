@@ -287,6 +287,7 @@ def one_time_plot_cc1():
 
 
 if __name__ == "__main__":
+    one_time_plot_cc1()
     # one_time_plot_rep()
     # one_time_plot_turing()
     # one_time_plot_sir()
@@ -302,8 +303,8 @@ if __name__ == "__main__":
     # with open("saves/train/PP_PINN_Lambda_20221230_084139/PP_PINN_Lambda_20221230_084139_info.npy", "rb") as f:
     #     info = pickle.load(f)
     # print(info["seed"])
-    clear_reformat(str1)
-    clear_reformat(str2)
-    clear_reformat(str3)
-    clear_reformat(str4)
+    # clear_reformat(str1)
+    # clear_reformat(str2)
+    # clear_reformat(str3)
+    # clear_reformat(str4)
     pass
