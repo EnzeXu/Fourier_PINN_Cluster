@@ -102,7 +102,7 @@ def draw_paper_figure_loss(**kwargs):
     save_loss_nmse_path = "{}/nmse.png".format(save_folder)
 
     plt.figure(figsize=(8, 6))
-    mask = np.asarray([mask_gap * item for item in range((epoch_max - kernel_size // 2) // mask_gap)])
+    mask = np.asarray([mask_gap * item for item in range(epoch_max // mask_gap)])
 
     x = None
     for i, one_model_group in enumerate(timestring_dict.keys()):
@@ -117,11 +117,11 @@ def draw_paper_figure_loss(**kwargs):
             # print(info["seed"], sum(info["real_loss_nmse"][-5000:])/5000)
             loss_collect.append(np.expand_dims(smooth_conv(info["real_loss_nmse"], kernel_size=kernel_size), axis=0))
         ys = np.concatenate(loss_collect)
-        y_mean = np.mean(ys, axis=0)[:-kernel_size//2][mask]
+        y_mean = np.mean(ys, axis=0)[mask]
         # y_std = smooth_conv(np.std(ys, axis=0), kernel_size=2000)[:-1000][mask]
 
-        y_max = np.max(ys, axis=0)[:-kernel_size//2][mask]
-        y_min = np.min(ys, axis=0)[:-kernel_size//2][mask]
+        y_max = np.max(ys, axis=0)[mask]
+        y_min = np.min(ys, axis=0)[mask]
         # y_max = y_mean + y_std
         # y_min = y_mean - y_std
         y_mean = np.log10(y_mean)
@@ -134,6 +134,10 @@ def draw_paper_figure_loss(**kwargs):
         # print(y_max.shape)
         # print(y_min.shape)
         x = np.asarray(range(len(y_mean)))
+        y_mean = y_mean[kernel_size // 2: -kernel_size // 2]
+        y_max = y_max[kernel_size // 2: -kernel_size // 2]
+        y_min = y_min[kernel_size // 2: -kernel_size // 2]
+        x = x[kernel_size // 2: -kernel_size // 2]
         # print(ys.shape)
         plt.plot(x * mask_gap, y_mean, c=default_color_list[i], linewidth=1, label=one_model_group)
         plt.fill_between(x * mask_gap, y_min, y_max, facecolor=default_color_list_alpha[i], alpha=0.2, linewidth=0)  # edgecolor="black",
@@ -186,7 +190,7 @@ def one_time_plot_turing():
         },
         model_name_short=model_name_short,
         kernel_size=500,
-        mask_gap=10,
+        mask_gap=1,
         epoch_max=3000,
         y_ticks=None,
         ylim=None,
