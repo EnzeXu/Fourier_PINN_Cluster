@@ -387,12 +387,23 @@ class MultiSubplotDraw:
             fig_title=None,
             fig_title_size=20,
             number_label_size=15,
+            colorbar=True,
+            x_ticks_set_flag=False,
+            y_ticks_set_flag=False,
+            x_ticks=None,
+            y_ticks=None,
     ):
         self.subplot_index += 1
         ax = self.fig.add_subplot(self.row, self.col, self.subplot_index)
         im1 = ax.imshow(matrix, cmap=plt.cm.jet, vmax=v_max, vmin=v_min, aspect='auto')
+        if x_ticks_set_flag:
+            ax.set_xticks(x_ticks)
+        if y_ticks_set_flag:
+            ax.set_yticks(y_ticks)
         ax.set_title(fig_title, fontsize=fig_title_size)
-        plt.colorbar(im1, shrink=1)
+        ax.invert_yaxis()
+        if colorbar:
+            plt.colorbar(im1, shrink=1)
         plt.tick_params(labelsize=number_label_size)
         return ax
 
