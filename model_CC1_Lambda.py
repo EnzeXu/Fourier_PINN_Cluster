@@ -31,7 +31,7 @@ class Parameters:
 
 
 class TrainArgs:
-    iteration = 50000  # 10000 -> 50000
+    iteration = 150000  # 10000 -> 50000 -> 100000
     epoch_step = 500  # 1000
     test_step = epoch_step * 10
     initial_lr = 0.001

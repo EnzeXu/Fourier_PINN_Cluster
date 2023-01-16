@@ -2,6 +2,8 @@ import pickle
 import numpy as np
 import torch
 
+from utils import get_now_string
+
 def one_unit(string):
     skip_words = ["init"]
     if "=" not in string:
@@ -14,15 +16,16 @@ def one_unit(string):
 
 
 def one_time_build_from_record():
+    time_string = get_now_string()
     with open("test/record.txt", "r") as f:
         lines = f.readlines()
-    with open("test/record.csv", "w") as f:
+    with open("test/record_{}.csv".format(time_string), "w") as f:
         for one_line in lines:
             parts = one_line.split()
             for one_part in parts:
                 flag, part_name, part_val = one_unit(one_part)
                 if flag:
-                    f.write("{},".format(part_val))
+                    f.write("{}, ".format(part_val))
             f.write("\n")
 
 
