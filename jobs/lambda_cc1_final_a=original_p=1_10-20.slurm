@@ -1,10 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name="lambda_cc1_final_a=original_p=1"
 #SBATCH --partition=gpu
-#SBATCH --constraint=cascade
 #SBATCH --nodes=1
 #SBATCH --time=2-00:00:00
-#SBATCH --gres=gpu:1
 #SBATCH --mem=8GB
 #SBATCH --ntasks-per-node=8
 #SBATCH --mail-user=xue20@wfu.edu

@@ -90,7 +90,7 @@ def draw_paper_figure_loss(**kwargs):
         os.makedirs(save_folder)
     save_loss_nmse_path = "{}/nmse.png".format(save_folder)
 
-    plt.figure(figsize=(12, 7))
+    plt.figure(figsize=(12, 6))
     mask = np.asarray([mask_gap * item for item in range(epoch_max // mask_gap)])
 
     x = None
@@ -113,9 +113,10 @@ def draw_paper_figure_loss(**kwargs):
         y_min = np.min(ys, axis=0)[mask]
         # y_max = y_mean + y_std
         # y_min = y_mean - y_std
-        y_mean = np.log10(y_mean)
-        y_max = np.log10(y_max)
-        y_min = np.log10(y_min)
+        if model_name_short != "Turing":
+            y_mean = np.log10(y_mean)
+            y_max = np.log10(y_max)
+            y_min = np.log10(y_min)
         # print(y_mean[:10])
         # print(y_max[:10])
         # print(y_min[:10])
@@ -201,13 +202,14 @@ def draw_paper_figure_best(**kwargs):
         #     line_style_list=["solid"] * config.prob_dim + ["dashed"] * config.prob_dim,
         #     legend_list=[]
         # )
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(12, 6))
         for j in range(len(y)):
             plt.plot(x, y[j], linewidth=2, c=default_best_color_list[:2 * config.prob_dim][j],
                      linestyle=(["solid"] * config.prob_dim + ["dashed"] * config.prob_dim)[j],
                      label=show_legend[j],
                      )
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=fontsize)
+        plt.xlabel("Time", fontsize=20)
         plt.tick_params(labelsize=20)
         plt.tight_layout()
         plt.savefig(best_save_path, dpi=500)
@@ -261,9 +263,9 @@ def draw_paper_figure_best_turing(**kwargs):
         print(y_predict.shape, y_truth.shape)
         u_last = y_predict[:, :, 0]
         v_last = y_predict[:, :, 1]
-        u_last_true = y_truth[:, :, 0]
-        v_last_true = y_truth[:, :, 1]
-        m = MultiSubplotDraw(row=2, col=2, fig_size=(8, 8), tight_layout_flag=True, show_flag=False, save_flag=True, save_path=best_save_path, save_dpi=500)
+        # u_last_true = y_truth[:, :, 0]
+        # v_last_true = y_truth[:, :, 1]
+        m = MultiSubplotDraw(row=1, col=2, fig_size=(12, 6), tight_layout_flag=True, show_flag=False, save_flag=True, save_path=best_save_path, save_dpi=500)
         m.add_subplot_turing(
             matrix=u_last,
             v_max=u_last.max(),  # u_last_true.max(),
@@ -292,34 +294,34 @@ def draw_paper_figure_best_turing(**kwargs):
             y_ticks=range(0, 30, 5),
             # fig_title="{}_{}_V_pred_epoch={}".format(self.config.model_name, self.time_string, self.epoch_tmp)
         )
-        m.add_subplot_turing(
-            matrix=u_last_true,
-            v_max=u_last_true.max(),
-            v_min=u_last_true.min(),
-            fig_title_size=20,
-            number_label_size=20,
-            colorbar=False,
-            fig_title="U (truth)",
-            x_ticks_set_flag=True,
-            y_ticks_set_flag=True,
-            x_ticks=range(0, 30, 5),
-            y_ticks=range(0, 30, 5),
-            # fig_title="{}_{}_U_true".format(self.config.model_name, self.time_string)
-        )
-        m.add_subplot_turing(
-            matrix=v_last_true,
-            v_max=v_last_true.max(),
-            v_min=v_last_true.min(),
-            fig_title_size=20,
-            number_label_size=20,
-            colorbar=False,
-            fig_title="V (truth)",
-            x_ticks_set_flag=True,
-            y_ticks_set_flag=True,
-            x_ticks=range(0, 30, 5),
-            y_ticks=range(0, 30, 5),
-            # fig_title="{}_{}_V_true".format(self.config.model_name, self.time_string)
-        )
+        # m.add_subplot_turing(
+        #     matrix=u_last_true,
+        #     v_max=u_last_true.max(),
+        #     v_min=u_last_true.min(),
+        #     fig_title_size=20,
+        #     number_label_size=20,
+        #     colorbar=False,
+        #     fig_title="U (truth)",
+        #     x_ticks_set_flag=True,
+        #     y_ticks_set_flag=True,
+        #     x_ticks=range(0, 30, 5),
+        #     y_ticks=range(0, 30, 5),
+        #     # fig_title="{}_{}_U_true".format(self.config.model_name, self.time_string)
+        # )
+        # m.add_subplot_turing(
+        #     matrix=v_last_true,
+        #     v_max=v_last_true.max(),
+        #     v_min=v_last_true.min(),
+        #     fig_title_size=20,
+        #     number_label_size=20,
+        #     colorbar=False,
+        #     fig_title="V (truth)",
+        #     x_ticks_set_flag=True,
+        #     y_ticks_set_flag=True,
+        #     x_ticks=range(0, 30, 5),
+        #     y_ticks=range(0, 30, 5),
+        #     # fig_title="{}_{}_V_true".format(self.config.model_name, self.time_string)
+        # )
         m.draw()
 
 def one_time_plot_sir_best():
@@ -411,12 +413,14 @@ def one_time_plot_turing_best():
     )
 
 def one_time_plot_sir():
+    from model_SIR_Lambda import Config
     model_name_short = "SIR"
+    time_string = get_now_string()
     draw_paper_figure_loss(
         timestring_dict={
-            "PINN": ["20221229_143735", "20221229_144457", "20221229_145231", "20221229_145959", "20221229_152210", "20221229_152941"],
-            "FNN": ["20221229_143214", "20221229_144129", "20221229_145111", "20221229_150059", "20221229_151040", "20221229_152040", "20221229_153022", "20221229_153948", "20221229_154852"],
-            "SB-FNN(A)": ["20221229_143657", "20221229_145101", "20221229_150514", "20221229_151911", "20221229_153320", "20221229_154726", "20221229_160123", "20221229_161517", "20221229_162909"],
+            "PINN": ["20230113_044709_702458", "20230113_050615_410338", "20230113_052520_287366", "20230113_054353_025943", "20230113_060252_533113", "20230113_062138_780026", "20230113_064057_939906", "20230113_065942_762433", "20230113_071837_172933", "20230113_073717_777907"],
+            "FNN": ["20230113_044709_572369", "20230113_051132_251255", "20230113_053631_684393", "20230113_060128_837339", "20230113_062648_579243", "20230113_065116_747622", "20230113_071609_222132", "20230113_074112_596632", "20230113_080615_761453", "20230113_083124_455906"],
+            "SB-FNN(A)": ["20230113_044709_441633", "20230113_052333_666996", "20230113_055945_709957", "20230113_063546_830813", "20230113_071153_026599", "20230113_074756_116466", "20230113_082338_234823", "20230113_085932_306269", "20230113_093553_230438", "20230113_101153_578230"],
         },
         info_path_format_dict={
             "PINN": "./saves/train/{0}_PINN_Lambda_{{0}}/{0}_PINN_Lambda_{{0}}_info.npy".format(model_name_short),
@@ -424,22 +428,53 @@ def one_time_plot_sir():
             "SB-FNN(A)": "./saves/train/{0}_Fourier_Lambda_{{0}}/{0}_Fourier_Lambda_{{0}}_info.npy".format(model_name_short),
         },
         model_name_short=model_name_short,
-        kernel_size=2000,
+        kernel_size=5000,
         mask_gap=1,
-        epoch_max=20000,
-        y_ticks=[-6.0 + 1 * item for item in range(4)],
-        ylim=[-6.5, -4.5],
+        epoch_max=50000,
+        y_ticks=[-7.0 + 1 * item for item in range(8)],
+        ylim=[-7.5, -0.5],
         y_ticks_format="$10^{%d}$",
         ncol=3,
+        timestring=time_string,
+    )
+    draw_paper_figure_best(
+        timestring_dict={
+            "PINN": ["20230113_044709_702458", "20230113_050615_410338", "20230113_052520_287366",
+                     "20230113_054353_025943", "20230113_060252_533113", "20230113_062138_780026",
+                     "20230113_064057_939906", "20230113_065942_762433", "20230113_071837_172933",
+                     "20230113_073717_777907"],
+            "FNN": ["20230113_044709_572369", "20230113_051132_251255", "20230113_053631_684393",
+                    "20230113_060128_837339", "20230113_062648_579243", "20230113_065116_747622",
+                    "20230113_071609_222132", "20230113_074112_596632", "20230113_080615_761453",
+                    "20230113_083124_455906"],
+            "SB-FNN(A)": ["20230113_044709_441633", "20230113_052333_666996", "20230113_055945_709957",
+                          "20230113_063546_830813", "20230113_071153_026599", "20230113_074756_116466",
+                          "20230113_082338_234823", "20230113_085932_306269", "20230113_093553_230438",
+                          "20230113_101153_578230"],
+        },
+        info_path_format_dict={
+            "PINN": "./saves/train/{0}_PINN_Lambda_{{0}}/{0}_PINN_Lambda_{{0}}_info.npy".format(model_name_short),
+            "FNN": "./saves/train/{0}_Fourier_Lambda_{{0}}/{0}_Fourier_Lambda_{{0}}_info.npy".format(model_name_short),
+            "SB-FNN(A)": "./saves/train/{0}_Fourier_Lambda_{{0}}/{0}_Fourier_Lambda_{{0}}_info.npy".format(
+                model_name_short),
+        },
+        model_name_short=model_name_short,
+        config=Config(),
+        loss_average_length=5000,
+        fontsize=20,
+        timestring=time_string,
+        show_legend=["$\hat{{{}}}$".format(item) for item in ["S", "I", "R"]] + ["${}$".format(item) for item in ["S", "I", "R"]]
     )
 
 def one_time_plot_turing():
+    from model_Turing_Lambda import Config
     model_name_short = "Turing"
+    time_string = get_now_string()
     draw_paper_figure_loss(
         timestring_dict={
-            "PINN": ["20221227_205000", "20221228_005108", "20221228_045255", "20221228_085553", "20221228_125128", "20221228_164823", "20221228_204721", "20221229_004407", "20221229_044122", "20221229_084042"],
-            "FNN": ["20221228_001505", "20221228_002600", "20221228_003700", "20221228_004759", "20221228_005859", "20221228_010957", "20221228_012054", "20221228_013153", "20221228_014252", "20221228_015351"],
-            "SB-FNN(A)": ["20221228_001505", "20221228_003145", "20221228_004826", "20221228_010505", "20221228_012144", "20221228_013823", "20221228_015504", "20221228_021143", "20221228_022823", "20221228_024501"],
+            "PINN": ["20230113_012543_502301", "20230113_152941_190182", "20230114_050659_463810"],
+            "FNN": ["20230113_012543_388054", "20230113_020130_943114", "20230113_023725_022232", "20230113_031314_069539", "20230113_034902_802106", "20230113_042449_490497", "20230113_050033_762260", "20230113_053627_898635", "20230113_061223_021126", "20230113_064812_984827"],
+            "SB-FNN(A)": ["20230113_044715_851325", "20230113_054236_639695", "20230113_063806_446492", "20230113_073328_129274", "20230113_082852_515273", "20230113_092420_414350", "20230113_101949_559684", "20230113_111508_182022", "20230113_121028_140717", "20230113_130547_991195"],
         },
         info_path_format_dict={
             "PINN": "./saves/train/{0}_PINN_Lambda_{{0}}/{0}_PINN_Lambda_{{0}}_info.npy".format(model_name_short),
@@ -454,6 +489,31 @@ def one_time_plot_turing():
         ylim=[-1.25, -0.65],
         y_ticks_format="$10^{%.1f}$",
         ncol=3,
+        timestring=time_string,
+    )
+    draw_paper_figure_best_turing(
+        timestring_dict={
+            "PINN": ["20230113_012543_502301", "20230113_152941_190182", "20230114_050659_463810"],
+            "FNN": ["20230113_012543_388054", "20230113_020130_943114", "20230113_023725_022232",
+                    "20230113_031314_069539", "20230113_034902_802106", "20230113_042449_490497",
+                    "20230113_050033_762260", "20230113_053627_898635", "20230113_061223_021126",
+                    "20230113_064812_984827"],
+            "SB-FNN(A)": ["20230113_044715_851325", "20230113_054236_639695", "20230113_063806_446492",
+                          "20230113_073328_129274", "20230113_082852_515273", "20230113_092420_414350",
+                          "20230113_101949_559684", "20230113_111508_182022", "20230113_121028_140717",
+                          "20230113_130547_991195"],
+        },
+        info_path_format_dict={
+            "PINN": "./saves/train/{0}_PINN_Lambda_{{0}}/{0}_PINN_Lambda_{{0}}_info.npy".format(model_name_short),
+            "FNN": "./saves/train/{0}_Fourier_Lambda_{{0}}/{0}_Fourier_Lambda_{{0}}_info.npy".format(model_name_short),
+            "SB-FNN(A)": "./saves/train/{0}_Fourier_Lambda_{{0}}/{0}_Fourier_Lambda_{{0}}_info.npy".format(
+                model_name_short),
+        },
+        model_name_short=model_name_short,
+        config=Config(),
+        loss_average_length=1000,
+        fontsize=20,
+        timestring=time_string,
     )
 
 def one_time_plot_rep():
@@ -505,7 +565,7 @@ def one_time_plot_rep():
         loss_average_length=5000,
         fontsize=20,
         timestring=time_string,
-        show_legend=["$\widehat{{{}}}$".format(item) for item in ["M_{lacI}", "M_{tetR}", "M_{cI}", "P_{cI}", "P_{lacI}", "P_{tetR}"]] + ["${}$".format(item) for item in ["M_{lacI}", "M_{tetR}", "M_{cI}", "P_{cI}", "P_{lacI}", "P_{tetR}"]]
+        show_legend=["$\hat{{{}}}$".format(item) for item in ["M_{lacI}", "M_{tetR}", "M_{cI}", "P_{cI}", "P_{lacI}", "P_{tetR}"]] + ["${}$".format(item) for item in ["M_{lacI}", "M_{tetR}", "M_{cI}", "P_{cI}", "P_{lacI}", "P_{tetR}"]]
     )
 
 def one_time_plot_cc1():
@@ -560,65 +620,39 @@ def one_time_plot_cc1():
         loss_average_length=1000,
         fontsize=20,
         timestring=time_string,
-        show_legend=["$\widehat{{{}}}$".format(item) for item in ["MPF", "Kin_{p}", "APC_{p}"]] + ["${}$".format(item) for item in ["MPF", "Kin_{p}", "APC_{p}"]],
+        show_legend=["$\hat{{{}}}$".format(item) for item in ["MPF", "Kin_{p}", "APC_{p}"]] + ["${}$".format(item) for item in ["MPF", "Kin_{p}", "APC_{p}"]],
     )
 
 str0 = """
- 20230114_104738_082733
- 20230114_110633_738392
- 20230114_112534_011307
- 20230114_114419_776550
- 20230114_120321_408292
- 20230114_122211_757770
- 20230114_124112_930914
- 20230114_125956_718534
- 20230114_131928_319098
- 20230114_133828_281110
- 20230114_105828_462987
- 20230114_111836_784358
- 20230114_113847_415229
- 20230114_115906_425832
- 20230114_121916_339738
- 20230114_123910_001294
- 20230114_130014_384850
- 20230114_132027_156401
- 20230114_134018_860625
- 20230114_140047_470748
+ 20230113_012543_502301
+ 20230113_152941_190182
+ 20230114_050659_463810
 """
 
 str1 = """
- 20230113_150114_122814
- 20230113_170207_774184
- 20230113_173218_621612
- 20230113_180213_136149
- 20230113_153824_742465
- 20230113_174035_034880
- 20230113_181000_331963
- 20230113_184102_918462
- 20230113_191619_207010
- 20230113_194800_328890
- 20230113_190234_884004
- 20230113_200256_223610
- 20230113_210323_501140
- 20230113_213341_501826
- 20230113_233409_823585
+ 20230113_012543_388054
+ 20230113_020130_943114
+ 20230113_023725_022232
+ 20230113_031314_069539
+ 20230113_034902_802106
+ 20230113_042449_490497
+ 20230113_050033_762260
+ 20230113_053627_898635
+ 20230113_061223_021126
+ 20230113_064812_984827
 """
 
 str2 = """
- 20230114_042652_455355
- 20230114_051054_533232
- 20230114_014100_517379
- 20230114_043138_706828
- 20230114_072151_686295
- 20230114_045400_054312
- 20230114_053845_970724
- 20230114_070401_975744
- 20230114_035946_702151
- 20230114_044917_964045
- 20230114_062205_601996
- 20230114_070728_045072
- 20230114_083957_451761
- 20230114_101241_352682
+ 20230113_044715_851325
+ 20230113_054236_639695
+ 20230113_063806_446492
+ 20230113_073328_129274
+ 20230113_082852_515273
+ 20230113_092420_414350
+ 20230113_101949_559684
+ 20230113_111508_182022
+ 20230113_121028_140717
+ 20230113_130547_991195
 """
 
 str3 = """
@@ -666,9 +700,9 @@ if __name__ == "__main__":
     # one_time_plot_sir_best()
     # one_time_plot_rep_best()
     # one_time_plot_cc1_best()
-    one_time_plot_cc1()
+    # one_time_plot_cc1()
     # one_time_plot_rep()
-    # one_time_plot_turing()
+    one_time_plot_turing()
     # one_time_plot_sir()
     # a = np.asarray([[1.0,2,3,4,7], [2,3,4,5,6], [3,4,5,6,7], [3,4,5,6,7], [3,4,5,6,5], [4,5,6,7,8], [5,6,7,8,9]])
     # print(MyNumpy.max(a, 1))

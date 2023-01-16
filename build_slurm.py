@@ -17,13 +17,12 @@ source /deac/csc/chenGrp/software/tensorflow/bin/activate
 python {1} {2}
 """
 
+
 draft_head = """#!/bin/bash
 #SBATCH --job-name="{0}"
 #SBATCH --partition=gpu
-#SBATCH --constraint=cascade
 #SBATCH --nodes=1
 #SBATCH --time=2-00:00:00
-#SBATCH --gres=gpu:1
 #SBATCH --mem=8GB
 #SBATCH --ntasks-per-node=8
 #SBATCH --mail-user=xue20@wfu.edu
@@ -34,6 +33,24 @@ draft_head = """#!/bin/bash
 echo $(pwd) > "jobs/pwd.txt"
 source /deac/csc/chenGrp/software/tensorflow/bin/activate
 """
+
+# draft_head = """#!/bin/bash
+# #SBATCH --job-name="{0}"
+# #SBATCH --partition=gpu
+# #SBATCH --constraint=cascade
+# #SBATCH --nodes=1
+# #SBATCH --time=2-00:00:00
+# #SBATCH --gres=gpu:1
+# #SBATCH --mem=8GB
+# #SBATCH --ntasks-per-node=8
+# #SBATCH --mail-user=xue20@wfu.edu
+# #SBATCH --mail-type=BEGIN,END,FAIL
+# #SBATCH --output="jobs_oe/{0}-%j.o"
+# #SBATCH --error="jobs_oe/{0}-%j.e"
+#
+# echo $(pwd) > "jobs/pwd.txt"
+# source /deac/csc/chenGrp/software/tensorflow/bin/activate
+# """
 
 draft_normal = "python {0} {1}\n"
 
@@ -387,8 +404,8 @@ if __name__ == "__main__":
     # one_time_build_cc1_lambda()
     # one_time_build_sir_lambda_final()
     # one_time_build_rep_lambda_final()
-    # one_time_build_cc1_lambda_final()
-    one_time_build_pp_lambda_final()
+    one_time_build_cc1_lambda_final()
+    # one_time_build_pp_lambda_final()
     # one_time_build_turing_lambda_final()
 
     pass
