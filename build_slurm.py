@@ -18,26 +18,9 @@ python {1} {2}
 """
 
 
-draft_head = """#!/bin/bash
-#SBATCH --job-name="{0}"
-#SBATCH --partition=gpu
-#SBATCH --nodes=1
-#SBATCH --time=2-00:00:00
-#SBATCH --mem=8GB
-#SBATCH --ntasks-per-node=8
-#SBATCH --mail-user=xue20@wfu.edu
-#SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --output="jobs_oe/{0}-%j.o"
-#SBATCH --error="jobs_oe/{0}-%j.e"
-
-echo $(pwd) > "jobs/pwd.txt"
-source /deac/csc/chenGrp/software/tensorflow/bin/activate
-"""
-
 # draft_head = """#!/bin/bash
 # #SBATCH --job-name="{0}"
 # #SBATCH --partition=gpu
-# #SBATCH --constraint=cascade
 # #SBATCH --nodes=1
 # #SBATCH --time=2-00:00:00
 # #SBATCH --gres=gpu:1
@@ -47,6 +30,24 @@ source /deac/csc/chenGrp/software/tensorflow/bin/activate
 # #SBATCH --mail-type=BEGIN,END,FAIL
 # #SBATCH --output="jobs_oe/{0}-%j.o"
 # #SBATCH --error="jobs_oe/{0}-%j.e"
+#
+# echo $(pwd) > "jobs/pwd.txt"
+# source /deac/csc/chenGrp/software/tensorflow/bin/activate
+# """
+
+draft_head = """#!/bin/bash
+#SBATCH --job-name="{0}"
+#SBATCH --partition=gpu
+#SBATCH --constraint=cascade
+#SBATCH --nodes=1
+#SBATCH --time=2-00:00:00
+#SBATCH --gres=gpu:1
+#SBATCH --mem=8GB
+#SBATCH --ntasks-per-node=8
+#SBATCH --mail-user=xue20@wfu.edu
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --output="jobs_oe/{0}-%j.o"
+#SBATCH --error="jobs_oe/{0}-%j.e"
 #
 # echo $(pwd) > "jobs/pwd.txt"
 # source /deac/csc/chenGrp/software/tensorflow/bin/activate
