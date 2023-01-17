@@ -200,6 +200,29 @@ def one_time_build_rep_lambda_final():
             "lambda_rep_final_a={}_p={}_{{}}".format(one_plan[0], one_plan[1]) if not one_plan[2] else "lambda_rep_final_pinn_{}",
         )
 
+def one_time_build_toggle_lambda_final():
+    plans = [
+        # activation / penalty / pinn
+        ["plan3", 0, 1],
+        ["plan3", 0, 0],
+        ["plan3", 1, 0],
+        ["original", 0, 0],
+        ["original", 1, 0],
+    ]
+    module_name_short = "Toggle"
+    dic = dict()
+    dic["main_path"] = "."
+    dic["layer"] = 4
+    for one_plan in plans:
+        dic["activation"] = one_plan[0]
+        dic["penalty"] = one_plan[1]
+        dic["pinn"] = one_plan[2]
+        one_slurm_multi_seed(
+            "lambda_{}_final_a={}_p={}".format(module_name_short.lower(), one_plan[0], one_plan[1]) if not one_plan[2] else "lambda_{}_final_pinn".format(module_name_short.lower()),
+            "model_{}_Lambda.py".format(module_name_short), dic, 0, 10,
+            "lambda_{}_final_a={}_p={}_{{}}".format(module_name_short.lower(), one_plan[0], one_plan[1]) if not one_plan[2] else "lambda_{}_final_pinn_{{}}".format(module_name_short.lower()),
+        )
+
 # def one_time_build_cc1_lambda():
 #     plans = [
 #         ["none", 0, 5],
@@ -405,7 +428,8 @@ if __name__ == "__main__":
     # one_time_build_cc1_lambda()
     # one_time_build_sir_lambda_final()
     # one_time_build_rep_lambda_final()
-    one_time_build_cc1_lambda_final()
+    # one_time_build_cc1_lambda_final()
+    one_time_build_toggle_lambda_final()
     # one_time_build_pp_lambda_final()
     # one_time_build_turing_lambda_final()
 
