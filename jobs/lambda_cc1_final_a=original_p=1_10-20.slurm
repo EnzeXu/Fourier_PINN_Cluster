@@ -11,10 +11,10 @@
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --output="jobs_oe/lambda_cc1_final_a=original_p=1-%j.o"
 #SBATCH --error="jobs_oe/lambda_cc1_final_a=original_p=1-%j.e"
-#
-# echo $(pwd) > "jobs/pwd.txt"
-# source /deac/csc/chenGrp/software/tensorflow/bin/activate
-# python model_CC1_Lambda.py --main_path . --layer 4 --activation original --penalty 1 --pinn 0 --seed 10 --log_path logs/lambda_cc1_final_a=original_p=1_10.txt
+
+echo $(pwd) > "jobs/pwd.txt"
+source /deac/csc/chenGrp/software/tensorflow/bin/activate
+python model_CC1_Lambda.py --main_path . --layer 4 --activation original --penalty 1 --pinn 0 --seed 10 --log_path logs/lambda_cc1_final_a=original_p=1_10.txt
 python model_CC1_Lambda.py --main_path . --layer 4 --activation original --penalty 1 --pinn 0 --seed 11 --log_path logs/lambda_cc1_final_a=original_p=1_11.txt
 python model_CC1_Lambda.py --main_path . --layer 4 --activation original --penalty 1 --pinn 0 --seed 12 --log_path logs/lambda_cc1_final_a=original_p=1_12.txt
 python model_CC1_Lambda.py --main_path . --layer 4 --activation original --penalty 1 --pinn 0 --seed 13 --log_path logs/lambda_cc1_final_a=original_p=1_13.txt

@@ -48,10 +48,10 @@ draft_head = """#!/bin/bash
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --output="jobs_oe/{0}-%j.o"
 #SBATCH --error="jobs_oe/{0}-%j.e"
-#
-# echo $(pwd) > "jobs/pwd.txt"
-# source /deac/csc/chenGrp/software/tensorflow/bin/activate
-# """
+
+echo $(pwd) > "jobs/pwd.txt"
+source /deac/csc/chenGrp/software/tensorflow/bin/activate
+"""
 
 draft_normal = "python {0} {1}\n"
 
