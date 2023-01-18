@@ -53,6 +53,22 @@ echo $(pwd) > "jobs/pwd.txt"
 source /deac/csc/chenGrp/software/tensorflow/bin/activate
 """
 
+draft_head_cpu = """#!/bin/bash
+#SBATCH --job-name="{0}"
+#SBATCH --partition=medium
+#SBATCH --nodes=1
+#SBATCH --time=2-00:00:00
+#SBATCH --mem=8GB
+#SBATCH --ntasks-per-node=8
+#SBATCH --mail-user=xue20@wfu.edu
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --output="jobs_oe/{0}-%j.o"
+#SBATCH --error="jobs_oe/{0}-%j.e"
+
+echo $(pwd) > "jobs/pwd.txt"
+source /deac/csc/chenGrp/software/tensorflow/bin/activate
+"""
+
 draft_normal = "python {0} {1}\n"
 
 draft_cpu = """#!/bin/bash
@@ -83,11 +99,14 @@ def one_slurm(job_name, python_name, kwargs, draft=draft):
             " ".join(["--{0} {1}".format(one_key, kwargs[one_key]) for one_key in kwargs])
         ))
 
-def one_slurm_multi_seed(job_name, python_name, kwargs, seed_start, seed_end, log_path_base, draft_head=draft_head, draft_normal=draft_normal):
+def one_slurm_multi_seed(job_name, python_name, kwargs, seed_start, seed_end, log_path_base, draft_head=draft_head, draft_normal=draft_normal, cpu=False):
     full_path = "jobs/{}_{}-{}.slurm".format(job_name, seed_start, seed_end)
+    draft_used = draft_head
+    if cpu:
+        draft_used = draft_head_cpu
     print("build {}".format(full_path))
     with open(full_path, "w") as f:
-        f.write(draft_head.format(
+        f.write(draft_used.format(
             job_name
         ))
         for one_seed in range(seed_start, seed_end):
@@ -221,6 +240,7 @@ def one_time_build_toggle_lambda_final():
             "lambda_{}_final_a={}_p={}".format(module_name_short.lower(), one_plan[0], one_plan[1]) if not one_plan[2] else "lambda_{}_final_pinn".format(module_name_short.lower()),
             "model_{}_Lambda.py".format(module_name_short), dic, 0, 10,
             "lambda_{}_final_a={}_p={}_{{}}".format(module_name_short.lower(), one_plan[0], one_plan[1]) if not one_plan[2] else "lambda_{}_final_pinn_{{}}".format(module_name_short.lower()),
+            cpu=True,
         )
 
 # def one_time_build_cc1_lambda():
@@ -350,77 +370,77 @@ def one_time_build_pp_lambda_final():
                 2] else "lambda_pp_final_pinn_{}",
         )
 
-def one_time_build_pp_zeta():
-    plans = [
-        ["plan1", -1],
-        ["plan2", 1],
-        ["plan2", 2],
-        ["plan2", 3],
-        ["plan2", 4],
-        ["plan2", 5],
-        ["plan3", -1],
-    ]
-    dic = dict()
-    dic["main_path"] = "."
-    dic["layer"] = 4
-    for one_plan in plans:
-        for seed in range(2):
-            dic["log_path"] = "logs/{}.txt".format(
-                "zeta_{}{}_{}".format(one_plan[0], "-{}".format(one_plan[1]) if one_plan[0] == "plan2" else "", seed))
-            dic["seed"] = seed
-            dic["activation"] = one_plan[0]
-            dic["activation_id"] = one_plan[1]
-            one_slurm(
-                "zeta_{}{}_{}".format(one_plan[0], "-{}".format(one_plan[1]) if one_plan[0] == "plan2" else "", seed),
-                "model_PP_Zeta.py", dic)
-
-def one_time_build_sir_zeta():
-    plans = [
-        ["plan1", -1],
-        ["plan2", 1],
-        ["plan2", 2],
-        ["plan2", 3],
-        ["plan2", 4],
-        ["plan2", 5],
-        ["plan3", -1],
-    ]
-    dic = dict()
-    dic["main_path"] = "."
-    dic["layer"] = 4
-    for one_plan in plans:
-        for seed in range(2):
-            dic["log_path"] = "logs/{}.txt".format(
-                "zeta_sir_{}{}_{}".format(one_plan[0], "-{}".format(one_plan[1]) if one_plan[0] == "plan2" else "", seed))
-            dic["seed"] = seed
-            dic["activation"] = one_plan[0]
-            dic["activation_id"] = one_plan[1]
-            one_slurm(
-                "zeta_sir_{}{}_{}".format(one_plan[0], "-{}".format(one_plan[1]) if one_plan[0] == "plan2" else "", seed),
-                "model_SIR_Zeta.py", dic, draft)
-
-def one_time_build_rep_zeta():
-    plans = [
-        ["plan1", -1],
-        ["plan2", 1],
-        ["plan2", 2],
-        ["plan2", 3],
-        ["plan2", 4],
-        ["plan2", 5],
-        ["plan3", -1],
-    ]
-    dic = dict()
-    dic["main_path"] = "."
-    dic["layer"] = 4
-    for one_plan in plans:
-        for seed in range(2):
-            dic["log_path"] = "logs/{}.txt".format(
-                "zeta_rep_{}{}_{}".format(one_plan[0], "-{}".format(one_plan[1]) if one_plan[0] == "plan2" else "", seed))
-            dic["seed"] = seed
-            dic["activation"] = one_plan[0]
-            dic["activation_id"] = one_plan[1]
-            one_slurm(
-                "zeta_rep_{}{}_{}".format(one_plan[0], "-{}".format(one_plan[1]) if one_plan[0] == "plan2" else "", seed),
-                "model_REP_Zeta.py", dic, draft)
+# def one_time_build_pp_zeta():
+#     plans = [
+#         ["plan1", -1],
+#         ["plan2", 1],
+#         ["plan2", 2],
+#         ["plan2", 3],
+#         ["plan2", 4],
+#         ["plan2", 5],
+#         ["plan3", -1],
+#     ]
+#     dic = dict()
+#     dic["main_path"] = "."
+#     dic["layer"] = 4
+#     for one_plan in plans:
+#         for seed in range(2):
+#             dic["log_path"] = "logs/{}.txt".format(
+#                 "zeta_{}{}_{}".format(one_plan[0], "-{}".format(one_plan[1]) if one_plan[0] == "plan2" else "", seed))
+#             dic["seed"] = seed
+#             dic["activation"] = one_plan[0]
+#             dic["activation_id"] = one_plan[1]
+#             one_slurm(
+#                 "zeta_{}{}_{}".format(one_plan[0], "-{}".format(one_plan[1]) if one_plan[0] == "plan2" else "", seed),
+#                 "model_PP_Zeta.py", dic)
+#
+# def one_time_build_sir_zeta():
+#     plans = [
+#         ["plan1", -1],
+#         ["plan2", 1],
+#         ["plan2", 2],
+#         ["plan2", 3],
+#         ["plan2", 4],
+#         ["plan2", 5],
+#         ["plan3", -1],
+#     ]
+#     dic = dict()
+#     dic["main_path"] = "."
+#     dic["layer"] = 4
+#     for one_plan in plans:
+#         for seed in range(2):
+#             dic["log_path"] = "logs/{}.txt".format(
+#                 "zeta_sir_{}{}_{}".format(one_plan[0], "-{}".format(one_plan[1]) if one_plan[0] == "plan2" else "", seed))
+#             dic["seed"] = seed
+#             dic["activation"] = one_plan[0]
+#             dic["activation_id"] = one_plan[1]
+#             one_slurm(
+#                 "zeta_sir_{}{}_{}".format(one_plan[0], "-{}".format(one_plan[1]) if one_plan[0] == "plan2" else "", seed),
+#                 "model_SIR_Zeta.py", dic, draft)
+#
+# def one_time_build_rep_zeta():
+#     plans = [
+#         ["plan1", -1],
+#         ["plan2", 1],
+#         ["plan2", 2],
+#         ["plan2", 3],
+#         ["plan2", 4],
+#         ["plan2", 5],
+#         ["plan3", -1],
+#     ]
+#     dic = dict()
+#     dic["main_path"] = "."
+#     dic["layer"] = 4
+#     for one_plan in plans:
+#         for seed in range(2):
+#             dic["log_path"] = "logs/{}.txt".format(
+#                 "zeta_rep_{}{}_{}".format(one_plan[0], "-{}".format(one_plan[1]) if one_plan[0] == "plan2" else "", seed))
+#             dic["seed"] = seed
+#             dic["activation"] = one_plan[0]
+#             dic["activation_id"] = one_plan[1]
+#             one_slurm(
+#                 "zeta_rep_{}{}_{}".format(one_plan[0], "-{}".format(one_plan[1]) if one_plan[0] == "plan2" else "", seed),
+#                 "model_REP_Zeta.py", dic, draft)
 
 if __name__ == "__main__":
     # one_time_build_rep_zeta()
