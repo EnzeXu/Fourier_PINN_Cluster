@@ -401,6 +401,8 @@ class MultiSubplotDraw:
         if y_ticks_set_flag:
             ax.set_yticks(y_ticks)
         ax.set_title(fig_title, fontsize=fig_title_size)
+        ax.set_xlabel("X", fontsize=number_label_size)
+        ax.set_ylabel("Y", fontsize=number_label_size)
         ax.invert_yaxis()
         if colorbar:
             plt.colorbar(im1, shrink=1)

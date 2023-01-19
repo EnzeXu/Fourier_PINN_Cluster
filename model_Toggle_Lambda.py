@@ -269,9 +269,9 @@ class FourierModel(nn.Module):
 
     #  MSE-loss of predicted value against truth
     def real_loss(self, y):
-        truth = torch.tensor(self.config.truth[:, :]).to(self.config.device)
-        real_loss_mse = self.criterion(y[0, :, :], truth)
-        real_loss_nmse = torch.mean(self.criterion_non_reduce(y[0, :, :], truth) / (truth ** 2))
+        truth = torch.tensor(self.config.truth[:, 1]).to(self.config.device)
+        real_loss_mse = self.criterion(y[0, :, 1], truth)
+        real_loss_nmse = torch.mean(self.criterion_non_reduce(y[0, :, 1], truth) / (truth ** 2))
         return real_loss_mse, real_loss_nmse
 
     def early_stop(self):
@@ -614,9 +614,9 @@ class PINNModel(nn.Module):
 
     #  MSE-loss of predicted value against truth
     def real_loss(self, y):
-        truth = torch.tensor(self.config.truth[:, :]).to(self.config.device)
-        real_loss_mse = self.criterion(y[0, :, :], truth)
-        real_loss_nmse = torch.mean(self.criterion_non_reduce(y[0, :, :], truth) / (truth ** 2))
+        truth = torch.tensor(self.config.truth[:, 1]).to(self.config.device)
+        real_loss_mse = self.criterion(y[0, :, 1], truth)
+        real_loss_nmse = torch.mean(self.criterion_non_reduce(y[0, :, 1], truth) / (truth ** 2))
         return real_loss_mse, real_loss_nmse
 
     def early_stop(self):
