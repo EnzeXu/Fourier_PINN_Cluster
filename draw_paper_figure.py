@@ -194,7 +194,7 @@ def draw_paper_figure_best(**kwargs):
         y_truth = np.swapaxes(best_info["y_truth"], 0, 1)
         y = np.concatenate([y_predict, y_truth], 0)
         x = config.t
-        # print(y.shape, y_predict.shape, y_truth.shape, x.shape)
+        print(y.shape, y_predict.shape, y_truth.shape, x.shape)
         # draw_two_dimension(
         #     y_lists=y,
         #     x_list=x,
@@ -632,36 +632,97 @@ def one_time_plot_cc1(time_string=None, all_flag=False):
         all_flag=all_flag,
     )
 
+def one_time_plot_toggle(time_string=None, all_flag=False):
+    from model_Toggle_Lambda import Config
+    model_name_short = "Toggle"
+    time_string = get_now_string() if not time_string else time_string
+    draw_paper_figure_loss(
+        timestring_dict={
+            "PINN": ["20230118_220841_363507", "20230118_220931_356850", "20230118_221021_991945", "20230118_221111_857457", "20230118_221201_995976", "20230118_221342_486961", "20230118_221432_561779", "20230118_221522_963537", "20230118_221613_274343"],
+            "FNN": ["20230118_214913_740028", "20230118_215108_544452", "20230118_215305_007363", "20230118_215458_109235", "20230118_215659_936018", "20230118_215902_102110", "20230118_220103_564349", "20230118_220306_616751", "20230118_220500_083379", "20230118_220654_987398"],
+            "SB-FNN": ["20230118_214911_492758", "20230118_215106_048802", "20230118_215301_284792", "20230118_215455_294749", "20230118_215649_366669", "20230118_215844_346283", "20230118_220038_746694", "20230118_220233_230957", "20230118_220427_843495", "20230118_220622_714664"],
+        },
+        info_path_format_dict={
+            "PINN": "./saves/train/{0}_PINN_Lambda_{{0}}/{0}_PINN_Lambda_{{0}}_info.npy".format(model_name_short),
+            "FNN": "./saves/train/{0}_Fourier_Lambda_{{0}}/{0}_Fourier_Lambda_{{0}}_info.npy".format(model_name_short),
+            "SB-FNN": "./saves/train/{0}_Fourier_Lambda_{{0}}/{0}_Fourier_Lambda_{{0}}_info.npy".format(model_name_short),
+        },
+        model_name_short=model_name_short,
+        kernel_size=200,
+        mask_gap=1,
+        epoch_max=2000,
+        y_ticks=None,#[-7.0 + 1 * item for item in range(8)],
+        ylim=None,#[-7.5, -0.5],
+        y_ticks_format="$10^{%d}$",
+        ncol=3,
+        timestring=time_string,
+        all_flag=all_flag,
+    )
+    draw_paper_figure_best(
+        timestring_dict={
+            "PINN": ["20230118_220841_363507", "20230118_220931_356850", "20230118_221021_991945",
+                     "20230118_221111_857457", "20230118_221201_995976", "20230118_221342_486961",
+                     "20230118_221432_561779", "20230118_221522_963537", "20230118_221613_274343"],
+            "FNN": ["20230118_214913_740028", "20230118_215108_544452", "20230118_215305_007363",
+                    "20230118_215458_109235", "20230118_215659_936018", "20230118_215902_102110",
+                    "20230118_220103_564349", "20230118_220306_616751", "20230118_220500_083379",
+                    "20230118_220654_987398"],
+            "SB-FNN": ["20230118_214911_492758", "20230118_215106_048802", "20230118_215301_284792",
+                       "20230118_215455_294749", "20230118_215649_366669", "20230118_215844_346283",
+                       "20230118_220038_746694", "20230118_220233_230957", "20230118_220427_843495",
+                       "20230118_220622_714664"],
+        },
+        info_path_format_dict={
+            "PINN": "./saves/train/{0}_PINN_Lambda_{{0}}/{0}_PINN_Lambda_{{0}}_info.npy".format(model_name_short),
+            "FNN": "./saves/train/{0}_Fourier_Lambda_{{0}}/{0}_Fourier_Lambda_{{0}}_info.npy".format(model_name_short),
+            "SB-FNN": "./saves/train/{0}_Fourier_Lambda_{{0}}/{0}_Fourier_Lambda_{{0}}_info.npy".format(
+                model_name_short),
+        },
+        model_name_short=model_name_short,
+        config=Config(),
+        loss_average_length=1000,
+        fontsize=30,
+        timestring=time_string,
+        show_legend=["$\hat{{{}}}$".format(item) for item in ["U", "V"]] + ["${}$".format(item) for item in ["U", "V"]],
+        all_flag=all_flag,
+    )
+
 str0 = """
- 20230113_012543_502301
- 20230113_152941_190182
- 20230114_050659_463810
+ 20230118_220841_363507
+ 20230118_220931_356850
+ 20230118_221021_991945
+ 20230118_221111_857457
+ 20230118_221201_995976
+ 20230118_221342_486961
+ 20230118_221432_561779
+ 20230118_221522_963537
+ 20230118_221613_274343
 """
 
 str1 = """
- 20230113_012543_388054
- 20230113_020130_943114
- 20230113_023725_022232
- 20230113_031314_069539
- 20230113_034902_802106
- 20230113_042449_490497
- 20230113_050033_762260
- 20230113_053627_898635
- 20230113_061223_021126
- 20230113_064812_984827
+ 20230118_214913_740028
+ 20230118_215108_544452
+ 20230118_215305_007363
+ 20230118_215458_109235
+ 20230118_215659_936018
+ 20230118_215902_102110
+ 20230118_220103_564349
+ 20230118_220306_616751
+ 20230118_220500_083379
+ 20230118_220654_987398
 """
 
 str2 = """
- 20230113_044715_851325
- 20230113_054236_639695
- 20230113_063806_446492
- 20230113_073328_129274
- 20230113_082852_515273
- 20230113_092420_414350
- 20230113_101949_559684
- 20230113_111508_182022
- 20230113_121028_140717
- 20230113_130547_991195
+ 20230118_214911_492758
+ 20230118_215106_048802
+ 20230118_215301_284792
+ 20230118_215455_294749
+ 20230118_215649_366669
+ 20230118_215844_346283
+ 20230118_220038_746694
+ 20230118_220233_230957
+ 20230118_220427_843495
+ 20230118_220622_714664
 """
 
 str3 = """
@@ -709,11 +770,14 @@ if __name__ == "__main__":
     # one_time_plot_sir_best()
     # one_time_plot_rep_best()
     # one_time_plot_cc1_best()
+
     time_string = get_now_string()
-    one_time_plot_cc1(time_string, all_flag=True)
-    one_time_plot_rep(time_string, all_flag=True)
-    one_time_plot_turing(time_string, all_flag=True)
-    one_time_plot_sir(time_string, all_flag=True)
+    # one_time_plot_cc1(time_string, all_flag=True)
+    # one_time_plot_rep(time_string, all_flag=True)
+    # one_time_plot_turing(time_string, all_flag=True)
+    # one_time_plot_sir(time_string, all_flag=True)
+    one_time_plot_toggle(time_string, all_flag=False)
+
     # a = np.asarray([[1.0,2,3,4,7], [2,3,4,5,6], [3,4,5,6,7], [3,4,5,6,7], [3,4,5,6,5], [4,5,6,7,8], [5,6,7,8,9]])
     # print(MyNumpy.max(a, 1))
     # a = np.asarray([1, 2, 3])
