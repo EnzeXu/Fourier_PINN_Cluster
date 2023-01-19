@@ -35,10 +35,10 @@ python {1} {2}
 # source /deac/csc/chenGrp/software/tensorflow/bin/activate
 # """
 
+# #SBATCH --constraint=cascade
 draft_head = """#!/bin/bash
 #SBATCH --job-name="{0}"
 #SBATCH --partition=gpu
-#SBATCH --constraint=cascade
 #SBATCH --nodes=1
 #SBATCH --time=2-00:00:00
 #SBATCH --gres=gpu:1
@@ -240,7 +240,7 @@ def one_time_build_toggle_lambda_final():
             "lambda_{}_final_a={}_p={}".format(module_name_short.lower(), one_plan[0], one_plan[1]) if not one_plan[2] else "lambda_{}_final_pinn".format(module_name_short.lower()),
             "model_{}_Lambda.py".format(module_name_short), dic, 0, 10,
             "lambda_{}_final_a={}_p={}_{{}}".format(module_name_short.lower(), one_plan[0], one_plan[1]) if not one_plan[2] else "lambda_{}_final_pinn_{{}}".format(module_name_short.lower()),
-            cpu=True,
+            cpu=False,
         )
 
 # def one_time_build_cc1_lambda():

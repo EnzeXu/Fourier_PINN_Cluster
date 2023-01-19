@@ -1,8 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name="lambda_toggle_final_a=plan3_p=1"
-#SBATCH --partition=medium
+#SBATCH --partition=gpu
 #SBATCH --nodes=1
 #SBATCH --time=2-00:00:00
+#SBATCH --gres=gpu:1
 #SBATCH --mem=8GB
 #SBATCH --ntasks-per-node=8
 #SBATCH --mail-user=xue20@wfu.edu
