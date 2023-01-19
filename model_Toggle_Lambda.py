@@ -21,10 +21,10 @@ class Parameters:
 
 
 class TrainArgs:
-    iteration = 11000  # 20000 -> 50000
+    iteration = 21000  # 20000 -> 50000
     epoch_step = 100  # 1000
     test_step = epoch_step * 10
-    initial_lr = 0.001
+    initial_lr = 0.01
     main_path = "."
     log_path = None
     early_stop = False
