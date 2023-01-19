@@ -361,9 +361,9 @@ class FourierModel(nn.Module):
 
         loss1 = self.criterion(y0_pred, y0_true)
         loss2 = 10 * (self.criterion(ode_n, zeros_nD))
-        loss3 = 1 * (self.criterion(torch.abs(y[0, :, 0] - 0), y[0, :, 0] - 0) + self.criterion(
-            torch.abs(0.65 - y[0, :, 0]), 0.65 - y[0, :, 0]) + self.criterion(torch.abs(y[0, :, 1] - 1.2), y[0, :, 1] - 1.2) + self.criterion(
-                    torch.abs(4 - y[0, :, 1]), 4 - y[0, :, 1]))
+        loss3 = 1 * (self.criterion(torch.abs(y[:, :, 0] - 0), y[:, :, 0] - 0) + self.criterion(
+            torch.abs(0.65 - y[:, :, 0]), 0.65 - y[:, :, 0]) + self.criterion(torch.abs(y[:, :, 1] - 1.2), y[:, :, 1] - 1.2) + self.criterion(
+                    torch.abs(4.0 - y[:, :, 1]), 4.0 - y[:, :, 1]))
         # loss4 = self.criterion(1 / u_0, pt_all_zeros_3)
         # loss5 = self.criterion(torch.abs(u_0 - v_0), u_0 - v_0)
 
@@ -681,10 +681,10 @@ class PINNModel(nn.Module):
 
         loss1 = self.criterion(y0_pred, y0_true)
         loss2 = 10 * (self.criterion(ode_n, zeros_nD))
-        loss3 = 1 * (self.criterion(torch.abs(y[0, :, 0] - 0), y[0, :, 0] - 0) + self.criterion(
-            torch.abs(0.65 - y[0, :, 0]), 0.65 - y[0, :, 0]) + self.criterion(torch.abs(y[0, :, 1] - 1.2),
-                                                                              y[0, :, 1] - 1.2) + self.criterion(
-            torch.abs(4 - y[0, :, 1]), 4 - y[0, :, 1]))
+        loss3 = 1 * (self.criterion(torch.abs(y[:, :, 0] - 0), y[:, :, 0] - 0) + self.criterion(
+            torch.abs(0.65 - y[:, :, 0]), 0.65 - y[:, :, 0]) + self.criterion(torch.abs(y[:, :, 1] - 1.2),
+                                                                              y[:, :, 1] - 1.2) + self.criterion(
+            torch.abs(4.0 - y[:, :, 1]), 4.0 - y[:, :, 1]))
         # loss4 = self.criterion(1 / u_0, pt_all_zeros_3)
         # loss5 = self.criterion(torch.abs(u_0 - v_0), u_0 - v_0)
 
