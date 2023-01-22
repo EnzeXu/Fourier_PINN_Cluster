@@ -141,8 +141,11 @@ class FourierModel(nn.Module):
         myprint("model_name = {}".format(self.config.model_name), self.config.args.log_path)
         myprint("time_string = {}".format(self.time_string), self.config.args.log_path)
         myprint("seed = {}".format(self.config.seed), self.config.args.log_path)
-        myprint("num_layer = {}".format(self.config.layer), self.config.args.log_path)
-        myprint("early stop: {}".format("On" if self.config.args.early_stop else "Off"), self.config.args.log_path)
+        myprint("cyclic = {}".format(self.config.cyclic), self.config.args.log_path)
+        myprint("stable = {}".format(self.config.stable), self.config.args.log_path)
+        myprint("derivative = {}".format(self.config.derivative), self.config.args.log_path)
+        myprint("activation = {}".format(self.config.activation), self.config.args.log_path)
+        # myprint("early stop: {}".format("On" if self.config.args.early_stop else "Off"), self.config.args.log_path)
         self.truth_loss()
 
     def truth_loss(self):
