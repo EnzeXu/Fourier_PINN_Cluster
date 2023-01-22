@@ -141,6 +141,7 @@ class FourierModel(nn.Module):
         myprint("model_name = {}".format(self.config.model_name), self.config.args.log_path)
         myprint("time_string = {}".format(self.time_string), self.config.args.log_path)
         myprint("seed = {}".format(self.config.seed), self.config.args.log_path)
+        myprint("initial_lr = {}".format(self.config.args.initial_lr), self.config.args.log_path)
         myprint("cyclic = {}".format(self.config.cyclic), self.config.args.log_path)
         myprint("stable = {}".format(self.config.stable), self.config.args.log_path)
         myprint("derivative = {}".format(self.config.derivative), self.config.args.log_path)
@@ -349,6 +350,7 @@ class FourierModel(nn.Module):
                         "loss_average_length": self.config.loss_average_length,
                         "epoch": self.config.args.iteration,
                         "epoch_stop": self.epoch_tmp,
+                        "initial_lr": self.config.args.initial_lr,
                         "loss_length": len(loss_record),
                         "loss": np.asarray(loss_record),
                         "real_loss_mse": np.asarray(real_loss_mse_record),
@@ -359,7 +361,6 @@ class FourierModel(nn.Module):
                         "y_shape": self.config.truth.shape,
                         # "config": self.config,
                         "time_string": self.time_string,
-                        "initial_lr": self.config.args.initial_lr,
                         "weights_raw": np.asarray([
                             self.activate_block1.activate_weights_raw.cpu().detach().numpy(),
                             self.activate_block2.activate_weights_raw.cpu().detach().numpy(),
@@ -464,8 +465,8 @@ class FourierModel(nn.Module):
 
 class PINNModel(FourierModel):
     def __init__(self, config):
+        config.model_name = config.model_name.replace("Fourier", "PINN")
         super(PINNModel, self).__init__(config)
-        self.config.model_name = self.config.model_name.replace("Fourier", "PINN")
 
         self.fc1 = nn.Sequential(
             nn.Linear(1, 50),
