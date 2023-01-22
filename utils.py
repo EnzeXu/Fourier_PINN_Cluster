@@ -1,6 +1,8 @@
 from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
+import torch.nn as nn
 import time
 
 
@@ -484,7 +486,158 @@ def draw_three_dimension(
 def get_now_string():
     return datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
+
+class ColorCandidate:
+    def __init__(self):
+        self.raw_rgb = [
+            (255, 0, 0),
+            (0, 0, 255),
+            (0, 128, 0),
+            (255, 127, 0),
+            (255, 0, 127),
+            (0, 128, 127),
+            (127, 128, 0),
+            (127, 0, 255),
+            (0, 64, 255),
+            (150, 10, 100),
+            (150, 50, 20),
+            (100, 75, 20),
+            (20, 75, 100),
+            (20, 50, 150),
+            (100, 10, 150),
+        ]
+
+    @staticmethod
+    def lighter(color_pair, rate=0.5):
+        return [int(color_pair[i] + (255 - color_pair[i]) * rate) for i in range(3)]
+
+    def get_color_list(self, n, light_rate=0.5):
+        assert n <= 15
+        return [self.encode(item) for item in self.raw_rgb[:n]] + [self.encode(self.lighter(item, light_rate)) for item in self.raw_rgb[:n]]
+
+    @staticmethod
+    def decode(color_str):
+        return [int("0x" + color_str[2 * i + 1: 2 * i + 3], 16) for i in range(3)]
+
+    @staticmethod
+    def encode(color_pair):
+        return "#" + "".join([str(hex(item))[2:].zfill(2) for item in color_pair])
+
+
+class SpectralConv1d(nn.Module):
+    def __init__(self, config):
+        super(SpectralConv1d, self).__init__()
+        self.config = config
+        self.in_channels = self.config.width
+        self.out_channels = self.config.width
+        self.scale = 1.0 / (self.in_channels * self.out_channels)
+        self.weights = nn.Parameter(
+            self.scale * torch.rand(self.in_channels, self.out_channels, self.config.modes, dtype=torch.cfloat))
+
+    def compl_mul1d(self, input, weights):
+        return torch.einsum("bix,iox->box", input, weights)
+
+    def forward(self, x):
+        batchsize = x.shape[0]
+        x_ft = torch.fft.rfft(x)
+        out_ft = torch.zeros(batchsize, self.out_channels, x.size(-1) // 2 + 1, dtype=torch.cfloat).to(
+            self.config.device)
+        out_ft[:, :, :self.config.modes] = self.compl_mul1d(x_ft[:, :, :self.config.modes], self.weights)
+        x = torch.fft.irfft(out_ft, n=x.size(-1))
+        return x
+
+
+class MySin(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.omega = nn.Parameter(torch.tensor([1.0]))
+
+    def forward(self, x):
+        return torch.sin(self.omega * x)
+
+
+class MySoftplus(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.beta = 1
+
+    def forward(self, x):
+        return nn.Softplus(beta=self.beta)(x)
+
+
+def activation_func(activation):
+    return nn.ModuleDict({
+        "relu": nn.ReLU(),
+        "gelu": nn.GELU(),
+        "leaky_relu": nn.LeakyReLU(negative_slope=0.01),
+        "selu": nn.SELU(),
+        "sin": MySin(),
+        "tanh": nn.Tanh(),
+        "softplus": MySoftplus(),
+        "elu": nn.ELU(),
+        "none": nn.Identity(),
+    })[activation]
+
+
+class ActivationBlock(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.config = config
+        self.activate_list = ["sin", "tanh", "relu", "gelu", "softplus", "elu"]
+        assert self.config.activation in self.activate_list + ["adaptive"]
+        self.activates = nn.ModuleList([activation_func(item).to(config.device) for item in self.activate_list])
+        self.activate_weights_raw = nn.Parameter(torch.rand(len(self.activate_list)).to(self.config.device), requires_grad=True)
+
+        self.my_sin = activation_func("sin")
+        self.my_softplus = activation_func("softplus")
+
+        self.activate_weights = my_softmax(self.activate_weights_raw)
+        # assert self.config.strategy in [0, 1, 2]
+        # if self.config.strategy == 0:
+        #     self.balance_weights = torch.tensor([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]).to(self.config.device)
+        # elif self.config.strategy == 1:
+        #     self.balance_weights = torch.tensor([10.0, 10.0, 1.0, 1.0, 1.0, 1.0]).to(self.config.device)
+        # else:
+        #     self.balance_weights = nn.Parameter(torch.tensor([10.0, 10.0, 1.0, 1.0, 1.0, 1.0]).to(self.config.device), requires_grad=True)
+        # print("self.activate_weights device = {}".format(self.activate_weights.device))
+
+    def forward(self, x):
+        if self.config.activation == "gelu":
+            return nn.functional.gelu(x)
+        elif self.config.activation == "relu":
+            return nn.functional.relu(x)
+        elif self.config.activation == "tanh":
+            return nn.functional.tanh(x)
+        elif self.config.activation == "elu":
+            return nn.functional.elu(x)
+        elif self.config.activation == "sin":
+            return self.my_sin(x)
+        elif self.config.activation == "softplus":
+            return self.my_softplus(x)
+        activation_res = 0.0
+        for i in range(len(self.activate_list)):
+            tmp_sum = self.activate_weights[i] * self.activates[i](x)
+            activation_res += tmp_sum
+        return activation_res
+
+
+def my_softmax(x):
+    exponent_vector = torch.exp(x)
+    sum_of_exponents = torch.sum(exponent_vector)
+    softmax_vector = exponent_vector / sum_of_exponents
+    return softmax_vector
+
+
 if __name__ == "__main__":
+
+    cc = ColorCandidate()
+    n = 15
+    color_list = cc.get_color_list(n, 0.7)
+    plt.figure(figsize=(16, 9))
+    for i in range(n * 2):
+        plt.plot(range(n * 2), [i if i < n else (i - n) + 0.3 for k in range(n * 2)], linewidth=4, c=color_list[i])
+    plt.show()
+    plt.close()
     # T = 10.0
     # T_unit = 1e-5
     # X_start = 6.0
@@ -567,17 +720,17 @@ if __name__ == "__main__":
     #     tight_layout_flag=True
     # )
 
-    x_list = range(10000)
-    y_lists = [
-        [0.005 * i + 10 for i in x_list],
-        [-0.005 * i - 30 for i in x_list],
-        # [0.008 * i - 10 for i in x_list],
-        # [-0.006 * i - 20 for i in x_list],
-        # [-0.001 * i - 5 for i in x_list],
-        # [-0.003 * i - 1 for i in x_list]
-    ]
-
-    m = MultiSubplotDraw(row=1, col=2, fig_size=(16, 7), tight_layout_flag=True)
+    # x_list = range(10000)
+    # y_lists = [
+    #     [0.005 * i + 10 for i in x_list],
+    #     [-0.005 * i - 30 for i in x_list],
+    #     # [0.008 * i - 10 for i in x_list],
+    #     # [-0.006 * i - 20 for i in x_list],
+    #     # [-0.001 * i - 5 for i in x_list],
+    #     # [-0.003 * i - 1 for i in x_list]
+    # ]
+    #
+    # m = MultiSubplotDraw(row=1, col=2, fig_size=(16, 7), tight_layout_flag=True)
 
     # truth = np.load("turing_truth.npy")
     # u = truth[-1, :, :, 0]
@@ -594,29 +747,29 @@ if __name__ == "__main__":
     #     v_min=v.min(),
     #     fig_title="v")
     # m.draw()
-
-    ax = m.add_subplot(
-        y_lists=y_lists,
-        x_list=x_list,
-        color_list=["yellow", "b"],
-        legend_list=["111", "222"],
-        line_style_list=["dashed", "solid"],
-        fig_title="hello world",
-        scatter_period=1000,
-        scatter_marker="X",
-        scatter_marker_size=100,
-        scatter_marker_color="red"
-    )
-    ax.set_title("fuck", fontsize=15)
-    m.add_subplot(
-        y_lists=y_lists,
-        x_list=x_list,
-        color_list=["g", "grey"],
-        legend_list=["111", "222"],
-        line_style_list=["dashed", "solid"],
-        fig_title="hello world")
-
-    m.draw()
+    #
+    # ax = m.add_subplot(
+    #     y_lists=y_lists,
+    #     x_list=x_list,
+    #     color_list=["yellow", "b"],
+    #     legend_list=["111", "222"],
+    #     line_style_list=["dashed", "solid"],
+    #     fig_title="hello world",
+    #     scatter_period=1000,
+    #     scatter_marker="X",
+    #     scatter_marker_size=100,
+    #     scatter_marker_color="red"
+    # )
+    # ax.set_title("fuck", fontsize=15)
+    # m.add_subplot(
+    #     y_lists=y_lists,
+    #     x_list=x_list,
+    #     color_list=["g", "grey"],
+    #     legend_list=["111", "222"],
+    #     line_style_list=["dashed", "solid"],
+    #     fig_title="hello world")
+    #
+    # m.draw()
 
 
     # color_list = ["red", "blue"]#, "green", "cyan", "black", "purple"]
