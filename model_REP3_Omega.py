@@ -15,8 +15,6 @@ from utils import *
 
 class Parameters:
     beta = 10
-    rho = 1e-6
-    gamma = 1
     n = 3
 
 
@@ -34,8 +32,8 @@ class TrainArgs:
 
 class Config:
     def __init__(self):
-        self.model_name = "REP6_Fourier_Omega"
-        self.curve_names = ["m_lacI", "m_tetR", "m_cI", "p_cI", "p_lacI", "p_tetR"]
+        self.model_name = "REP3_Fourier_Omega"
+        self.curve_names = ["p_cI", "p_lacI", "p_tetR"]
         self.params = Parameters
         self.args = TrainArgs
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -43,13 +41,13 @@ class Config:
         self.layer = -1
         self.pinn = 0
 
-        self.T = 20
+        self.T = 10
         self.T_unit = 1e-2
         self.T_N = int(self.T / self.T_unit)
 
         self.prob_dim = len(self.curve_names)
-        self.y0 = np.asarray([9.0983668, 0.90143886, 0.15871683, 7.2439572, 2.85342356, 0.15983291])
-        self.boundary_list = np.asarray([[0.0, 10.0], [0.0, 10.0], [0.0, 10.0], [0.0, 10.0], [0.0, 10.0], [0.0, 10.0]])
+        self.y0 = np.asarray([1.75241881, 4.77323806, 1.04664267])
+        self.boundary_list = np.asarray([[0.0, 6.0], [0.0, 6.0], [0.0, 6.0]])
         self.t = np.asarray([i * self.T_unit for i in range(self.T_N)])
         self.t_torch = torch.tensor(self.t, dtype=torch.float32).to(self.device)
         self.x = torch.tensor(np.asarray([[[i * self.T_unit] * 1 for i in range(self.T_N)]]),
@@ -71,12 +69,9 @@ class Config:
     def pend(self, y, t):
         k = self.params
         dydt = np.asarray([
-            k.beta * (k.rho + 1 / (1 + y[5] ** k.n)) - y[0],
-            k.beta * (k.rho + 1 / (1 + y[3] ** k.n)) - y[1],
-            k.beta * (k.rho + 1 / (1 + y[4] ** k.n)) - y[2],
-            k.gamma * (y[0] - y[3]),
-            k.gamma * (y[1] - y[4]),
-            k.gamma * (y[2] - y[5])
+            k.beta / (1 + y[2] ** k.n) - y[0],
+            k.beta / (1 + y[0] ** k.n) - y[1],
+            k.beta / (1 + y[1] ** k.n) - y[2]
         ])
         return dydt
 
@@ -232,29 +227,25 @@ class FourierModel(nn.Module):
     def ode_gradient(self, x, y):
         k = self.config.params
 
-        m_lacl = y[0, :, 0]
-        m_tetR = y[0, :, 1]
-        m_cl = y[0, :, 2]
-        p_cl = y[0, :, 3]
-        p_lacl = y[0, :, 4]
-        p_tetR = y[0, :, 5]
-
-        m_lacl_t = torch.gradient(m_lacl, spacing=(self.config.t_torch,))[0]
-        m_tetR_t = torch.gradient(m_tetR, spacing=(self.config.t_torch,))[0]
-        m_cl_t = torch.gradient(m_cl, spacing=(self.config.t_torch,))[0]
+        p_cl = y[0, :, 0]
+        p_lacl = y[0, :, 1]
+        p_tetR = y[0, :, 2]
+        """
+        dydt = np.asarray([
+            k.beta / (1 + y[2] ** k.n) - y[0],
+            k.beta / (1 + y[0] ** k.n) - y[1],
+            k.beta / (1 + y[1] ** k.n) - y[2]
+        ])
+        """
         p_cl_t = torch.gradient(p_cl, spacing=(self.config.t_torch,))[0]
         p_lacl_t = torch.gradient(p_lacl, spacing=(self.config.t_torch,))[0]
         p_tetR_t = torch.gradient(p_tetR, spacing=(self.config.t_torch,))[0]
 
-        f_m_lacl = m_lacl_t - (k.beta * (k.rho + 1 / (1 + p_tetR ** k.n)) - m_lacl)
-        f_m_tetR = m_tetR_t - (k.beta * (k.rho + 1 / (1 + p_cl ** k.n)) - m_tetR)
-        f_m_cl = m_cl_t - (k.beta * (k.rho + 1 / (1 + p_lacl ** k.n)) - m_cl)
-        f_p_cl = p_cl_t - (k.gamma * (m_lacl - p_cl))
-        f_p_lacl = p_lacl_t - (k.gamma * (m_tetR - p_lacl))
-        f_p_tetR = p_tetR_t - (k.gamma * (m_cl - p_tetR))
+        f_p_cl = p_cl_t - (k.beta / (1 + p_tetR ** k.n) - p_cl)
+        f_p_lacl = p_lacl_t - (k.beta / (1 + p_cl ** k.n) - p_lacl)
+        f_p_tetR = p_tetR_t - (k.beta / (1 + p_lacl ** k.n) - p_tetR)
 
-        return torch.cat((f_m_lacl.reshape([-1, 1]), f_m_tetR.reshape([-1, 1]), f_m_cl.reshape([-1, 1]),
-                          f_p_cl.reshape([-1, 1]), f_p_lacl.reshape([-1, 1]), f_p_tetR.reshape([-1, 1])), 1)
+        return torch.cat((f_p_cl.reshape([-1, 1]), f_p_lacl.reshape([-1, 1]), f_p_tetR.reshape([-1, 1])), 1)
 
     def loss(self, y):
         y0_pred = y[0, 0, :]
@@ -498,44 +489,12 @@ class PINNModel(FourierModel):
             nn.Linear(50, 1),
         )
 
-        self.fc4 = nn.Sequential(
-            nn.Linear(1, 50),
-            nn.Tanh(),
-            nn.Linear(50, 50),
-            nn.Tanh(),
-            nn.Linear(50, 50),
-            nn.Tanh(),
-            nn.Linear(50, 1),
-        )
-
-        self.fc5 = nn.Sequential(
-            nn.Linear(1, 50),
-            nn.Tanh(),
-            nn.Linear(50, 50),
-            nn.Tanh(),
-            nn.Linear(50, 50),
-            nn.Tanh(),
-            nn.Linear(50, 1),
-        )
-
-        self.fc6 = nn.Sequential(
-            nn.Linear(1, 50),
-            nn.Tanh(),
-            nn.Linear(50, 50),
-            nn.Tanh(),
-            nn.Linear(50, 50),
-            nn.Tanh(),
-            nn.Linear(50, 1),
-        )
 
     def forward(self, x):
         x1_new = self.fc1(x)
         x2_new = self.fc2(x)
         x3_new = self.fc3(x)
-        x4_new = self.fc4(x)
-        x5_new = self.fc5(x)
-        x6_new = self.fc6(x)
-        x = torch.cat((x1_new, x2_new, x3_new, x4_new, x5_new, x6_new), -1)
+        x = torch.cat((x1_new, x2_new, x3_new), -1)
         return x
 
 
