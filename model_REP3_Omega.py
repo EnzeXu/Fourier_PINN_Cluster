@@ -532,14 +532,14 @@ if __name__ == "__main__":
     myprint("log_path: {}".format(opt.log_path), opt.log_path)
     myprint("cuda is available: {}".format(torch.cuda.is_available()), opt.log_path)
 
-    if not opt.pinn:
-        run(opt, FourierModel)
-    else:
-        run(opt, PINNModel)
-    # try:
-    #     if not opt.pinn:
-    #         run(opt, FourierModel)
-    #     else:
-    #         run(opt, PINNModel)
-    # except Exception as e:
-    #     print("[Error]", e)
+    # if not opt.pinn:
+    #     run(opt, FourierModel)
+    # else:
+    #     run(opt, PINNModel)
+    try:
+        if not opt.pinn:
+            run(opt, FourierModel)
+        else:
+            run(opt, PINNModel)
+    except Exception as e:
+        print("[Error]", e)
