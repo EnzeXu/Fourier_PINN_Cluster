@@ -502,6 +502,66 @@ def one_time_build_rep6_omega_activations():
             cpu=False,
         )
 
+def one_time_build_sir_omega_activations():
+    plans = [
+        # pinn / activation / cyclic / stable / derivative
+        [1, "adaptive", 0, 0, 0],
+        [0, "gelu", 0, 0, 0],
+        [0, "relu", 0, 0, 0],
+        [0, "elu", 0, 0, 0],
+        [0, "tanh", 0, 0, 0],
+        [0, "sin", 0, 0, 0],
+        [0, "softplus", 0, 0, 0],
+        [0, "adaptive", 0, 0, 0],
+    ]
+    module_name_short = "SIR"
+    dic = dict()
+    dic["main_path"] = "."
+    dic["skip_draw_flag"] = 1
+    for one_plan in plans:
+        dic["pinn"] = one_plan[0]
+        dic["activation"] = one_plan[1]
+        dic["cyclic"] = one_plan[2]
+        dic["stable"] = one_plan[3]
+        dic["derivative"] = one_plan[4]
+
+        one_slurm_multi_seed(
+            "o_{}_{}".format(module_name_short.lower(), one_plan[1]) if not one_plan[0] else "o_{}_pinn".format(module_name_short.lower()),
+            "model_{}_Omega.py".format(module_name_short), dic, 0, 10,
+            "o_{}_{}_{{}}".format(module_name_short.lower(), one_plan[1]) if not one_plan[0] else "o_{}_pinn_{{}}".format(module_name_short.lower()),
+            cpu=False,
+        )
+
+def one_time_build_siraged_omega_activations():
+    plans = [
+        # pinn / activation / cyclic / stable / derivative
+        [1, "adaptive", 0, 0, 0],
+        [0, "gelu", 0, 0, 0],
+        [0, "relu", 0, 0, 0],
+        [0, "elu", 0, 0, 0],
+        [0, "tanh", 0, 0, 0],
+        [0, "sin", 0, 0, 0],
+        [0, "softplus", 0, 0, 0],
+        [0, "adaptive", 0, 0, 0],
+    ]
+    module_name_short = "SIRAged"
+    dic = dict()
+    dic["main_path"] = "."
+    dic["skip_draw_flag"] = 1
+    for one_plan in plans:
+        dic["pinn"] = one_plan[0]
+        dic["activation"] = one_plan[1]
+        dic["cyclic"] = one_plan[2]
+        dic["stable"] = one_plan[3]
+        dic["derivative"] = one_plan[4]
+
+        one_slurm_multi_seed(
+            "o_{}_{}".format(module_name_short.lower(), one_plan[1]) if not one_plan[0] else "o_{}_pinn".format(module_name_short.lower()),
+            "model_{}_Omega.py".format(module_name_short), dic, 0, 10,
+            "o_{}_{}_{{}}".format(module_name_short.lower(), one_plan[1]) if not one_plan[0] else "o_{}_pinn_{{}}".format(module_name_short.lower()),
+            cpu=False,
+        )
+
 if __name__ == "__main__":
     # one_time_build_rep_zeta()
     # one_time_build_sir_zeta()
@@ -509,8 +569,10 @@ if __name__ == "__main__":
     # one_time_build_sir_lambda_final()
     # one_time_build_rep_lambda_final()
     # one_time_build_cc1_lambda_final()
-    one_time_build_rep3_omega_activations()
-    one_time_build_rep6_omega_activations()
+    # one_time_build_rep3_omega_activations()
+    # one_time_build_rep6_omega_activations()
+    one_time_build_sir_omega_activations()
+    one_time_build_siraged_omega_activations()
     # one_time_build_pp_lambda_final()
     # one_time_build_turing_lambda_final()
 
