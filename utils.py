@@ -1,8 +1,6 @@
 from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
-import torch.nn as nn
 import time
 
 
@@ -524,108 +522,6 @@ class ColorCandidate:
         return "#" + "".join([str(hex(item))[2:].zfill(2) for item in color_pair])
 
 
-class SpectralConv1d(nn.Module):
-    def __init__(self, config):
-        super(SpectralConv1d, self).__init__()
-        self.config = config
-        self.in_channels = self.config.width
-        self.out_channels = self.config.width
-        self.scale = 1.0 / (self.in_channels * self.out_channels)
-        self.weights = nn.Parameter(
-            self.scale * torch.rand(self.in_channels, self.out_channels, self.config.modes, dtype=torch.cfloat))
-
-    def compl_mul1d(self, input, weights):
-        return torch.einsum("bix,iox->box", input, weights)
-
-    def forward(self, x):
-        batchsize = x.shape[0]
-        x_ft = torch.fft.rfft(x)
-        out_ft = torch.zeros(batchsize, self.out_channels, x.size(-1) // 2 + 1, dtype=torch.cfloat).to(
-            self.config.device)
-        out_ft[:, :, :self.config.modes] = self.compl_mul1d(x_ft[:, :, :self.config.modes], self.weights)
-        x = torch.fft.irfft(out_ft, n=x.size(-1))
-        return x
-
-
-class MySin(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.omega = nn.Parameter(torch.tensor([1.0]))
-
-    def forward(self, x):
-        return torch.sin(self.omega * x)
-
-
-class MySoftplus(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.beta = 1
-
-    def forward(self, x):
-        return nn.Softplus(beta=self.beta)(x)
-
-
-def activation_func(activation):
-    return nn.ModuleDict({
-        "relu": nn.ReLU(),
-        "gelu": nn.GELU(),
-        "leaky_relu": nn.LeakyReLU(negative_slope=0.01),
-        "selu": nn.SELU(),
-        "sin": MySin(),
-        "tanh": nn.Tanh(),
-        "softplus": MySoftplus(),
-        "elu": nn.ELU(),
-        "none": nn.Identity(),
-    })[activation]
-
-
-class ActivationBlock(nn.Module):
-    def __init__(self, config):
-        super().__init__()
-        self.config = config
-        self.activate_list = ["sin", "tanh", "relu", "gelu", "softplus", "elu"]
-        assert self.config.activation in self.activate_list + ["adaptive"]
-        self.activates = nn.ModuleList([activation_func(item).to(config.device) for item in self.activate_list])
-        self.activate_weights_raw = nn.Parameter(torch.rand(len(self.activate_list)).to(self.config.device), requires_grad=True)
-
-        self.my_sin = activation_func("sin")
-        self.my_softplus = activation_func("softplus")
-
-        self.activate_weights = my_softmax(self.activate_weights_raw)
-        # assert self.config.strategy in [0, 1, 2]
-        # if self.config.strategy == 0:
-        #     self.balance_weights = torch.tensor([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]).to(self.config.device)
-        # elif self.config.strategy == 1:
-        #     self.balance_weights = torch.tensor([10.0, 10.0, 1.0, 1.0, 1.0, 1.0]).to(self.config.device)
-        # else:
-        #     self.balance_weights = nn.Parameter(torch.tensor([10.0, 10.0, 1.0, 1.0, 1.0, 1.0]).to(self.config.device), requires_grad=True)
-        # print("self.activate_weights device = {}".format(self.activate_weights.device))
-
-    def forward(self, x):
-        if self.config.activation == "gelu":
-            return nn.functional.gelu(x)
-        elif self.config.activation == "relu":
-            return nn.functional.relu(x)
-        elif self.config.activation == "tanh":
-            return nn.functional.tanh(x)
-        elif self.config.activation == "elu":
-            return nn.functional.elu(x)
-        elif self.config.activation == "sin":
-            return self.my_sin(x)
-        elif self.config.activation == "softplus":
-            return self.my_softplus(x)
-        activation_res = 0.0
-        for i in range(len(self.activate_list)):
-            tmp_sum = self.activate_weights[i] * self.activates[i](x)
-            activation_res += tmp_sum
-        return activation_res
-
-
-def my_softmax(x):
-    exponent_vector = torch.exp(x)
-    sum_of_exponents = torch.sum(exponent_vector)
-    softmax_vector = exponent_vector / sum_of_exponents
-    return softmax_vector
 
 
 if __name__ == "__main__":
