@@ -477,7 +477,7 @@ def one_time_build_rep3_omega_activations():
 
         one_slurm_multi_seed(
             title_format,
-            "model_{}_Omega.py".format(module_name_short), dic, 0, 2,
+            "model_{}_Omega.py".format(module_name_short), dic, 3, 5,
             title_format_log,
             cpu=False,
         )
@@ -517,7 +517,7 @@ def one_time_build_rep6_omega_activations():
 
         one_slurm_multi_seed(
             title_format,
-            "model_{}_Omega.py".format(module_name_short), dic, 0, 2,
+            "model_{}_Omega.py".format(module_name_short), dic, 3, 5,
             title_format_log,
             cpu=False,
         )
@@ -557,7 +557,7 @@ def one_time_build_sir_omega_activations():
 
         one_slurm_multi_seed(
             title_format,
-            "model_{}_Omega.py".format(module_name_short), dic, 0, 2,
+            "model_{}_Omega.py".format(module_name_short), dic, 3, 5,
             title_format_log,
             cpu=False,
         )
@@ -597,7 +597,7 @@ def one_time_build_siraged_omega_activations():
 
         one_slurm_multi_seed(
             title_format,
-            "model_{}_Omega.py".format(module_name_short), dic, 0, 2,
+            "model_{}_Omega.py".format(module_name_short), dic, 3, 5,
             title_format_log,
             cpu=False,
         )
