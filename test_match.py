@@ -6,10 +6,10 @@ import matplotlib.pyplot as plt
 
 
 class Config:
-    iteration = 10000000
-    epoch_step = 2000
+    iteration = 1000000
+    epoch_step = 10000
     test_step = epoch_step * 10
-    initial_lr = 0.01
+    initial_lr = 0.00001
 
 
 class MatchModel(torch.nn.Module):
@@ -18,7 +18,7 @@ class MatchModel(torch.nn.Module):
         self.setup_seed(0)
         self.config = config
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.params = torch.nn.Parameter(torch.tensor([0.0014706622, 1.5877504, 1.0, 0.0, 0.0, -0.0005020078, -0.022107242])) # [0.00023, 1.85, 0.0, -0.001, 1.28]
+        self.params = torch.nn.Parameter(torch.tensor([0.41971564, 10.686993, 0.95063734, -8.744956, -3.3821703e-05, 0.00020107726, 0.00163968, -4.984618e-05])) # [0.00023, 1.85, 0.0, -0.001, 1.28]
         self.criterion = torch.nn.MSELoss().to(self.device)
         self.x_truth_numpy = np.asarray([3.0, 6.0, 9.0, 11.0, 12.0]) - 3.0
         self.x_truth = torch.tensor(self.x_truth_numpy, dtype=torch.float32).to(self.device)
@@ -37,7 +37,7 @@ class MatchModel(torch.nn.Module):
         torch.backends.cudnn.deterministic = True
 
     def f(self, x, params):
-        return params[0] * (params[1] ** (params[2] * x + params[3])) + params[5] * x + params[6]
+        return params[0] * (params[1] ** (params[2] * x + params[3])) + params[4] * x + params[5] + params[6] * x ** 2 + params[7] * x ** 3
 
     def loss(self):
         y_predict = self.f(self.x_truth, self.params)
@@ -91,9 +91,10 @@ class MatchModel(torch.nn.Module):
         x_plot = self.x_plot
         y_plot = self.f(x_plot, params_numpy)
         plt.figure(figsize=(8, 6))
-        plt.plot(x_plot, y_plot, c="b")
-        plt.scatter(x_truth, y_truth, c="r", label="truth")
-        plt.scatter(x_truth, y_predict, c="b", label="predict")
+        plt.plot(x_plot, y_plot, c="b", label="predict")
+        plt.scatter(x_truth, y_predict, facecolors="none", edgecolors="b", s=100, label="predict_points")
+        plt.scatter(x_truth, y_truth, c="r", s=100, marker="x", label="truth_points")
+
         plt.legend()
         plt.show()
         # plt.close()
@@ -104,4 +105,5 @@ class MatchModel(torch.nn.Module):
 if __name__ == "__main__":
     config = Config
     model = MatchModel(config)
-    model.train_model()
+    # model.train_model()
+    model.test_model()
