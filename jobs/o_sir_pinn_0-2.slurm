@@ -13,5 +13,5 @@
 
 echo $(pwd) > "jobs/pwd.txt"
 source /deac/csc/chenGrp/software/tensorflow/bin/activate
-python model_SIR_Omega.py --main_path . --skip_draw_flag 1 --pinn 0 --activation gelu --cyclic 0 --stable 0 --derivative 0 --boundary 1 --seed 0 --log_path logs/o_sir_pinn_0.txt
-python model_SIR_Omega.py --main_path . --skip_draw_flag 1 --pinn 0 --activation gelu --cyclic 0 --stable 0 --derivative 0 --boundary 1 --seed 1 --log_path logs/o_sir_pinn_1.txt
+python model_SIR_Omega.py --main_path . --skip_draw_flag 1 --pinn 1 --activation adaptive --cyclic 0 --stable 0 --derivative 0 --boundary 0 --seed 0 --log_path logs/o_sir_pinn_0.txt
+python model_SIR_Omega.py --main_path . --skip_draw_flag 1 --pinn 1 --activation adaptive --cyclic 0 --stable 0 --derivative 0 --boundary 0 --seed 1 --log_path logs/o_sir_pinn_1.txt
