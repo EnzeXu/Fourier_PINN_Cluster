@@ -467,9 +467,9 @@ def one_time_build_rep3_omega_activations():
         dic["derivative"] = one_plan[4]
         dic["boundary"] = one_plan[5]
 
-        if not one_plan[0]:
+        if one_plan[0]:
             title_format = "o_{}_pinn".format(module_name_short.lower())
-        elif not one_plan[5]:
+        elif one_plan[5]:
             title_format = "o_{}_boundary".format(module_name_short.lower())
         else:
             title_format = "o_{}_{}".format(module_name_short.lower(), one_plan[1])
@@ -507,9 +507,9 @@ def one_time_build_rep6_omega_activations():
         dic["derivative"] = one_plan[4]
         dic["boundary"] = one_plan[5]
 
-        if not one_plan[0]:
+        if one_plan[0]:
             title_format = "o_{}_pinn".format(module_name_short.lower())
-        elif not one_plan[5]:
+        elif one_plan[5]:
             title_format = "o_{}_boundary".format(module_name_short.lower())
         else:
             title_format = "o_{}_{}".format(module_name_short.lower(), one_plan[1])
@@ -547,9 +547,9 @@ def one_time_build_sir_omega_activations():
         dic["derivative"] = one_plan[4]
         dic["boundary"] = one_plan[5]
 
-        if not one_plan[0]:
+        if one_plan[0]:
             title_format = "o_{}_pinn".format(module_name_short.lower())
-        elif not one_plan[5]:
+        elif one_plan[5]:
             title_format = "o_{}_boundary".format(module_name_short.lower())
         else:
             title_format = "o_{}_{}".format(module_name_short.lower(), one_plan[1])
@@ -587,9 +587,9 @@ def one_time_build_siraged_omega_activations():
         dic["derivative"] = one_plan[4]
         dic["boundary"] = one_plan[5]
 
-        if not one_plan[0]:
+        if one_plan[0]:
             title_format = "o_{}_pinn".format(module_name_short.lower())
-        elif not one_plan[5]:
+        elif one_plan[5]:
             title_format = "o_{}_boundary".format(module_name_short.lower())
         else:
             title_format = "o_{}_{}".format(module_name_short.lower(), one_plan[1])
