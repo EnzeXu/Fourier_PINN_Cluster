@@ -23,7 +23,7 @@ class TrainArgs:
     iteration = 50000  # 20000 -> 50000
     epoch_step = 1000  # 1000
     test_step = epoch_step * 10
-    initial_lr = 0.01
+    initial_lr = 0.001
     main_path = "."
     log_path = None
     early_stop = False
