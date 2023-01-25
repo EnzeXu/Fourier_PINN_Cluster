@@ -384,7 +384,7 @@ class FourierModelTemplate(nn.Module):
                         self.write_finish_log()
                         break
 
-                    myprint(str(train_info), self.config.args.log_path)
+                    # myprint(str(train_info), self.config.args.log_path)
 
     def test_model(self):
         if self.config.skip_draw_flag:

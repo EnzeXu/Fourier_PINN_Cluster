@@ -444,15 +444,16 @@ def one_time_build_pp_lambda_final():
 
 def one_time_build_rep3_omega_activations():
     plans = [
-        # pinn / activation / cyclic / stable / derivative
-        [1, "adaptive", 0, 0, 0],
-        [0, "gelu", 0, 0, 0],
-        [0, "relu", 0, 0, 0],
-        [0, "elu", 0, 0, 0],
-        [0, "tanh", 0, 0, 0],
-        [0, "sin", 0, 0, 0],
-        [0, "softplus", 0, 0, 0],
-        [0, "adaptive", 0, 0, 0],
+        # pinn / activation / cyclic / stable / derivative / boundary
+        [1, "adaptive", 0, 0, 0, 0],
+        [0, "gelu", 0, 0, 0, 0],
+        [0, "relu", 0, 0, 0, 0],
+        [0, "elu", 0, 0, 0, 0],
+        [0, "tanh", 0, 0, 0, 0],
+        [0, "sin", 0, 0, 0, 0],
+        [0, "softplus", 0, 0, 0, 0],
+        [0, "adaptive", 0, 0, 0, 0],
+        [0, "gelu", 0, 0, 0, 1],
     ]
     module_name_short = "REP3"
     dic = dict()
@@ -464,25 +465,35 @@ def one_time_build_rep3_omega_activations():
         dic["cyclic"] = one_plan[2]
         dic["stable"] = one_plan[3]
         dic["derivative"] = one_plan[4]
+        dic["boundary"] = one_plan[5]
+
+        if not one_plan[0]:
+            title_format = "o_{}_pinn".format(module_name_short.lower())
+        elif not one_plan[5]:
+            title_format = "o_{}_boundary".format(module_name_short.lower())
+        else:
+            title_format = "o_{}_{}".format(module_name_short.lower(), one_plan[1])
+        title_format_log = title_format + "_{}"
 
         one_slurm_multi_seed(
-            "o_{}_{}".format(module_name_short.lower(), one_plan[1]) if not one_plan[0] else "o_{}_pinn".format(module_name_short.lower()),
+            title_format,
             "model_{}_Omega.py".format(module_name_short), dic, 0, 2,
-            "o_{}_{}_{{}}".format(module_name_short.lower(), one_plan[1]) if not one_plan[0] else "o_{}_pinn_{{}}".format(module_name_short.lower()),
+            title_format_log,
             cpu=False,
         )
 
 def one_time_build_rep6_omega_activations():
     plans = [
-        # pinn / activation / cyclic / stable / derivative
-        [1, "adaptive", 0, 0, 0],
-        [0, "gelu", 0, 0, 0],
-        [0, "relu", 0, 0, 0],
-        [0, "elu", 0, 0, 0],
-        [0, "tanh", 0, 0, 0],
-        [0, "sin", 0, 0, 0],
-        [0, "softplus", 0, 0, 0],
-        [0, "adaptive", 0, 0, 0],
+        # pinn / activation / cyclic / stable / derivative / boundary
+        [1, "adaptive", 0, 0, 0, 0],
+        [0, "gelu", 0, 0, 0, 0],
+        [0, "relu", 0, 0, 0, 0],
+        [0, "elu", 0, 0, 0, 0],
+        [0, "tanh", 0, 0, 0, 0],
+        [0, "sin", 0, 0, 0, 0],
+        [0, "softplus", 0, 0, 0, 0],
+        [0, "adaptive", 0, 0, 0, 0],
+        [0, "gelu", 0, 0, 0, 1],
     ]
     module_name_short = "REP6"
     dic = dict()
@@ -494,25 +505,35 @@ def one_time_build_rep6_omega_activations():
         dic["cyclic"] = one_plan[2]
         dic["stable"] = one_plan[3]
         dic["derivative"] = one_plan[4]
+        dic["boundary"] = one_plan[5]
+
+        if not one_plan[0]:
+            title_format = "o_{}_pinn".format(module_name_short.lower())
+        elif not one_plan[5]:
+            title_format = "o_{}_boundary".format(module_name_short.lower())
+        else:
+            title_format = "o_{}_{}".format(module_name_short.lower(), one_plan[1])
+        title_format_log = title_format + "_{}"
 
         one_slurm_multi_seed(
-            "o_{}_{}".format(module_name_short.lower(), one_plan[1]) if not one_plan[0] else "o_{}_pinn".format(module_name_short.lower()),
+            title_format,
             "model_{}_Omega.py".format(module_name_short), dic, 0, 2,
-            "o_{}_{}_{{}}".format(module_name_short.lower(), one_plan[1]) if not one_plan[0] else "o_{}_pinn_{{}}".format(module_name_short.lower()),
+            title_format_log,
             cpu=False,
         )
 
 def one_time_build_sir_omega_activations():
     plans = [
-        # pinn / activation / cyclic / stable / derivative
-        [1, "adaptive", 0, 0, 0],
-        [0, "gelu", 0, 0, 0],
-        [0, "relu", 0, 0, 0],
-        [0, "elu", 0, 0, 0],
-        [0, "tanh", 0, 0, 0],
-        [0, "sin", 0, 0, 0],
-        [0, "softplus", 0, 0, 0],
-        [0, "adaptive", 0, 0, 0],
+        # pinn / activation / cyclic / stable / derivative / boundary
+        [1, "adaptive", 0, 0, 0, 0],
+        [0, "gelu", 0, 0, 0, 0],
+        [0, "relu", 0, 0, 0, 0],
+        [0, "elu", 0, 0, 0, 0],
+        [0, "tanh", 0, 0, 0, 0],
+        [0, "sin", 0, 0, 0, 0],
+        [0, "softplus", 0, 0, 0, 0],
+        [0, "adaptive", 0, 0, 0, 0],
+        [0, "gelu", 0, 0, 0, 1],
     ]
     module_name_short = "SIR"
     dic = dict()
@@ -524,25 +545,35 @@ def one_time_build_sir_omega_activations():
         dic["cyclic"] = one_plan[2]
         dic["stable"] = one_plan[3]
         dic["derivative"] = one_plan[4]
+        dic["boundary"] = one_plan[5]
+
+        if not one_plan[0]:
+            title_format = "o_{}_pinn".format(module_name_short.lower())
+        elif not one_plan[5]:
+            title_format = "o_{}_boundary".format(module_name_short.lower())
+        else:
+            title_format = "o_{}_{}".format(module_name_short.lower(), one_plan[1])
+        title_format_log = title_format + "_{}"
 
         one_slurm_multi_seed(
-            "o_{}_{}".format(module_name_short.lower(), one_plan[1]) if not one_plan[0] else "o_{}_pinn".format(module_name_short.lower()),
+            title_format,
             "model_{}_Omega.py".format(module_name_short), dic, 0, 2,
-            "o_{}_{}_{{}}".format(module_name_short.lower(), one_plan[1]) if not one_plan[0] else "o_{}_pinn_{{}}".format(module_name_short.lower()),
+            title_format_log,
             cpu=False,
         )
 
 def one_time_build_siraged_omega_activations():
     plans = [
-        # pinn / activation / cyclic / stable / derivative
-        [1, "adaptive", 0, 0, 0],
-        [0, "gelu", 0, 0, 0],
-        [0, "relu", 0, 0, 0],
-        [0, "elu", 0, 0, 0],
-        [0, "tanh", 0, 0, 0],
-        [0, "sin", 0, 0, 0],
-        [0, "softplus", 0, 0, 0],
-        [0, "adaptive", 0, 0, 0],
+        # pinn / activation / cyclic / stable / derivative / boundary
+        [1, "adaptive", 0, 0, 0, 0],
+        [0, "gelu", 0, 0, 0, 0],
+        [0, "relu", 0, 0, 0, 0],
+        [0, "elu", 0, 0, 0, 0],
+        [0, "tanh", 0, 0, 0, 0],
+        [0, "sin", 0, 0, 0, 0],
+        [0, "softplus", 0, 0, 0, 0],
+        [0, "adaptive", 0, 0, 0, 0],
+        [0, "gelu", 0, 0, 0, 1],
     ]
     module_name_short = "SIRAged"
     dic = dict()
@@ -554,11 +585,20 @@ def one_time_build_siraged_omega_activations():
         dic["cyclic"] = one_plan[2]
         dic["stable"] = one_plan[3]
         dic["derivative"] = one_plan[4]
+        dic["boundary"] = one_plan[5]
+
+        if not one_plan[0]:
+            title_format = "o_{}_pinn".format(module_name_short.lower())
+        elif not one_plan[5]:
+            title_format = "o_{}_boundary".format(module_name_short.lower())
+        else:
+            title_format = "o_{}_{}".format(module_name_short.lower(), one_plan[1])
+        title_format_log = title_format + "_{}"
 
         one_slurm_multi_seed(
-            "o_{}_{}".format(module_name_short.lower(), one_plan[1]) if not one_plan[0] else "o_{}_pinn".format(module_name_short.lower()),
+            title_format,
             "model_{}_Omega.py".format(module_name_short), dic, 0, 2,
-            "o_{}_{}_{{}}".format(module_name_short.lower(), one_plan[1]) if not one_plan[0] else "o_{}_pinn_{{}}".format(module_name_short.lower()),
+            title_format_log,
             cpu=False,
         )
 
