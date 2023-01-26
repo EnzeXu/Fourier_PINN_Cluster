@@ -453,6 +453,7 @@ def one_time_build_rep3_omega_activations():
         [0, "sin", 0, 0, 0, 0],
         [0, "softplus", 0, 0, 0, 0],
         [0, "adaptive", 0, 0, 0, 0],
+        [0, "adaptive_3", 0, 0, 0, 0],
         [0, "gelu", 0, 0, 0, 1],
     ]
     module_name_short = "REP3"
@@ -477,7 +478,7 @@ def one_time_build_rep3_omega_activations():
 
         one_slurm_multi_seed(
             title_format,
-            "model_{}_Omega.py".format(module_name_short), dic, 3, 5,
+            "model_{}_Omega.py".format(module_name_short), dic, 2, 3,
             title_format_log,
             cpu=False,
         )
@@ -493,6 +494,7 @@ def one_time_build_rep6_omega_activations():
         [0, "sin", 0, 0, 0, 0],
         [0, "softplus", 0, 0, 0, 0],
         [0, "adaptive", 0, 0, 0, 0],
+        [0, "adaptive_3", 0, 0, 0, 0],
         [0, "gelu", 0, 0, 0, 1],
     ]
     module_name_short = "REP6"
@@ -517,7 +519,7 @@ def one_time_build_rep6_omega_activations():
 
         one_slurm_multi_seed(
             title_format,
-            "model_{}_Omega.py".format(module_name_short), dic, 3, 5,
+            "model_{}_Omega.py".format(module_name_short), dic, 2, 3,
             title_format_log,
             cpu=False,
         )
@@ -533,6 +535,7 @@ def one_time_build_sir_omega_activations():
         [0, "sin", 0, 0, 0, 0],
         [0, "softplus", 0, 0, 0, 0],
         [0, "adaptive", 0, 0, 0, 0],
+        [0, "adaptive_3", 0, 0, 0, 0],
         [0, "gelu", 0, 0, 0, 1],
     ]
     module_name_short = "SIR"
@@ -557,7 +560,7 @@ def one_time_build_sir_omega_activations():
 
         one_slurm_multi_seed(
             title_format,
-            "model_{}_Omega.py".format(module_name_short), dic, 3, 5,
+            "model_{}_Omega.py".format(module_name_short), dic, 2, 3,
             title_format_log,
             cpu=False,
         )
@@ -573,6 +576,7 @@ def one_time_build_siraged_omega_activations():
         [0, "sin", 0, 0, 0, 0],
         [0, "softplus", 0, 0, 0, 0],
         [0, "adaptive", 0, 0, 0, 0],
+        [0, "adaptive_3", 0, 0, 0, 0],
         [0, "gelu", 0, 0, 0, 1],
     ]
     module_name_short = "SIRAged"
@@ -597,7 +601,7 @@ def one_time_build_siraged_omega_activations():
 
         one_slurm_multi_seed(
             title_format,
-            "model_{}_Omega.py".format(module_name_short), dic, 3, 5,
+            "model_{}_Omega.py".format(module_name_short), dic, 2, 3,
             title_format_log,
             cpu=False,
         )
