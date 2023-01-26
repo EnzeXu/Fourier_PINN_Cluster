@@ -404,17 +404,18 @@ class FourierModelTemplate(nn.Module):
             line_style_list=["solid"] * self.config.prob_dim + ["dashed"] * self.config.prob_dim,
             fig_title="{}_{}_epoch={}".format(self.config.model_name, self.time_string, self.epoch_tmp),
             fig_size=(8, 6),
-            show_flag=False,
+            show_flag=True,
             save_flag=True,
             save_path=save_path,
             save_dpi=300,
             legend_loc="center right",
         )
         myprint("Figure is saved to {}".format(save_path), self.config.args.log_path)
-        # self.draw_loss_multi(self.loss_record_tmp, [1.0, 0.5, 0.25, 0.125])
+        self.draw_loss_multi(self.loss_record_tmp, [1.0, 0.5, 0.25, 0.125])
+        self.draw_loss_multi(self.real_loss_nmse_record_tmp, [1.0, 0.5, 0.25, 0.125])
 
     def write_finish_log(self):
-        with open("saves/record_omega.txt", "a") as f:
+        with open(os.path.join(self.config.args.main_path, "saves/record_omega.txt"), "a") as f:
             f.write("{0},{1},{2},{3:.2f},{4},{5:.12f},{6:.12f},{7:.12f},{8},{9},{10},{11},{12},{13},{14},{15}\n".format(
                 self.config.model_name,  # 0
                 self.time_string,  # 1
@@ -437,7 +438,7 @@ class FourierModelTemplate(nn.Module):
     @staticmethod
     def draw_loss_multi(loss_list, last_rate_list):
         m = MultiSubplotDraw(row=1, col=len(last_rate_list), fig_size=(8 * len(last_rate_list), 6),
-                             tight_layout_flag=True, show_flag=False, save_flag=False, save_path=None)
+                             tight_layout_flag=True, show_flag=True, save_flag=False, save_path=None)
         for one_rate in last_rate_list:
             m.add_subplot(
                 y_lists=[loss_list[-int(len(loss_list) * one_rate):]],
@@ -524,14 +525,18 @@ class ActivationBlock(nn.Module):
         super().__init__()
         self.config = config
         self.activate_list = ["sin", "tanh", "relu", "gelu", "softplus", "elu"]
-        assert self.config.activation in self.activate_list + ["adaptive"]
+        self.activate_list_3 = ["gelu", "softplus", "elu"]
+        assert self.config.activation in self.activate_list + ["adaptive", "adaptive_3"]
         self.activates = nn.ModuleList([activation_func(item).to(config.device) for item in self.activate_list])
         self.activate_weights_raw = nn.Parameter(torch.rand(len(self.activate_list)).to(self.config.device), requires_grad=True)
+        self.activates_3 = nn.ModuleList([activation_func(item).to(config.device) for item in self.activate_list_3])
+        self.activate_weights_raw_3 = nn.Parameter(torch.rand(3).to(self.config.device), requires_grad=True)
 
         self.my_sin = activation_func("sin")
         self.my_softplus = activation_func("softplus")
 
         self.activate_weights = my_softmax(self.activate_weights_raw)
+        self.activate_weights_3 = my_softmax(self.activate_weights_raw_3)
         # assert self.config.strategy in [0, 1, 2]
         # if self.config.strategy == 0:
         #     self.balance_weights = torch.tensor([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]).to(self.config.device)
@@ -555,9 +560,16 @@ class ActivationBlock(nn.Module):
         elif self.config.activation == "softplus":
             return self.my_softplus(x)
         activation_res = 0.0
-        for i in range(len(self.activate_list)):
-            tmp_sum = self.activate_weights[i] * self.activates[i](x)
-            activation_res += tmp_sum
+        if self.config.activation == "adaptive":
+            self.activate_weights = my_softmax(self.activate_weights_raw)
+            for i in range(len(self.activate_list)):
+                tmp_sum = self.activate_weights[i] * self.activates[i](x)
+                activation_res += tmp_sum
+        else: # adaptive_3
+            self.activate_weights_3 = my_softmax(self.activate_weights_raw_3)
+            for i in range(len(self.activate_list_3)):
+                tmp_sum = self.activate_weights_3[i] * self.activates_3[i](x)
+                activation_res += tmp_sum
         return activation_res
 
 
@@ -574,7 +586,7 @@ def run(config, fourier_model, pinn_model):
     parser.add_argument("--main_path", default="./", help="main_path")
     parser.add_argument("--seed", type=int, default=0, help="seed")
     parser.add_argument("--pinn", type=int, default=0, help="0=off 1=on")
-    parser.add_argument("--activation", choices=["gelu", "elu", "relu", "sin", "tanh", "softplus", "adaptive"],
+    parser.add_argument("--activation", choices=["gelu", "elu", "relu", "sin", "tanh", "softplus", "adaptive", "adaptive_3"],
                         type=str, help="activation plan")
     parser.add_argument("--cyclic", type=int, choices=[0, 1], help="0=off 1=on")
     parser.add_argument("--stable", type=int, choices=[0, 1], help="0=off 1=on")
