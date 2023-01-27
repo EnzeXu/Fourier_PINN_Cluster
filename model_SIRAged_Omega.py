@@ -77,6 +77,7 @@ class Config(ConfigTemplate):
 class FourierModel(FourierModelTemplate):
     def __init__(self, config):
         super(FourierModel, self).__init__(config)
+        self.truth_loss()
 
     def real_loss(self, y):
         truth = torch.tensor(self.config.truth[:, 10:15]).to(self.config.device)

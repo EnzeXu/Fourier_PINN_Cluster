@@ -124,15 +124,15 @@ class FourierModelTemplate(nn.Module):
         myprint("derivative = {}".format(self.config.derivative), self.config.args.log_path)
         myprint("activation = {}".format(self.config.activation), self.config.args.log_path)
         # myprint("early stop: {}".format("On" if self.config.args.early_stop else "Off"), self.config.args.log_path)
-        self.truth_loss()
 
     def truth_loss(self):
         y_truth = torch.tensor(self.config.truth.reshape([1, self.config.T_N, self.config.prob_dim])).to(
             self.config.device)
         tl, tl_list = self.loss(y_truth)
+        print("tl_list=", tl_list)
         loss_print_part = " ".join(
-            ["Loss_{0:d}:{1:.8f}".format(i + 1, loss_part.item()) for i, loss_part in enumerate(tl_list)])
-        myprint("Ground truth has loss: Loss:{0:.8f} {1}".format(tl.item(), loss_print_part), self.config.args.log_path)
+            ["Loss_{0:d}:{1:.12f}".format(i + 1, loss_part.item()) for i, loss_part in enumerate(tl_list)])
+        myprint("Ground truth has loss: Loss:{0:.12f} {1}".format(tl.item(), loss_print_part), self.config.args.log_path)
 
     #  MSE-loss of predicted value against truth
     def real_loss(self, y):
@@ -307,9 +307,9 @@ class FourierModelTemplate(nn.Module):
 
             if epoch % self.config.args.epoch_step == 0:
                 loss_print_part = " ".join(
-                    ["Loss_{0:d}:{1:.6f}".format(i + 1, loss_part.item()) for i, loss_part in enumerate(loss_list)])
+                    ["Loss_{0:d}:{1:.12f}".format(i + 1, loss_part.item()) for i, loss_part in enumerate(loss_list)])
                 myprint(
-                    "Epoch [{0:05d}/{1:05d}] Loss:{2:.6f} {3} Lr:{4:.6f} Time:{5:.6f}s ({6:.2f}min in total, {7:.2f}min remains)".format(
+                    "Epoch [{0:05d}/{1:05d}] Loss:{2:.12f} {3} Lr:{4:.12f} Time:{5:.6f}s ({6:.2f}min in total, {7:.2f}min remains)".format(
                         epoch, self.config.args.iteration, loss.item(), loss_print_part,
                         optimizer.param_groups[0]["lr"], now_time - start_time, (now_time - start_time_0) / 60.0,
                         (now_time - start_time_0) / 60.0 / epoch * (self.config.args.iteration - epoch)), self.config.args.log_path)
@@ -588,7 +588,7 @@ def run(config, fourier_model, pinn_model):
     parser.add_argument("--pinn", type=int, default=0, help="0=off 1=on")
     parser.add_argument("--activation", choices=["gelu", "elu", "relu", "sin", "tanh", "softplus", "adaptive", "adaptive_3"],
                         type=str, help="activation plan")
-    parser.add_argument("--cyclic", type=int, choices=[0, 1], help="0=off 1=on")
+    parser.add_argument("--cyclic", type=int, choices=[0, 1, 2], help="0=off 1=on")
     parser.add_argument("--stable", type=int, choices=[0, 1], help="0=off 1=on")
     parser.add_argument("--derivative", type=int, choices=[0, 1], help="0=off 1=on")
     parser.add_argument("--boundary", type=int, choices=[0, 1, 2], help="0=off 1=on")
