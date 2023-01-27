@@ -61,6 +61,9 @@ class Config(ConfigTemplate):
         return dydt
 
 
+def penalty_func(x):
+    return 1 * (- torch.tanh((x - 0.004) * 300) + 1)
+
 class FourierModel(FourierModelTemplate):
     def __init__(self, config):
         super(FourierModel, self).__init__(config)
@@ -98,6 +101,29 @@ class FourierModel(FourierModelTemplate):
 
         return torch.cat((f_m_lacl.reshape([-1, 1]), f_m_tetR.reshape([-1, 1]), f_m_cl.reshape([-1, 1]),
                           f_p_cl.reshape([-1, 1]), f_p_lacl.reshape([-1, 1]), f_p_tetR.reshape([-1, 1])), 1)
+
+    def loss(self, y):
+        y0_pred = y[0, 0, :]
+        y0_true = torch.tensor(self.config.y0, dtype=torch.float32).to(self.config.device)
+
+        ode_n = self.ode_gradient(self.config.x, y)
+        zeros_1D = torch.zeros([self.config.T_N]).to(self.config.device)
+        zeros_nD = torch.zeros([self.config.T_N, self.config.prob_dim]).to(self.config.device)
+
+        loss1 = self.criterion(y0_pred, y0_true)
+        loss2 = 1.0 * (self.criterion(ode_n, zeros_nD))
+
+        loss3 = (1.0 if self.config.boundary else 0.0) * (sum([
+            self.criterion(torch.abs(y[:, :, i] - self.config.boundary_list[i][0]),
+                           y[:, :, i] - self.config.boundary_list[i][0]) +
+            self.criterion(torch.abs(self.config.boundary_list[i][1] - y[:, :, i]),
+                           self.config.boundary_list[i][1] - y[:, :, i]) for i in range(self.config.prob_dim)]))
+        loss4 = (1.0 if self.config.cyclic else 0) * sum(
+            [penalty_func(torch.var(y[0, :, i])) for i in range(self.config.prob_dim)])
+
+        loss = loss1 + loss2 + loss3 + loss4
+        loss_list = [loss1, loss2, loss3, loss4]
+        return loss, loss_list
 
 
 class PINNModel(FourierModel):

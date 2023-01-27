@@ -606,6 +606,55 @@ def one_time_build_siraged_omega_activations():
             cpu=False,
         )
 
+def one_time_build_omega(module_name_short, start_seed, end_seed):
+    plans = [
+        # pinn / activation / cyclic / stable / derivative / boundary
+        [1, "adaptive", 0, 0, 0, 0],
+        [0, "gelu", 0, 0, 0, 0],
+        [0, "relu", 0, 0, 0, 0],
+        [0, "elu", 0, 0, 0, 0],
+        [0, "tanh", 0, 0, 0, 0],
+        [0, "sin", 0, 0, 0, 0],
+        [0, "softplus", 0, 0, 0, 0],
+        [0, "adaptive", 0, 0, 0, 0],
+        [0, "adaptive_3", 0, 0, 0, 0],
+        [0, "gelu", 0, 0, 0, 1],
+        [0, "gelu", 1, 0, 0, 0],
+        [0, "gelu", 0, 1, 0, 0],
+    ]
+    module_name_short = module_name_short
+    dic = dict()
+    dic["main_path"] = "."
+    dic["skip_draw_flag"] = 1
+    for one_plan in plans:
+        dic["pinn"] = one_plan[0]
+        dic["activation"] = one_plan[1]
+        dic["cyclic"] = one_plan[2]
+        dic["stable"] = one_plan[3]
+        dic["derivative"] = one_plan[4]
+        dic["boundary"] = one_plan[5]
+
+        if one_plan[0]:
+            title_format = "o_{}_pinn".format(module_name_short.lower())
+        elif one_plan[5]:
+            title_format = "o_{}_boundary".format(module_name_short.lower())
+        elif one_plan[2]:
+            title_format = "o_{}_cyclic".format(module_name_short.lower())
+        elif one_plan[3]:
+            title_format = "o_{}_stable".format(module_name_short.lower())
+        elif one_plan[4]:
+            title_format = "o_{}_derivative".format(module_name_short.lower())
+        else:
+            title_format = "o_{}_{}".format(module_name_short.lower(), one_plan[1])
+        title_format_log = title_format + "_{}"
+
+        one_slurm_multi_seed(
+            title_format,
+            "model_{}_Omega.py".format(module_name_short), dic, start_seed, end_seed,
+            title_format_log,
+            cpu=False,
+        )
+
 if __name__ == "__main__":
     # one_time_build_rep_zeta()
     # one_time_build_sir_zeta()
@@ -613,10 +662,11 @@ if __name__ == "__main__":
     # one_time_build_sir_lambda_final()
     # one_time_build_rep_lambda_final()
     # one_time_build_cc1_lambda_final()
-    one_time_build_rep3_omega_activations()
-    one_time_build_rep6_omega_activations()
-    one_time_build_sir_omega_activations()
-    one_time_build_siraged_omega_activations()
+    one_time_build_omega("REP6", 1, 3)
+    # one_time_build_rep3_omega_activations()
+    # one_time_build_rep6_omega_activations()
+    # one_time_build_sir_omega_activations()
+    # one_time_build_siraged_omega_activations()
     # one_time_build_pp_lambda_final()
     # one_time_build_turing_lambda_final()
 
