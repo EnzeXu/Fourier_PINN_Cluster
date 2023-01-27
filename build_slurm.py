@@ -665,8 +665,8 @@ if __name__ == "__main__":
 
     one_time_build_omega("SIRAged", 0, 3)
     one_time_build_omega("SIR", 0, 3)
-    one_time_build_omega("Rep6", 0, 3)
-    one_time_build_omega("Rep3", 0, 3)
+    one_time_build_omega("REP6", 0, 3)
+    one_time_build_omega("REP3", 0, 3)
     # one_time_build_rep3_omega_activations()
     # one_time_build_rep6_omega_activations()
     # one_time_build_sir_omega_activations()
