@@ -620,7 +620,7 @@ def one_time_build_omega(module_name_short, start_seed, end_seed):
         # [0, "adaptive_3", 0, 0, 0, 0],
         # [0, "gelu", 0, 0, 0, 1],
         # [0, "gelu", 1, 0, 0, 0],
-        [0, "gelu", 0, 1, 0, 0],
+        [0, "gelu", 0, 0, 0, 2],
     ]
     module_name_short = module_name_short
     dic = dict()
@@ -663,7 +663,10 @@ if __name__ == "__main__":
     # one_time_build_rep_lambda_final()
     # one_time_build_cc1_lambda_final()
 
-    one_time_build_omega("SIRAged", 2, 3)
+    one_time_build_omega("SIRAged", 0, 3)
+    one_time_build_omega("SIR", 0, 3)
+    one_time_build_omega("Rep6", 0, 3)
+    one_time_build_omega("Rep3", 0, 3)
     # one_time_build_rep3_omega_activations()
     # one_time_build_rep6_omega_activations()
     # one_time_build_sir_omega_activations()

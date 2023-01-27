@@ -42,7 +42,8 @@ class Config(ConfigTemplate):
         self.T = 10
         self.T_unit = 1e-2
         self.y0 = np.asarray([1.75241881, 4.77323806, 1.04664267])
-        self.boundary_list = np.asarray([[0.0, 6.0], [0.0, 6.0], [0.0, 6.0]])
+        # self.boundary_list = np.asarray([[0.0, 6.0], [0.0, 6.0], [0.0, 6.0]])
+        self.boundary_list = np.asarray([[0.64, 5.5], [0.64, 5.5], [0.64, 5.5]])
 
         self.setup()
 

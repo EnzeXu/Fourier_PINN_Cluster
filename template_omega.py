@@ -591,7 +591,7 @@ def run(config, fourier_model, pinn_model):
     parser.add_argument("--cyclic", type=int, choices=[0, 1], help="0=off 1=on")
     parser.add_argument("--stable", type=int, choices=[0, 1], help="0=off 1=on")
     parser.add_argument("--derivative", type=int, choices=[0, 1], help="0=off 1=on")
-    parser.add_argument("--boundary", type=int, choices=[0, 1], help="0=off 1=on")
+    parser.add_argument("--boundary", type=int, choices=[0, 1, 2], help="0=off 1=on")
     parser.add_argument("--skip_draw_flag", type=int, default=1, choices=[0, 1], help="0=off 1=on")
     parser.add_argument("--test", type=int, default=0, help="test will take epoch as 10")
     # parser.add_argument("--strategy", type=int, default=0, help="0=ones 1=fixed 2=adaptive")
