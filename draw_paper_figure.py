@@ -122,6 +122,7 @@ def draw_paper_figure_loss(**kwargs):
                 info = pickle.load(f)
             # print(info["seed"], sum(info["real_loss_nmse"][-5000:])/5000)
             loss_collect.append(np.expand_dims(smooth_conv(info["real_loss_nmse"], kernel_size=kernel_size), axis=0))
+            # print((np.expand_dims(smooth_conv(info["real_loss_nmse"], kernel_size=kernel_size), axis=0)).shape)
         ys = np.concatenate(loss_collect)
         y_mean = np.mean(ys, axis=0)[mask]
         # y_std = smooth_conv(np.std(ys, axis=0), kernel_size=2000)[:-1000][mask]
@@ -717,7 +718,9 @@ def one_time_plot_rep3(time_string=None, all_flag=False):
         # "SB-FNN (softplus)": ["20230125_012538_615411", "20230125_020332_903522", "20230125_085620_701421"],
         # "SB-FNN (tanh)": ["20230125_005540_802196", "20230125_013132_572485", "20230125_083013_080349"],
         "SB-FNN (gelu+boundary)": ["20230125_015108_174467", "20230125_022852_847120", "20230125_090253_249386"],
-        "SB-FNN (gelu+stable)": ["20230126_192423_092041", "20230126_200218_223136", "20230126_204208_313040"],
+        "SB-FNN (gelu+boundary_tense)": ["20230127_004115_321527", "20230127_011943_050618", "20230127_015809_930792"],
+        "SB-FNN (gelu+cyclic-1)": ["20230126_192423_092041", "20230126_200218_223136", "20230126_204208_313040"],
+        "SB-FNN (gelu+cyclic-2)": ["20230127_032935_543922"],
 
         # "PINN": ["20230123_051031_562368", "20230123_053357_980705", "20230123_055749_996809", "20230123_062146_202857", "20230123_064557_873001", "20230123_070943_333342", "20230123_073321_157872", "20230123_075659_336315", "20230123_082045_071531", "20230123_084406_654492"],
         # "SB-FNN (adaptive)": ["20230123_183336_929195", "20230123_194400_864789", "20230123_205522_803460", "20230123_220609_712838", "20230123_231501_548374", "20230124_002412_546527", "20230124_013228_072621", "20230124_024156_434477", "20230124_035139_118738", "20230124_050237_890136"],
@@ -741,7 +744,7 @@ def one_time_plot_rep3(time_string=None, all_flag=False):
         y_ticks=[-9.0 + 2 * item for item in range(6)],
         ylim=[-9.5, 3.5],
         y_ticks_format="$10^{%d}$",
-        ncol=3,
+        ncol=2,
         legend_fontsize=18,
         timestring=time_string,
         all_flag=all_flag,
@@ -776,7 +779,9 @@ def one_time_plot_rep6(time_string=None, all_flag=False):
         # "SB-FNN (softplus)": ["20230124_213144_456506", "20230124_222324_644725", "20230125_103338_369995"],
         # "SB-FNN (tanh)": ["20230124_212409_470578", "20230124_221538_636326", "20230125_102532_817191"],
         "SB-FNN (gelu+boundary)": ["20230124_234502_821689", "20230125_011421_453306", "20230125_104243_389203"],
-        "SB-FNN (gelu+stable)": ["20230126_191154_455798", "20230126_204807_161086"],
+        "SB-FNN (gelu+boundary_tense)": ["20230127_004106_883307", "20230127_013654_085794", "20230127_023348_043369"],
+        "SB-FNN (gelu+cyclic-1)": ["20230126_191154_455798", "20230126_204807_161086"],
+        "SB-FNN (gelu+cyclic-2)": ["20230127_020156_745731", "20230127_030444_804640", "20230127_040657_389688"],
 
         # "PINN": ["20230123_051901_465405", "20230123_060508_057827", "20230123_065048_665629", "20230123_073721_504787", "20230123_082310_969669", "20230123_090946_428982", "20230123_095703_645997", "20230123_104341_700825", "20230123_113048_662712", "20230123_121750_730901"],
         # "SB-FNN (adaptive)": ["20230123_183343_390251", "20230123_192902_174778", "20230123_202406_750541", "20230123_211826_111533", "20230123_221311_998306", "20230123_230824_908542", "20230124_000346_570641", "20230124_005815_990397", "20230124_015352_491861", "20230124_024902_199353"],
@@ -800,7 +805,7 @@ def one_time_plot_rep6(time_string=None, all_flag=False):
         y_ticks=[-7.0 + 2 * item for item in range(6)],
         ylim=[-7.5, 3.5],
         y_ticks_format="$10^{%d}$",
-        ncol=3,
+        ncol=2,
         legend_fontsize=18,
         timestring=time_string,
         all_flag=all_flag,
@@ -835,7 +840,8 @@ def one_time_plot_sir(time_string=None, all_flag=False):
         # "SB-FNN (softplus)": ["20230125_041514_287338", "20230125_045626_868292"],
         # "SB-FNN (tanh)": ["20230125_030659_696879", "20230125_035128_503958"],
         "SB-FNN (gelu+boundary)": ["20230125_042647_252543", "20230125_051459_076017"],
-        "SB-FNN (gelu+cyclic)": ["20230126_200758_065223", "20230126_205600_180314", "20230126_214337_179872"],
+        "SB-FNN (gelu+boundary_tense)": ["20230127_003859_334585", "20230127_012622_437093", "20230127_021353_520808"],
+        "SB-FNN (gelu+stable)": ["20230127_021010_370517", "20230127_025409_892965", "20230127_033816_777286"],
 
         # "PINN": ["20230123_234717_299531", "20230124_001058_364264", "20230124_003435_131193", "20230124_005814_160509", "20230124_012138_581311", "20230124_014501_414241", "20230124_020850_290943", "20230124_023254_346000", "20230124_025639_137893", "20230124_032006_207141"],
         # "SB-FNN (adaptive)": ["20230124_061025_725337", "20230124_072430_636371", "20230124_083802_866146", "20230124_095343_841909", "20230124_110829_018813", "20230124_122210_634107"],
@@ -859,7 +865,7 @@ def one_time_plot_sir(time_string=None, all_flag=False):
         y_ticks=[-9.0 + 2 * item for item in range(6)],
         ylim=[-9.5, 1.5],
         y_ticks_format="$10^{%d}$",
-        ncol=3,
+        ncol=2,
         legend_fontsize=18,
         timestring=time_string,
         all_flag=all_flag,
@@ -894,7 +900,8 @@ def one_time_plot_siraged(time_string=None, all_flag=False):
         # "SB-FNN (softplus)": ["20230125_204723_511250", "20230125_225922_839450", "20230125_134451_366695"],
         # "SB-FNN (tanh)": ["20230125_203432_142685", "20230125_224345_685056", "20230125_133456_936209"],
         "SB-FNN (gelu+boundary)": ["20230125_223801_813906", "20230126_005758_163026", "20230125_142334_670035"],
-        "SB-FNN (gelu+cyclic)": ["20230126_200158_140273", "20230126_201226_525728", "20230126_201230_198878"],
+        "SB-FNN (gelu+boundary_tense)": ["20230127_003854_169340"],
+        "SB-FNN (gelu+stable)": ["20230127_021017_804031", "20230127_043458_050928", "20230127_005251_778418"],
     }
     draw_paper_figure_loss(
         timestring_dict=timestring_dict,
@@ -909,7 +916,7 @@ def one_time_plot_siraged(time_string=None, all_flag=False):
         y_ticks=None,#[-9.0 + 2 * item for item in range(6)],
         ylim=None,#[-9.5, 1.5],
         y_ticks_format="$10^{%d}$",
-        ncol=3,
+        ncol=2,
         legend_fontsize=18,
         timestring=time_string,
         all_flag=all_flag,
@@ -979,10 +986,10 @@ strings = {
 
 if __name__ == "__main__":
     time_string = get_now_string()
-    # one_time_plot_rep3(time_string)
-    # one_time_plot_rep6(time_string)
+    one_time_plot_rep3(time_string)
+    one_time_plot_rep6(time_string)
     # one_time_plot_sir(time_string)
-    one_time_plot_siraged(time_string)
+    # one_time_plot_siraged(time_string)
     # clear_reformat_dictionary(strings)
     # one_time_plot_turing_best()
     # one_time_plot_sir_best()
