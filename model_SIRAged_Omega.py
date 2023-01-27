@@ -129,7 +129,7 @@ class FourierModel(FourierModelTemplate):
         f_i = - i_t + i_t_target
         f_r = - r_t + r_t_target
 
-        return torch.cat((f_s, f_i, f_r), 1)
+        return torch.cat((f_s, f_i, f_r), 1), torch.cat((s_t, i_t, r_t), 1)
 
     def loss(self, y):
         y0_pred = y[0, 0, :]
