@@ -79,7 +79,38 @@ class FourierModel(FourierModelTemplate):
         f_S = S_t - (- self.config.params.beta * S * I)
         f_I = I_t - (self.config.params.beta * S * I - self.config.params.gamma * I)
         f_R = R_t - (self.config.params.gamma * I)
-        return torch.cat((f_S.reshape([-1, 1]), f_I.reshape([-1, 1]), f_R.reshape([-1, 1])), 1)
+        return torch.cat((f_S.reshape([-1, 1]), f_I.reshape([-1, 1]), f_R.reshape([-1, 1])), 1), torch.cat((S_t.reshape([-1, 1]), I_t.reshape([-1, 1]), R_t.reshape([-1, 1])), 1)
+
+    def loss(self, y):
+        y0_pred = y[0, 0, :]
+        y0_true = torch.tensor(self.config.y0, dtype=torch.float32).to(self.config.device)
+
+        ode_n, dy = self.ode_gradient(self.config.x, y)
+        zeros_1D = torch.zeros([self.config.T_N]).to(self.config.device)
+        zeros_nD = torch.zeros([self.config.T_N, self.config.prob_dim]).to(self.config.device)
+
+        loss1 = self.criterion(y0_pred, y0_true)
+        loss2 = 1.0 * (self.criterion(ode_n, zeros_nD))
+
+        loss3 = (1.0 if self.config.boundary else 0.0) * (sum([
+            self.criterion(torch.abs(y[:, :, i] - self.config.boundary_list[i][0]),
+                           y[:, :, i] - self.config.boundary_list[i][0]) +
+            self.criterion(torch.abs(self.config.boundary_list[i][1] - y[:, :, i]),
+                           self.config.boundary_list[i][1] - y[:, :, i]) for i in range(self.config.prob_dim)]))
+        loss4 = (1.0 if self.config.cyclic else 0) * sum(
+            [penalty_func(torch.var(y[0, :, i])) for i in range(self.config.prob_dim)])
+
+        stable_period = 0.9
+        loss5 = (1.0 if self.config.stable else 0) * self.criterion(
+            torch.abs(0.06 - torch.abs(dy[int(stable_period * self.config.T_N):, :])),
+            0.06 - torch.abs(dy[int(stable_period * self.config.T_N):, :]))
+        # print("dy max", torch.max(dy[int(0.9 * self.config.T_N):,:]))
+        # print("dy min", torch.min(dy[int(0.9 * self.config.T_N):,:]))
+        # print("dy avg", torch.mean(dy[int(0.9 * self.config.T_N):,:]))
+
+        loss = loss1 + loss2 + loss3 + loss4 + loss5
+        loss_list = [loss1, loss2, loss3, loss4, loss5]
+        return loss, loss_list
 
 
 class PINNModel(FourierModel):
