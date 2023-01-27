@@ -662,7 +662,7 @@ if __name__ == "__main__":
     # one_time_build_sir_lambda_final()
     # one_time_build_rep_lambda_final()
     # one_time_build_cc1_lambda_final()
-    one_time_build_omega("REP6", 1, 3)
+    one_time_build_omega("REP3", 0, 3)
     # one_time_build_rep3_omega_activations()
     # one_time_build_rep6_omega_activations()
     # one_time_build_sir_omega_activations()
