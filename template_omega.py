@@ -78,10 +78,10 @@ class FourierModelTemplate(nn.Module):
         self.cnn2 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
         self.cnn3 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
         self.cnn4 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
-        # self.mlp1 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
-        # self.mlp2 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
-        # self.mlp3 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
-        # self.mlp4 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
+        self.mlp1 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
+        self.mlp2 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
+        self.mlp3 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
+        self.mlp4 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
         self.activate_block1 = ActivationBlock(self.config).to(self.config.device)
         self.activate_block2 = ActivationBlock(self.config).to(self.config.device)
         self.activate_block3 = ActivationBlock(self.config).to(self.config.device)
@@ -275,8 +275,9 @@ class FourierModelTemplate(nn.Module):
         return loss, loss_list
 
     def train_model(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.config.args.initial_lr, weight_decay=0)
-        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda e: 1 / (e / 1000 + 1))
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.config.args.initial_lr, weight_decay=1e-4)
+        # scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda e: 1 / (e / 1000 + 1))
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.config.args.iteration)
         self.train()
 
         start_time = time.time()
