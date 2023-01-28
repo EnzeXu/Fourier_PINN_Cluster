@@ -13,6 +13,6 @@
 
 echo $(pwd) > "jobs/pwd.txt"
 source /deac/csc/chenGrp/software/tensorflow/bin/activate
-python model_REP3_Omega.py --main_path . --skip_draw_flag 1 --pinn 0 --activation gelu --cyclic 2 --stable 0 --derivative 0 --boundary 0 --seed 0 --log_path logs/o_rep3_cyclic_0.txt
-python model_REP3_Omega.py --main_path . --skip_draw_flag 1 --pinn 0 --activation gelu --cyclic 2 --stable 0 --derivative 0 --boundary 0 --seed 1 --log_path logs/o_rep3_cyclic_1.txt
-python model_REP3_Omega.py --main_path . --skip_draw_flag 1 --pinn 0 --activation gelu --cyclic 2 --stable 0 --derivative 0 --boundary 0 --seed 2 --log_path logs/o_rep3_cyclic_2.txt
+python model_REP3_Omega.py --main_path . --skip_draw_flag 1 --pinn 0 --activation gelu --cyclic 1 --stable 0 --derivative 0 --boundary 0 --seed 0 --log_path logs/o_rep3_cyclic_0.txt --init_lr 0.01
+python model_REP3_Omega.py --main_path . --skip_draw_flag 1 --pinn 0 --activation gelu --cyclic 1 --stable 0 --derivative 0 --boundary 0 --seed 1 --log_path logs/o_rep3_cyclic_1.txt --init_lr 0.01
+python model_REP3_Omega.py --main_path . --skip_draw_flag 1 --pinn 0 --activation gelu --cyclic 1 --stable 0 --derivative 0 --boundary 0 --seed 2 --log_path logs/o_rep3_cyclic_2.txt --init_lr 0.01

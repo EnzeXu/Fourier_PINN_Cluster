@@ -62,8 +62,11 @@ class Config(ConfigTemplate):
         return dydt
 
 
-def penalty_cyclic_func(x):
-    return 1 * (- torch.tanh((x - 0.05) * 200) + 1)
+# def penalty_cyclic_func(x):
+#     return 1 * (- torch.tanh((x - 0.05) * 200) + 1)
+
+def penalty_func(x):
+    return 1 * (- torch.tanh((x - 0.004) * 300) + 1)
 
 class FourierModel(FourierModelTemplate):
     def __init__(self, config):
@@ -104,7 +107,7 @@ class FourierModel(FourierModelTemplate):
         return torch.cat((f_m_lacl.reshape([-1, 1]), f_m_tetR.reshape([-1, 1]), f_m_cl.reshape([-1, 1]),
                           f_p_cl.reshape([-1, 1]), f_p_lacl.reshape([-1, 1]), f_p_tetR.reshape([-1, 1])), 1)
 
-    def loss(self, y):
+    def loss(self, y, iteration=-1):
         y0_pred = y[0, 0, :]
         y0_true = torch.tensor(self.config.y0, dtype=torch.float32).to(self.config.device)
 
@@ -121,10 +124,13 @@ class FourierModel(FourierModelTemplate):
             self.criterion(torch.abs(self.config.boundary_list[i][1] - y[:, :, i]),
                            self.config.boundary_list[i][1] - y[:, :, i]) for i in range(self.config.prob_dim)]))
 
-        y_norm = torch.zeros(self.config.prob_dim).to(self.config.device)
-        for i in range(self.config.prob_dim):
-            y_norm[i] = torch.var((y[0, :, i] - torch.min(y[0, :, i])) / (torch.max(y[0, :, i]) - torch.min(y[0, :, i])))
-        loss4 = (1.0 if self.config.cyclic else 0) * torch.mean(penalty_cyclic_func(y_norm))
+        # y_norm = torch.zeros(self.config.prob_dim).to(self.config.device)
+        # for i in range(self.config.prob_dim):
+        #     y_norm[i] = torch.var((y[0, :, i] - torch.min(y[0, :, i])) / (torch.max(y[0, :, i]) - torch.min(y[0, :, i])))
+        # loss4 = (1.0 if self.config.cyclic else 0) * torch.mean(penalty_cyclic_func(y_norm))
+
+        loss4 = (1.0 if self.config.cyclic else 0) * sum(
+            [penalty_func(torch.var(y[0, :, i])) for i in range(self.config.prob_dim)])
         # loss4 = (1.0 if self.config.cyclic else 0) * sum(
         #     [penalty_func(torch.var(y[0, :, i])) for i in range(self.config.prob_dim)])
 

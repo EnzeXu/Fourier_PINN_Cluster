@@ -83,7 +83,7 @@ class FourierModel(FourierModelTemplate):
         f_R = R_t - (self.config.params.gamma * I)
         return torch.cat((f_S.reshape([-1, 1]), f_I.reshape([-1, 1]), f_R.reshape([-1, 1])), 1), torch.cat((S_t.reshape([-1, 1]), I_t.reshape([-1, 1]), R_t.reshape([-1, 1])), 1)
 
-    def loss(self, y):
+    def loss(self, y, iteration=-1):
         y0_pred = y[0, 0, :]
         y0_true = torch.tensor(self.config.y0, dtype=torch.float32).to(self.config.device)
 
@@ -103,7 +103,8 @@ class FourierModel(FourierModelTemplate):
             [penalty_func(torch.var(y[0, :, i])) for i in range(self.config.prob_dim)])
 
         stable_period = 0.9
-        loss5 = (1.0 if self.config.stable else 0) * self.criterion(
+        stable_iteration = int(0.3 * self.config.args.iteration)
+        loss5 = (1.0 if self.config.stable and iteration > stable_iteration else 0) * self.criterion(
             torch.abs(0.06 - torch.abs(dy[int(stable_period * self.config.T_N):, :])),
             0.06 - torch.abs(dy[int(stable_period * self.config.T_N):, :]))
         # print("dy max", torch.max(dy[int(0.9 * self.config.T_N):,:]))

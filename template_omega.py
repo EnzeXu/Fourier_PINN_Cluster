@@ -129,7 +129,6 @@ class FourierModelTemplate(nn.Module):
         y_truth = torch.tensor(self.config.truth.reshape([1, self.config.T_N, self.config.prob_dim])).to(
             self.config.device)
         tl, tl_list = self.loss(y_truth)
-        print("tl_list=", tl_list)
         loss_print_part = " ".join(
             ["Loss_{0:d}:{1:.12f}".format(i + 1, loss_part.item()) for i, loss_part in enumerate(tl_list)])
         myprint("Ground truth has loss: Loss:{0:.12f} {1}".format(tl.item(), loss_print_part), self.config.args.log_path)
@@ -243,7 +242,7 @@ class FourierModelTemplate(nn.Module):
         return torch.cat((f_m_lacl.reshape([-1, 1]), f_m_tetR.reshape([-1, 1]), f_m_cl.reshape([-1, 1]),
                           f_p_cl.reshape([-1, 1]), f_p_lacl.reshape([-1, 1]), f_p_tetR.reshape([-1, 1])), 1)
 
-    def loss(self, y):
+    def loss(self, y, iteration=-1):
         y0_pred = y[0, 0, :]
         y0_true = torch.tensor(self.config.y0, dtype=torch.float32).to(self.config.device)
 
@@ -291,7 +290,7 @@ class FourierModelTemplate(nn.Module):
             optimizer.zero_grad()
 
             y = self.forward(self.config.x)
-            loss, loss_list = self.loss(y)
+            loss, loss_list = self.loss(y, epoch)
             loss_record.append(loss.item())
             real_loss_mse, real_loss_nmse = self.real_loss(y)
             real_loss_mse_record.append(real_loss_mse.item())
@@ -405,7 +404,7 @@ class FourierModelTemplate(nn.Module):
             fig_title="{}_{}_epoch={}".format(self.config.model_name, self.time_string, self.epoch_tmp),
             fig_size=(8, 6),
             show_flag=True,
-            save_flag=True,
+            save_flag=False,
             save_path=save_path,
             save_dpi=300,
             legend_loc="center right",
@@ -416,23 +415,24 @@ class FourierModelTemplate(nn.Module):
 
     def write_finish_log(self):
         with open(os.path.join(self.config.args.main_path, "saves/record_omega.txt"), "a") as f:
-            f.write("{0},{1},{2},{3:.2f},{4},{5:.12f},{6:.12f},{7:.12f},{8},{9},{10},{11},{12},{13},{14},{15}\n".format(
+            f.write("{0},{1},{2},{3:.2f},{4},{5:.6f},{6:.12f},{7:.12f},{8:.12f},{9},{10},{11},{12},{13},{14},{15},{16}\n".format(
                 self.config.model_name,  # 0
                 self.time_string,  # 1
                 self.config.seed,  # 2
                 self.time_record_tmp[-1] / 60.0,  # 3
                 self.config.args.iteration,  # 4
-                sum(self.loss_record_tmp[-self.config.loss_average_length:]) / self.config.loss_average_length,  # 5
-                sum(self.real_loss_mse_record_tmp[-self.config.loss_average_length:]) / self.config.loss_average_length,  # 6
-                sum(self.real_loss_nmse_record_tmp[-self.config.loss_average_length:]) / self.config.loss_average_length,  # 7
-                self.config.pinn,  # 8
-                self.config.activation,  # 9
-                self.config.stable,  # 10
-                self.config.cyclic,  # 11
-                self.config.derivative,  # 12
-                self.config.boundary,  # 12
-                self.config.loss_average_length,  # 14
-                "{}-{}".format(self.config.args.iteration - self.config.loss_average_length, self.config.args.iteration),  # 15
+                self.config.args.initial_lr,  # 5
+                sum(self.loss_record_tmp[-self.config.loss_average_length:]) / self.config.loss_average_length,  # 6
+                sum(self.real_loss_mse_record_tmp[-self.config.loss_average_length:]) / self.config.loss_average_length,  # 7
+                sum(self.real_loss_nmse_record_tmp[-self.config.loss_average_length:]) / self.config.loss_average_length,  # 8
+                self.config.pinn,  # 9
+                self.config.activation,  # 10
+                self.config.stable,  # 11
+                self.config.cyclic,  # 12
+                self.config.derivative,  # 13
+                self.config.boundary,  # 14
+                self.config.loss_average_length,  # 15
+                "{}-{}".format(self.config.args.iteration - self.config.loss_average_length, self.config.args.iteration),  # 16
             ))
 
     @staticmethod
@@ -596,6 +596,7 @@ def run(config, fourier_model, pinn_model):
     parser.add_argument("--boundary", type=int, choices=[0, 1, 2], help="0=off 1=on")
     parser.add_argument("--skip_draw_flag", type=int, default=1, choices=[0, 1], help="0=off 1=on")
     parser.add_argument("--test", type=int, default=0, help="test will take epoch as 10")
+    parser.add_argument("--init_lr", type=float, default=None, help="forced initial learning rate")
     # parser.add_argument("--strategy", type=int, default=0, help="0=ones 1=fixed 2=adaptive")
     # parser.add_argument("--layer", type=int, default=8, help="number of layer")
     opt = parser.parse_args()
@@ -615,6 +616,8 @@ def run(config, fourier_model, pinn_model):
     config.pinn = opt.pinn
     config.args.main_path = opt.main_path
     config.args.log_path = opt.log_path
+    if opt.init_lr:
+        config.args.initial_lr = opt.init_lr
     if opt.test:
         config.args.iteration = 10
         config.args.epoch_step = 1  # 1000  # 1000

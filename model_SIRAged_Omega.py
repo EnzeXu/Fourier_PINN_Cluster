@@ -53,8 +53,8 @@ class Config(ConfigTemplate):
         self.T = 100
         self.T_unit = 1e-2
         self.y0 = np.asarray([50.0] * self.params.n + [40.0] * self.params.n + [10.0] * self.params.n)
-        # self.boundary_list = np.asarray([[0.0, 100.0]] * 3 * self.params.n)
-        self.boundary_list = np.asarray([[0.11, 50.0], [0.0, 50.0], [0.1, 50.0], [0.32, 50.0], [6.17, 50.0], [0.75, 57.53], [0.66, 66.25], [0.75, 57.56], [0.8, 54.93], [1.26, 42.27], [10.0, 99.14], [10.0, 99.34], [10.0, 99.14], [10.0, 98.87], [10.0, 92.57]])
+        self.boundary_list = np.asarray([[0.0, 100.0]] * 3 * self.params.n)
+        # self.boundary_list = np.asarray([[0.11, 50.0], [0.0, 50.0], [0.1, 50.0], [0.32, 50.0], [6.17, 50.0], [0.75, 57.53], [0.66, 66.25], [0.75, 57.56], [0.8, 54.93], [1.26, 42.27], [10.0, 99.14], [10.0, 99.34], [10.0, 99.14], [10.0, 98.87], [10.0, 92.57]])
 
         self.setup()
 
@@ -133,7 +133,7 @@ class FourierModel(FourierModelTemplate):
 
         return torch.cat((f_s, f_i, f_r), 1), torch.cat((s_t, i_t, r_t), 1)
 
-    def loss(self, y):
+    def loss(self, y, iteration=-1):
         y0_pred = y[0, 0, :]
         y0_true = torch.tensor(self.config.y0, dtype=torch.float32).to(self.config.device)
 
@@ -153,7 +153,8 @@ class FourierModel(FourierModelTemplate):
             [penalty_func(torch.var(y[0, :, i])) for i in range(self.config.prob_dim)])
 
         stable_period = 0.9
-        loss5 = (1.0 if self.config.stable else 0) * self.criterion(
+        stable_iteration = int(0.3 * self.config.args.iteration)
+        loss5 = (1.0 if self.config.stable and iteration > stable_iteration else 0) * self.criterion(
             torch.abs(0.1 - torch.abs(dy[int(stable_period * self.config.T_N):, :])),
             0.1 - torch.abs(dy[int(stable_period * self.config.T_N):, :]))
         # print("dy max", torch.max(dy[int(0.9 * self.config.T_N):,:]))

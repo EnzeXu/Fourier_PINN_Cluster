@@ -608,21 +608,22 @@ def one_time_build_siraged_omega_activations():
 
 def one_time_build_omega(module_name_short, start_seed, end_seed):
     plans = [
-        # pinn / activation / cyclic / stable / derivative / boundary
-        # [1, "adaptive", 0, 0, 0, 0],
-        # [0, "gelu", 0, 0, 0, 0],
-        # [0, "relu", 0, 0, 0, 0],
-        # [0, "elu", 0, 0, 0, 0],
-        # [0, "tanh", 0, 0, 0, 0],
-        # [0, "sin", 0, 0, 0, 0],
-        # [0, "softplus", 0, 0, 0, 0],
-        # [0, "adaptive", 0, 0, 0, 0],
-        # [0, "adaptive_3", 0, 0, 0, 0],
-        # [0, "gelu", 0, 0, 0, 1],
-        # [0, "gelu", 1, 0, 0, 0],
-        # [0, "gelu", 0, 0, 0, 2],
-        # [0, "gelu", 2, 0, 0, 0],
-        [0, "gelu", 2, 0, 0, 0],
+        # pinn / activation / cyclic / stable / derivative / boundary /init_lr
+        [1, "gelu", 0, 0, 0, 0, None],
+        [0, "gelu", 0, 0, 0, 0, None],
+        [0, "relu", 0, 0, 0, 0, None],
+        [0, "elu", 0, 0, 0, 0, None],
+        [0, "tanh", 0, 0, 0, 0, None],
+        [0, "sin", 0, 0, 0, 0, None],
+        [0, "softplus", 0, 0, 0, 0, None],
+        [0, "adaptive", 0, 0, 0, 0, 0.001],
+        [0, "adaptive", 0, 0, 0, 0, 0.003],
+        [0, "adaptive", 0, 0, 0, 0, 0.005],
+        [0, "adaptive", 0, 0, 0, 0, 0.01],
+        # [0, "adaptive_3", 0, 0, 0, 0, None],
+        [0, "gelu", 0, 0, 0, 1, None],
+        [0, "gelu", 1, 0, 0, 0, None],
+        [0, "gelu", 0, 1, 0, 0, None],
     ]
     module_name_short = module_name_short
     dic = dict()
@@ -635,6 +636,8 @@ def one_time_build_omega(module_name_short, start_seed, end_seed):
         dic["stable"] = one_plan[3]
         dic["derivative"] = one_plan[4]
         dic["boundary"] = one_plan[5]
+        if one_plan[6]:
+            dic["init_lr"] = one_plan[6]
 
         if one_plan[0]:
             title_format = "o_{}_pinn".format(module_name_short.lower())
@@ -647,7 +650,7 @@ def one_time_build_omega(module_name_short, start_seed, end_seed):
         elif one_plan[4]:
             title_format = "o_{}_derivative".format(module_name_short.lower())
         else:
-            title_format = "o_{}_{}".format(module_name_short.lower(), one_plan[1])
+            title_format = "o_{}_{}".format(module_name_short.lower(), one_plan[1] + (str(one_plan[6]) if dic["activation"] == "adaptive" else ""))
         title_format_log = title_format + "_{}"
 
         one_slurm_multi_seed(
@@ -665,10 +668,10 @@ if __name__ == "__main__":
     # one_time_build_rep_lambda_final()
     # one_time_build_cc1_lambda_final()
 
-    # one_time_build_omega("SIRAged", 0, 3)
-    # one_time_build_omega("SIR", 0, 3)
-    # one_time_build_omega("REP6", 0, 3)
-    one_time_build_omega("REP3", 3, 10)
+    one_time_build_omega("SIRAged", 0, 3)
+    one_time_build_omega("SIR", 0, 3)
+    one_time_build_omega("REP6", 0, 3)
+    one_time_build_omega("REP3", 0, 3)
     # one_time_build_rep3_omega_activations()
     # one_time_build_rep6_omega_activations()
     # one_time_build_sir_omega_activations()
