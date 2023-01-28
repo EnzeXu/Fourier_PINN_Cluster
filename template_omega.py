@@ -173,27 +173,26 @@ class FourierModelTemplate(nn.Module):
         x = self.fc0(x)
         x = x.permute(0, 2, 1)
 
-        # x = self.layers(x)
         x1 = self.conv1(x)
-        # x1 = self.mlp1(x1)
+        x1 = self.mlp1(x1)
         x2 = self.cnn1(x)
         x = x1 + x2
         x = self.activate_block1(x)
 
         x1 = self.conv2(x)
-        # x1 = self.mlp2(x1)
+        x1 = self.mlp2(x1)
         x2 = self.cnn2(x)
         x = x1 + x2
         x = self.activate_block2(x)
 
         x1 = self.conv3(x)
-        # x1 = self.mlp3(x1)
+        x1 = self.mlp3(x1)
         x2 = self.cnn3(x)
         x = x1 + x2
         x = self.activate_block3(x)
 
         x1 = self.conv4(x)
-        # x1 = self.mlp4(x1)
+        x1 = self.mlp4(x1)
         x2 = self.cnn4(x)
         x = x1 + x2
 
