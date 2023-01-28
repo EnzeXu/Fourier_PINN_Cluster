@@ -78,10 +78,10 @@ class FourierModelTemplate(nn.Module):
         self.cnn2 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
         self.cnn3 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
         self.cnn4 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
-        self.mlp1 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
-        self.mlp2 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
-        self.mlp3 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
-        self.mlp4 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
+        # self.mlp1 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
+        # self.mlp2 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
+        # self.mlp3 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
+        # self.mlp4 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
         self.activate_block1 = ActivationBlock(self.config).to(self.config.device)
         self.activate_block2 = ActivationBlock(self.config).to(self.config.device)
         self.activate_block3 = ActivationBlock(self.config).to(self.config.device)
@@ -175,25 +175,25 @@ class FourierModelTemplate(nn.Module):
 
         # x = self.layers(x)
         x1 = self.conv1(x)
-        x1 = self.mlp1(x1)
+        # x1 = self.mlp1(x1)
         x2 = self.cnn1(x)
         x = x1 + x2
         x = self.activate_block1(x)
 
         x1 = self.conv2(x)
-        x1 = self.mlp2(x1)
+        # x1 = self.mlp2(x1)
         x2 = self.cnn2(x)
         x = x1 + x2
         x = self.activate_block2(x)
 
         x1 = self.conv3(x)
-        x1 = self.mlp3(x1)
+        # x1 = self.mlp3(x1)
         x2 = self.cnn3(x)
         x = x1 + x2
         x = self.activate_block3(x)
 
         x1 = self.conv4(x)
-        x1 = self.mlp4(x1)
+        # x1 = self.mlp4(x1)
         x2 = self.cnn4(x)
         x = x1 + x2
 
@@ -559,6 +559,8 @@ class ActivationBlock(nn.Module):
             return self.my_sin(x)
         elif self.config.activation == "softplus":
             return self.my_softplus(x)
+        elif self.config.activation == "selu":
+            return nn.functional.selu(x)
         activation_res = 0.0
         if self.config.activation == "adaptive":
             self.activate_weights = my_softmax(self.activate_weights_raw)
@@ -586,7 +588,7 @@ def run(config, fourier_model, pinn_model):
     parser.add_argument("--main_path", default="./", help="main_path")
     parser.add_argument("--seed", type=int, default=0, help="seed")
     parser.add_argument("--pinn", type=int, default=0, help="0=off 1=on")
-    parser.add_argument("--activation", choices=["gelu", "elu", "relu", "sin", "tanh", "softplus", "adaptive", "adaptive_3"],
+    parser.add_argument("--activation", choices=["gelu", "elu", "relu", "sin", "tanh", "softplus", "adaptive", "adaptive_3", "selu"],
                         type=str, help="activation plan")
     parser.add_argument("--cyclic", type=int, choices=[0, 1, 2], help="0=off 1=on")
     parser.add_argument("--stable", type=int, choices=[0, 1], help="0=off 1=on")

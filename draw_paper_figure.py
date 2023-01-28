@@ -720,7 +720,7 @@ def one_time_plot_rep3(time_string=None, all_flag=False):
         "SB-FNN (gelu+boundary)": ["20230125_015108_174467", "20230125_022852_847120", "20230125_090253_249386"],
         "SB-FNN (gelu+boundary_tense)": ["20230127_004115_321527", "20230127_011943_050618", "20230127_015809_930792"],
         "SB-FNN (gelu+cyclic-1)": ["20230126_192423_092041", "20230126_200218_223136", "20230126_204208_313040"],
-        "SB-FNN (gelu+cyclic-2)": ["20230127_032935_543922"],
+        "SB-FNN (gelu+cyclic-2)": ["20230127_020154_680831", "20230127_024510_758013", "20230127_032935_543922"],
 
         # "PINN": ["20230123_051031_562368", "20230123_053357_980705", "20230123_055749_996809", "20230123_062146_202857", "20230123_064557_873001", "20230123_070943_333342", "20230123_073321_157872", "20230123_075659_336315", "20230123_082045_071531", "20230123_084406_654492"],
         # "SB-FNN (adaptive)": ["20230123_183336_929195", "20230123_194400_864789", "20230123_205522_803460", "20230123_220609_712838", "20230123_231501_548374", "20230124_002412_546527", "20230124_013228_072621", "20230124_024156_434477", "20230124_035139_118738", "20230124_050237_890136"],
@@ -900,7 +900,7 @@ def one_time_plot_siraged(time_string=None, all_flag=False):
         # "SB-FNN (softplus)": ["20230125_204723_511250", "20230125_225922_839450", "20230125_134451_366695"],
         # "SB-FNN (tanh)": ["20230125_203432_142685", "20230125_224345_685056", "20230125_133456_936209"],
         "SB-FNN (gelu+boundary)": ["20230125_223801_813906", "20230126_005758_163026", "20230125_142334_670035"],
-        "SB-FNN (gelu+boundary_tense)": ["20230127_003854_169340"],
+        "SB-FNN (gelu+boundary_tense)": ["20230127_003854_169340", "20230127_045212_509992"],
         "SB-FNN (gelu+stable)": ["20230127_021017_804031", "20230127_043458_050928", "20230127_005251_778418"],
     }
     draw_paper_figure_loss(
@@ -986,8 +986,8 @@ strings = {
 
 if __name__ == "__main__":
     time_string = get_now_string()
-    one_time_plot_rep3(time_string)
-    one_time_plot_rep6(time_string)
+    # one_time_plot_rep3(time_string)
+    # one_time_plot_rep6(time_string)
     # one_time_plot_sir(time_string)
     # one_time_plot_siraged(time_string)
     # clear_reformat_dictionary(strings)
@@ -1019,4 +1019,24 @@ if __name__ == "__main__":
     # clear_reformat(str2)
     # clear_reformat(str3)
     # clear_reformat(str4)
+    model_name_short = "REP3"
+    time_string = get_now_string() if not time_string else time_string
+    timestring_dict = {
+        "SB-FNN (gelu+cyclic-2)": ["20230127_020154_680831"],
+    }
+    from model_REP3_Omega import Config
+    draw_paper_figure_best(
+        timestring_dict=timestring_dict,
+        info_path_format_dict={
+            "PINN": "./saves/train/{0}_PINN_Omega_{{0}}/{0}_PINN_Omega_{{0}}_info.npy".format(model_name_short),
+            "default": "./saves/train/{0}_Fourier_Omega_{{0}}/{0}_Fourier_Omega_{{0}}_info.npy".format(model_name_short),
+        },
+        model_name_short=model_name_short,
+        config=Config(),
+        loss_average_length=5000,
+        fontsize=30,
+        timestring=time_string,
+        show_legend=["${}$".format(item) for item in ["\hat{P}_{cI}", "\hat{P}_{lacI}", "\hat{P}_{tetR}"]] + ["${}$".format(item) for item in ["P_{cI}", "P_{lacI}", "P_{tetR}"]],
+        all_flag=False,
+    )
     pass
