@@ -70,22 +70,22 @@ class FourierModelTemplate(nn.Module):
 
         self.fc0 = nn.Linear(2, self.config.width)  # input channel is 2: (a(x), x)
         # self.layers = Layers(config=self.config, n=self.config.layer).to(self.config.device)
+        self.conv0 = SpectralConv1d(self.config).to(self.config.device)
         self.conv1 = SpectralConv1d(self.config).to(self.config.device)
         self.conv2 = SpectralConv1d(self.config).to(self.config.device)
         self.conv3 = SpectralConv1d(self.config).to(self.config.device)
-        self.conv4 = SpectralConv1d(self.config).to(self.config.device)
-        self.cnn1 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
-        self.cnn2 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
-        self.cnn3 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
-        self.cnn4 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
+        self.w0 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
+        self.w1 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
+        self.w2 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
+        self.w3 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
+        self.mlp0 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
         self.mlp1 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
         self.mlp2 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
         self.mlp3 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
-        self.mlp4 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
+        self.activate_block0 = ActivationBlock(self.config).to(self.config.device)
         self.activate_block1 = ActivationBlock(self.config).to(self.config.device)
         self.activate_block2 = ActivationBlock(self.config).to(self.config.device)
         self.activate_block3 = ActivationBlock(self.config).to(self.config.device)
-        self.activate_block4 = ActivationBlock(self.config).to(self.config.device)
 
         self.fc1 = nn.Linear(self.config.width, self.config.fc_map_dim)
         self.fc2 = nn.Linear(self.config.fc_map_dim, self.config.prob_dim)
@@ -173,32 +173,32 @@ class FourierModelTemplate(nn.Module):
         x = self.fc0(x)
         x = x.permute(0, 2, 1)
 
+        x1 = self.conv0(x)
+        x1 = self.mlp0(x1)
+        x2 = self.w0(x)
+        x = x1 + x2
+        x = self.activate_block0(x)
+
         x1 = self.conv1(x)
         x1 = self.mlp1(x1)
-        x2 = self.cnn1(x)
+        x2 = self.w1(x)
         x = x1 + x2
         x = self.activate_block1(x)
 
         x1 = self.conv2(x)
         x1 = self.mlp2(x1)
-        x2 = self.cnn2(x)
+        x2 = self.w2(x)
         x = x1 + x2
         x = self.activate_block2(x)
 
         x1 = self.conv3(x)
         x1 = self.mlp3(x1)
-        x2 = self.cnn3(x)
-        x = x1 + x2
-        x = self.activate_block3(x)
-
-        x1 = self.conv4(x)
-        x1 = self.mlp4(x1)
-        x2 = self.cnn4(x)
+        x2 = self.w3(x)
         x = x1 + x2
 
         x = x.permute(0, 2, 1)
         x = self.fc1(x)
-        x = self.activate_block4(x)
+        x = self.activate_block3(x)
         x = self.fc2(x)
         return x
 
@@ -350,22 +350,22 @@ class FourierModelTemplate(nn.Module):
                         # "config": self.config,
                         "time_string": self.time_string,
                         "weights_raw": np.asarray([
+                            self.activate_block0.activate_weights_raw.cpu().detach().numpy(),
                             self.activate_block1.activate_weights_raw.cpu().detach().numpy(),
                             self.activate_block2.activate_weights_raw.cpu().detach().numpy(),
                             self.activate_block3.activate_weights_raw.cpu().detach().numpy(),
-                            self.activate_block4.activate_weights_raw.cpu().detach().numpy(),
                         ]),
                         "weights": np.asarray([
+                            self.activate_block0.activate_weights.cpu().detach().numpy(),
                             self.activate_block1.activate_weights.cpu().detach().numpy(),
                             self.activate_block2.activate_weights.cpu().detach().numpy(),
                             self.activate_block3.activate_weights.cpu().detach().numpy(),
-                            self.activate_block4.activate_weights.cpu().detach().numpy(),
                         ]),
                         "sin_weight": np.asarray([
+                            self.activate_block0.activates[0].omega.cpu().detach().numpy(),
                             self.activate_block1.activates[0].omega.cpu().detach().numpy(),
                             self.activate_block2.activates[0].omega.cpu().detach().numpy(),
                             self.activate_block3.activates[0].omega.cpu().detach().numpy(),
-                            self.activate_block4.activates[0].omega.cpu().detach().numpy(),
                         ]),
                     }
                     train_info_path_loss = "{}/{}_{}_info.npy".format(self.train_save_path_folder,
