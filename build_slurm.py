@@ -626,10 +626,11 @@ def one_time_build_omega(module_name_short, start_seed, end_seed):
         [0, "gelu", 0, 1, 0, 0, None],
     ]
     module_name_short = module_name_short
-    dic = dict()
-    dic["main_path"] = "."
-    dic["skip_draw_flag"] = 1
+
     for one_plan in plans:
+        dic = dict()
+        dic["main_path"] = "."
+        dic["skip_draw_flag"] = 1
         dic["pinn"] = one_plan[0]
         dic["activation"] = one_plan[1]
         dic["cyclic"] = one_plan[2]
