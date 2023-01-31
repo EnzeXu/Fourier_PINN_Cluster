@@ -525,18 +525,22 @@ class ActivationBlock(nn.Module):
         super().__init__()
         self.config = config
         self.activate_list = ["sin", "tanh", "relu", "gelu", "softplus", "elu"]
+        self.activate_list_5 = ["tanh", "relu", "gelu", "softplus", "elu"]
         self.activate_list_3 = ["gelu", "softplus", "elu"]
-        assert self.config.activation in self.activate_list + ["adaptive", "adaptive_3"]
+        assert self.config.activation in self.activate_list + ["adaptive", "adaptive_3", "adaptive_5"]
         self.activates = nn.ModuleList([activation_func(item).to(config.device) for item in self.activate_list])
         self.activate_weights_raw = nn.Parameter(torch.rand(len(self.activate_list)).to(self.config.device), requires_grad=True)
         self.activates_3 = nn.ModuleList([activation_func(item).to(config.device) for item in self.activate_list_3])
         self.activate_weights_raw_3 = nn.Parameter(torch.rand(3).to(self.config.device), requires_grad=True)
+        self.activates_5 = nn.ModuleList([activation_func(item).to(config.device) for item in self.activate_list_5])
+        self.activate_weights_raw_5 = nn.Parameter(torch.rand(5).to(self.config.device), requires_grad=True)
 
         self.my_sin = activation_func("sin")
         self.my_softplus = activation_func("softplus")
 
         self.activate_weights = my_softmax(self.activate_weights_raw)
         self.activate_weights_3 = my_softmax(self.activate_weights_raw_3)
+        self.activate_weights_5 = my_softmax(self.activate_weights_raw_5)
         # assert self.config.strategy in [0, 1, 2]
         # if self.config.strategy == 0:
         #     self.balance_weights = torch.tensor([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]).to(self.config.device)
@@ -567,10 +571,15 @@ class ActivationBlock(nn.Module):
             for i in range(len(self.activate_list)):
                 tmp_sum = self.activate_weights[i] * self.activates[i](x)
                 activation_res += tmp_sum
-        else: # adaptive_3
+        elif self.config.activation == "adaptive_3":  # adaptive_3
             self.activate_weights_3 = my_softmax(self.activate_weights_raw_3)
             for i in range(len(self.activate_list_3)):
                 tmp_sum = self.activate_weights_3[i] * self.activates_3[i](x)
+                activation_res += tmp_sum
+        else:  # adaptive_5
+            self.activate_weights_5 = my_softmax(self.activate_weights_raw_5)
+            for i in range(len(self.activate_list_5)):
+                tmp_sum = self.activate_weights_5[i] * self.activates_5[i](x)
                 activation_res += tmp_sum
         return activation_res
 
@@ -588,7 +597,7 @@ def run(config, fourier_model, pinn_model):
     parser.add_argument("--main_path", default="./", help="main_path")
     parser.add_argument("--seed", type=int, default=0, help="seed")
     parser.add_argument("--pinn", type=int, default=0, help="0=off 1=on")
-    parser.add_argument("--activation", choices=["gelu", "elu", "relu", "sin", "tanh", "softplus", "adaptive", "adaptive_3", "selu"],
+    parser.add_argument("--activation", choices=["gelu", "elu", "relu", "sin", "tanh", "softplus", "adaptive", "adaptive_3", "adaptive_5", "selu"],
                         type=str, help="activation plan")
     parser.add_argument("--cyclic", type=int, choices=[0, 1, 2], help="0=off 1=on")
     parser.add_argument("--stable", type=int, choices=[0, 1], help="0=off 1=on")
