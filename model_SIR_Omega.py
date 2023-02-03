@@ -162,4 +162,12 @@ class PINNModel(FourierModel):
 
 if __name__ == "__main__":
     run(Config, FourierModel, PINNModel)
+    # jianxiang
+    # https://github.com/EnzeXu/Fourier_PINN_Cluster
+    # stable & boundary: activation=gelu
+    # python model_SIR_Omega.py --main_path . --skip_draw_flag 1 --pinn 0 --activation gelu --cyclic 0 --stable 1 --derivative 0 --boundary 0 --seed 0 --log_path logs/o_sir_sin_test.txt
+    # scheduler / optimizer
+    # loss weights
+
+    # --init_lr 0.001
 
