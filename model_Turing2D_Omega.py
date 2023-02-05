@@ -59,6 +59,7 @@ class Config:
         self.T_N_before = int(self.T_before / self.T_unit)
         self.T_N = int(self.T / self.T_unit)
 
+
         self.prob_dim = 2
         torch.manual_seed(self.seed)
         torch.cuda.manual_seed_all(self.seed)
