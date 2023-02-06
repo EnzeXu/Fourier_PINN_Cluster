@@ -50,7 +50,7 @@ draft_head = """#!/bin/bash
 #SBATCH --error="jobs_oe/{0}-%j.e"
 
 echo $(pwd) > "jobs/pwd.txt"
-source /deac/csc/chenGrp/software/tensorflow/bin/activate
+source venv/bin/activate
 """
 
 draft_head_cpu = """#!/bin/bash
