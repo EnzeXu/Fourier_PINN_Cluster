@@ -17,8 +17,8 @@ from template_omega import *
 
 
 class Parameters:
-    N = 30
-    M = 30
+    N = 100
+    M = 1
     d1 = 1
     d2 = 40
     c1 = 0.1  # 0.1
@@ -56,7 +56,7 @@ class Config(ConfigTemplate):
         self.T_N_before = int(self.T_before / self.T_unit)
         self.T_N = int(self.T / self.T_unit)
         # self.y0 = np.asarray([50.0, 40.0, 10.0])
-        self.boundary_list = np.asarray([[0.1, 6.0], [0.2, 1.5]])# [0.1, 3.5], [0.3, 1.5]
+        self.boundary_list = np.asarray([[0.1, 3.5], [0.3, 1.5]])# [0.1, 3.5], [0.3, 1.5]
         self.noise_rate = 0.05
 
         self.setup()
