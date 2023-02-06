@@ -626,7 +626,7 @@ def one_time_build_omega(module_name_short, start_seed, end_seed):
         [0, "adaptive_5", 0, 0, 0, 0, 0.01],
         # [0, "adaptive", 0, 0, 0, 0, 0.01],
         # # [0, "adaptive_3", 0, 0, 0, 0, None],
-        # [0, "gelu", 0, 0, 0, 2, None],
+        [0, "gelu", 0, 0, 0, 1, None],
         # [0, "gelu", 1, 0, 0, 0, None],
         # [0, "gelu", 0, 1, 0, 0, None],
         # [0, "adaptive_5", 0, 0, 0, 0, 0.001],
