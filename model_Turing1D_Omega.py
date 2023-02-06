@@ -45,7 +45,7 @@ class TrainArgs:
 class Config(ConfigTemplate):
     def __init__(self):
         super(Config, self).__init__()
-        self.model_name = "Turing2D_Fourier_Omega"
+        self.model_name = "Turing1D_Fourier_Omega"
         self.curve_names = ["U", "V"]
         self.params = Parameters
         self.args = TrainArgs
@@ -56,8 +56,10 @@ class Config(ConfigTemplate):
         self.T_N_before = int(self.T_before / self.T_unit)
         self.T_N = int(self.T / self.T_unit)
         # self.y0 = np.asarray([50.0, 40.0, 10.0])
-        self.boundary_list = np.asarray([[0.1, 3.5], [0.3, 1.5]])# [0.1, 3.5], [0.3, 1.5]
+        self.boundary_list = np.asarray([[0.1, 3.5], [0.3, 1.5]])  # [0.1, 3.5], [0.3, 1.5]
         self.noise_rate = 0.05
+
+        self.truth_torch = None
 
         self.setup()
 
@@ -84,25 +86,28 @@ class Config(ConfigTemplate):
                                           method='euler').to(self.device)
         noise = (torch.rand([self.params.N, self.params.M, self.prob_dim]).to(self.device) - 0.5) * self.noise_rate
         self.y0 = torch.abs(truth_before[-1] * (1.0 + noise) + 0.2)
-        self.truth = torchdiffeq.odeint(self.pend, self.y0.cpu(), torch.tensor(self.t), method='euler').to(
+        self.truth_torch = torchdiffeq.odeint(self.pend, self.y0.cpu(), torch.tensor(self.t), method='euler').to(
             self.device)
-            # np.save(truth_path, self.truth.cpu().detach().numpy())
+        # np.save(truth_path, self.truth.cpu().detach().numpy())
+
         print("y0:")
         # self.draw_turing(self.y0)
         print("Truth:")
-        print("Truth U: max={0:.6f} min={1:.6f}".format(torch.max(self.truth[:, :, :, 0]).item(),
-                                                        torch.min(self.truth[:, :, :, 0]).item()))
-        print("Truth V: max={0:.6f} min={1:.6f}".format(torch.max(self.truth[:, :, :, 1]).item(),
-                                                        torch.min(self.truth[:, :, :, 1]).item()))
+        print("Truth U: max={0:.6f} min={1:.6f}".format(torch.max(self.truth_torch[:, :, :, 0]).item(),
+                                                        torch.min(self.truth_torch[:, :, :, 0]).item()))
+        print("Truth V: max={0:.6f} min={1:.6f}".format(torch.max(self.truth_torch[:, :, :, 1]).item(),
+                                                        torch.min(self.truth_torch[:, :, :, 1]).item()))
         # self.draw_turing(self.truth[-1])
+        self.truth = self.truth_torch.cpu().detach().numpy()
         self.loss_average_length = int(0.1 * self.args.iteration)
-
-
 
     def pend(self, t, y):
         shapes = y.shape
         reaction_part = torch.zeros([shapes[0], shapes[1], 2])
-        reaction_part[:, :, 0] = self.params.c1 - self.params.c_1 * y[:, :, 0] + self.params.c3 * (y[:, :, 0] ** 2) * y[:, :, 1]
+        reaction_part[:, :, 0] = self.params.c1 - self.params.c_1 * y[:, :, 0] + self.params.c3 * (y[:, :, 0] ** 2) * y[
+                                                                                                                      :,
+                                                                                                                      :,
+                                                                                                                      1]
         reaction_part[:, :, 1] = self.params.c2 - self.params.c3 * (y[:, :, 0] ** 2) * y[:, :, 1]
 
         y_from_left = torch.roll(y, 1, 1)
@@ -117,11 +122,11 @@ class Config(ConfigTemplate):
 
         diffusion_part = torch.zeros([shapes[0], shapes[1], 2])
         diffusion_part[:, :, 0] = self.params.d1 * (
-                    ((y_from_left[:, :, 0] + y_from_right[:, :, 0] - y[:, :, 0] * 2) / (self.params.l ** 2)) + (
-                        (y_from_top[:, :, 0] + y_from_bottom[:, :, 0] - y[:, :, 0] * 2) / (self.params.w ** 2)))
+                ((y_from_left[:, :, 0] + y_from_right[:, :, 0] - y[:, :, 0] * 2) / (self.params.l ** 2)) + (
+                (y_from_top[:, :, 0] + y_from_bottom[:, :, 0] - y[:, :, 0] * 2) / (self.params.w ** 2)))
         diffusion_part[:, :, 1] = self.params.d2 * (
-                    ((y_from_left[:, :, 1] + y_from_right[:, :, 1] - y[:, :, 1] * 2) / (self.params.l ** 2)) + (
-                        (y_from_top[:, :, 1] + y_from_bottom[:, :, 1] - y[:, :, 1] * 2) / (self.params.w ** 2)))
+                ((y_from_left[:, :, 1] + y_from_right[:, :, 1] - y[:, :, 1] * 2) / (self.params.l ** 2)) + (
+                (y_from_top[:, :, 1] + y_from_bottom[:, :, 1] - y[:, :, 1] * 2) / (self.params.w ** 2)))
         return reaction_part + diffusion_part
 
     @staticmethod
@@ -150,8 +155,9 @@ class FourierModel(FourierModelTemplate):
         self.truth_loss()
 
     def truth_loss(self):
-        y_truth = self.config.truth.reshape(
+        y_truth = self.config.truth_torch.reshape(
             [1, self.config.T_N, self.config.params.N, self.config.params.M, self.config.prob_dim])
+        y_truth = y_truth.to(self.config.device)
         # print("y_truth max:", torch.max(y_truth))
         # print("y_truth min:", torch.min(y_truth))
         tl, tl_list = self.loss(y_truth)
@@ -163,7 +169,7 @@ class FourierModel(FourierModelTemplate):
         return self.f_model(self.config.x)
 
     def real_loss(self, y):
-        truth = self.config.truth[:, :].to(self.config.device)
+        truth = self.config.truth_torch[:, :].to(self.config.device)
         real_loss_mse = self.criterion(y[0, :, :], truth)
         real_loss_nmse = torch.mean(self.criterion_non_reduce(y[0, :, :], truth) / (truth ** 2))
         return real_loss_mse, real_loss_nmse
@@ -174,7 +180,7 @@ class FourierModel(FourierModelTemplate):
         reaction_part = torch.zeros([shapes[0], shapes[1], shapes[2], 2]).to(self.config.device)
         reaction_part[:, :, :, 0] = self.config.params.c1 - self.config.params.c_1 * y[:, :, :,
                                                                                      0] + self.config.params.c3 * (
-                                                y[:, :, :, 0] ** 2) * y[:, :, :, 1]
+                                            y[:, :, :, 0] ** 2) * y[:, :, :, 1]
         reaction_part[:, :, :, 1] = self.config.params.c2 - self.config.params.c3 * (y[:, :, :, 0] ** 2) * y[:, :, :, 1]
 
         y_from_left = torch.roll(y, 1, 2)
@@ -193,31 +199,31 @@ class FourierModel(FourierModelTemplate):
                                                                                                                      :,
                                                                                                                      :,
                                                                                                                      0] * 2) / (
-                                                                           self.config.params.l ** 2)) + ((y_from_top[:,
-                                                                                                           :, :,
-                                                                                                           0] + y_from_bottom[
-                                                                                                                :, :, :,
-                                                                                                                0] - y[
-                                                                                                                     :,
-                                                                                                                     :,
-                                                                                                                     :,
-                                                                                                                     0] * 2) / (
-                                                                                                                      self.config.params.w ** 2)))
+                                                                       self.config.params.l ** 2)) + ((y_from_top[:,
+                                                                                                       :, :,
+                                                                                                       0] + y_from_bottom[
+                                                                                                            :, :, :,
+                                                                                                            0] - y[
+                                                                                                                 :,
+                                                                                                                 :,
+                                                                                                                 :,
+                                                                                                                 0] * 2) / (
+                                                                                                              self.config.params.w ** 2)))
         diffusion_part[:, :, :, 1] = self.config.params.d2 * (((y_from_left[:, :, :, 1] + y_from_right[:, :, :, 1] - y[
                                                                                                                      :,
                                                                                                                      :,
                                                                                                                      :,
                                                                                                                      1] * 2) / (
-                                                                           self.config.params.l ** 2)) + ((y_from_top[:,
-                                                                                                           :, :,
-                                                                                                           1] + y_from_bottom[
-                                                                                                                :, :, :,
-                                                                                                                1] - y[
-                                                                                                                     :,
-                                                                                                                     :,
-                                                                                                                     :,
-                                                                                                                     1] * 2) / (
-                                                                                                                      self.config.params.w ** 2)))
+                                                                       self.config.params.l ** 2)) + ((y_from_top[:,
+                                                                                                       :, :,
+                                                                                                       1] + y_from_bottom[
+                                                                                                            :, :, :,
+                                                                                                            1] - y[
+                                                                                                                 :,
+                                                                                                                 :,
+                                                                                                                 :,
+                                                                                                                 1] * 2) / (
+                                                                                                              self.config.params.w ** 2)))
 
         y_t_theory = reaction_part + diffusion_part
 
@@ -472,7 +478,6 @@ class FourierModel(FourierModelTemplate):
     #     # self.draw_loss_multi(self.loss_record_tmp, [1.0, 0.5, 0.25, 0.125])
 
 
-
 def block_turing():
     return nn.Sequential(
         nn.Linear(3, 10),
@@ -484,6 +489,7 @@ def block_turing():
         nn.Linear(10, 1),
     )
 
+
 class PINNModel(FourierModel):
     def __init__(self, config):
         config.model_name = config.model_name.replace("Fourier", "PINN")
@@ -491,7 +497,6 @@ class PINNModel(FourierModel):
 
         self.sequences_u = nn.Sequential(*[block_turing() for _ in range(self.config.params.N * self.config.params.M)])
         self.sequences_v = nn.Sequential(*[block_turing() for _ in range(self.config.params.N * self.config.params.M)])
-
 
     def forward(self, x):
         shapes = x.shape
@@ -505,7 +510,6 @@ class PINNModel(FourierModel):
         y = torch.cat((results_u, results_v), -1)
         return y
 
-
     def ode_gradient(self, x, y):
         # y: 1 * T_N * N * M * 2
         y = y[0]
@@ -513,7 +517,7 @@ class PINNModel(FourierModel):
         reaction_part = torch.zeros([shapes[0], shapes[1], shapes[2], 2]).to(self.config.device)
         reaction_part[:, :, :, 0] = self.config.params.c1 - self.config.params.c_1 * y[:, :, :,
                                                                                      0] + self.config.params.c3 * (
-                                                y[:, :, :, 0] ** 2) * y[:, :, :, 1]
+                                            y[:, :, :, 0] ** 2) * y[:, :, :, 1]
         reaction_part[:, :, :, 1] = self.config.params.c2 - self.config.params.c3 * (y[:, :, :, 0] ** 2) * y[:, :, :, 1]
 
         y_from_left = torch.roll(y, 1, 2)
@@ -532,38 +536,37 @@ class PINNModel(FourierModel):
                                                                                                                      :,
                                                                                                                      :,
                                                                                                                      0] * 2) / (
-                                                                           self.config.params.l ** 2)) + ((y_from_top[:,
-                                                                                                           :, :,
-                                                                                                           0] + y_from_bottom[
-                                                                                                                :, :, :,
-                                                                                                                0] - y[
-                                                                                                                     :,
-                                                                                                                     :,
-                                                                                                                     :,
-                                                                                                                     0] * 2) / (
-                                                                                                                      self.config.params.w ** 2)))
+                                                                       self.config.params.l ** 2)) + ((y_from_top[:,
+                                                                                                       :, :,
+                                                                                                       0] + y_from_bottom[
+                                                                                                            :, :, :,
+                                                                                                            0] - y[
+                                                                                                                 :,
+                                                                                                                 :,
+                                                                                                                 :,
+                                                                                                                 0] * 2) / (
+                                                                                                              self.config.params.w ** 2)))
         diffusion_part[:, :, :, 1] = self.config.params.d2 * (((y_from_left[:, :, :, 1] + y_from_right[:, :, :, 1] - y[
                                                                                                                      :,
                                                                                                                      :,
                                                                                                                      :,
                                                                                                                      1] * 2) / (
-                                                                           self.config.params.l ** 2)) + ((y_from_top[:,
-                                                                                                           :, :,
-                                                                                                           1] + y_from_bottom[
-                                                                                                                :, :, :,
-                                                                                                                1] - y[
-                                                                                                                     :,
-                                                                                                                     :,
-                                                                                                                     :,
-                                                                                                                     1] * 2) / (
-                                                                                                                      self.config.params.w ** 2)))
+                                                                       self.config.params.l ** 2)) + ((y_from_top[:,
+                                                                                                       :, :,
+                                                                                                       1] + y_from_bottom[
+                                                                                                            :, :, :,
+                                                                                                            1] - y[
+                                                                                                                 :,
+                                                                                                                 :,
+                                                                                                                 :,
+                                                                                                                 1] * 2) / (
+                                                                                                              self.config.params.w ** 2)))
 
         y_t_theory = reaction_part + diffusion_part
 
         y_t = torch.gradient(y, spacing=(self.config.t_torch,), dim=0)[0]
 
         return y_t - y_t_theory
-
 
 
 if __name__ == "__main__":

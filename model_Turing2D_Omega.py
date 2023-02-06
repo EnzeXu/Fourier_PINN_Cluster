@@ -59,6 +59,8 @@ class Config(ConfigTemplate):
         self.boundary_list = np.asarray([[0.1, 6.0], [0.2, 1.5]])# [0.1, 3.5], [0.3, 1.5]
         self.noise_rate = 0.05
 
+        self.truth_torch = None
+
         self.setup()
 
         self.modes1 = 12  # 8
@@ -84,17 +86,19 @@ class Config(ConfigTemplate):
                                           method='euler').to(self.device)
         noise = (torch.rand([self.params.N, self.params.M, self.prob_dim]).to(self.device) - 0.5) * self.noise_rate
         self.y0 = torch.abs(truth_before[-1] * (1.0 + noise) + 0.2)
-        self.truth = torchdiffeq.odeint(self.pend, self.y0.cpu(), torch.tensor(self.t), method='euler').to(
+        self.truth_torch = torchdiffeq.odeint(self.pend, self.y0.cpu(), torch.tensor(self.t), method='euler').to(
             self.device)
             # np.save(truth_path, self.truth.cpu().detach().numpy())
+
         print("y0:")
         # self.draw_turing(self.y0)
         print("Truth:")
-        print("Truth U: max={0:.6f} min={1:.6f}".format(torch.max(self.truth[:, :, :, 0]).item(),
-                                                        torch.min(self.truth[:, :, :, 0]).item()))
-        print("Truth V: max={0:.6f} min={1:.6f}".format(torch.max(self.truth[:, :, :, 1]).item(),
-                                                        torch.min(self.truth[:, :, :, 1]).item()))
+        print("Truth U: max={0:.6f} min={1:.6f}".format(torch.max(self.truth_torch[:, :, :, 0]).item(),
+                                                        torch.min(self.truth_torch[:, :, :, 0]).item()))
+        print("Truth V: max={0:.6f} min={1:.6f}".format(torch.max(self.truth_torch[:, :, :, 1]).item(),
+                                                        torch.min(self.truth_torch[:, :, :, 1]).item()))
         # self.draw_turing(self.truth[-1])
+        self.truth = self.truth_torch.cpu().detach().numpy()
         self.loss_average_length = int(0.1 * self.args.iteration)
 
 
@@ -150,8 +154,9 @@ class FourierModel(FourierModelTemplate):
         self.truth_loss()
 
     def truth_loss(self):
-        y_truth = self.config.truth.reshape(
+        y_truth = self.config.truth_torch.reshape(
             [1, self.config.T_N, self.config.params.N, self.config.params.M, self.config.prob_dim])
+        y_truth = y_truth.to(self.config.device)
         # print("y_truth max:", torch.max(y_truth))
         # print("y_truth min:", torch.min(y_truth))
         tl, tl_list = self.loss(y_truth)
@@ -163,7 +168,7 @@ class FourierModel(FourierModelTemplate):
         return self.f_model(self.config.x)
 
     def real_loss(self, y):
-        truth = self.config.truth[:, :].to(self.config.device)
+        truth = self.config.truth_torch[:, :].to(self.config.device)
         real_loss_mse = self.criterion(y[0, :, :], truth)
         real_loss_nmse = torch.mean(self.criterion_non_reduce(y[0, :, :], truth) / (truth ** 2))
         return real_loss_mse, real_loss_nmse
