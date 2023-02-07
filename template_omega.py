@@ -46,6 +46,7 @@ class ConfigTemplate:
         self.skip_draw_flag = False
         self.loss_average_length = None
 
+
     def setup(self):
         self.T_N = int(self.T / self.T_unit)
         self.prob_dim = len(self.curve_names)
@@ -313,12 +314,12 @@ class FourierModelTemplate(nn.Module):
             now_time = time.time()
             time_record.append(now_time - start_time_0)
 
-            if epoch % self.config.args.epoch_step == 0:
+            if epoch % self.config.args.epoch_step == 0 or epoch == self.config.args.iteration:
                 loss_print_part = " ".join(
                     ["Loss_{0:d}:{1:.12f}".format(i + 1, loss_part.item()) for i, loss_part in enumerate(loss_list)])
                 myprint(
-                    "Epoch [{0:05d}/{1:05d}] Loss:{2:.12f} {3} Lr:{4:.12f} Time:{5:.6f}s ({6:.2f}min in total, {7:.2f}min remains)".format(
-                        epoch, self.config.args.iteration, loss.item(), loss_print_part,
+                    "Epoch [{0:05d}/{1:05d}] Loss:{2:.12f} {3} NMSE-Loss: {4:.12f} Lr:{5:.12f} Time:{6:.6f}s ({7:.2f}min in total, {8:.2f}min remains)".format(
+                        epoch, self.config.args.iteration, loss.item(), loss_print_part, real_loss_nmse.item(),
                         optimizer.param_groups[0]["lr"], now_time - start_time, (now_time - start_time_0) / 60.0,
                         (now_time - start_time_0) / 60.0 / epoch * (self.config.args.iteration - epoch)), self.config.args.log_path)
                 start_time = now_time
@@ -388,8 +389,9 @@ class FourierModelTemplate(nn.Module):
                     }, model_save_path)
 
                     if epoch == self.config.args.iteration or self.early_stop():
-                        myprint(str(train_info), self.config.args.log_path)
+                        # myprint(str(train_info), self.config.args.log_path)
                         self.write_finish_log()
+                        myprint("Finished.", self.config.args.log_path)
                         break
 
                     # myprint(str(train_info), self.config.args.log_path)

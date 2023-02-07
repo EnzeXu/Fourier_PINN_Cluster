@@ -30,8 +30,8 @@ class Parameters:
 
 
 class TrainArgs:
-    iteration = 10000  # 3000->10000
-    epoch_step = 100  # 1000
+    iteration = 5000  # 3000->10000
+    epoch_step = 50  # 1000
     test_step = epoch_step * 10
     initial_lr = 0.001
     ignore_save_flag = True

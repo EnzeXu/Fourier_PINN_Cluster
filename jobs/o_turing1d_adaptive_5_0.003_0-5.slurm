@@ -2,10 +2,10 @@
 #SBATCH --job-name="o_turing1d_adaptive_5_0.003"
 #SBATCH --partition=gpu
 #SBATCH --nodes=1
-#SBATCH --time=2-00:00:00
+#SBATCH --time=1-00:00:00
 #SBATCH --gres=gpu:1
-#SBATCH --mem=32GB
-#SBATCH --ntasks-per-node=8
+#SBATCH --mem=8GB
+#SBATCH --ntasks-per-node=4
 #SBATCH --mail-user=xue20@wfu.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --output="jobs_oe/o_turing1d_adaptive_5_0.003-%j.o"
