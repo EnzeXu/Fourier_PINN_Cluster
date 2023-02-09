@@ -99,6 +99,9 @@ class Config(ConfigTemplate):
                                                         torch.min(self.truth_torch[:, :, :, 1]).item()))
         # self.draw_turing(self.truth[-1])
         self.truth = self.truth_torch.cpu().detach().numpy()
+        # self.draw_turing(self.truth_torch[-1])
+        # turing_1d_all = self.truth_torch.reshape([-1, self.params.N, 2])
+        # self.draw_turing_1d(turing_1d_all)
         self.loss_average_length = int(0.1 * self.args.iteration)
 
     def pend(self, t, y):
@@ -142,6 +145,24 @@ class Config(ConfigTemplate):
 
         ax2 = fig.add_subplot(122)
         im2 = ax2.imshow(v, cmap=plt.cm.jet, aspect='auto')
+        ax2.set_title("v")
+        cb2 = plt.colorbar(im2, shrink=1)
+        plt.tight_layout()
+        plt.show()
+
+    @staticmethod
+    def draw_turing_1d(map):
+        # map: N * M * 2
+        u = map[:, :, 0].cpu().detach().numpy()
+        v = map[:, :, 1].cpu().detach().numpy()
+        fig = plt.figure(figsize=(14, 6))
+        ax1 = fig.add_subplot(121)
+        im1 = ax1.imshow(u, cmap=plt.cm.jet, aspect='auto', vmin=np.min(u[-1]), vmax=np.max(u[-1]))
+        ax1.set_title("u")
+        cb1 = plt.colorbar(im1, shrink=1)
+
+        ax2 = fig.add_subplot(122)
+        im2 = ax2.imshow(v, cmap=plt.cm.jet, aspect='auto', vmin=np.min(v[-1]), vmax=np.max(v[-1]))
         ax2.set_title("v")
         cb2 = plt.colorbar(im2, shrink=1)
         plt.tight_layout()
