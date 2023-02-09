@@ -4,7 +4,7 @@
 #SBATCH --nodes=1
 #SBATCH --time=1-00:00:00
 #SBATCH --gres=gpu:1
-#SBATCH --mem=8GB
+#SBATCH --mem=30GB
 #SBATCH --ntasks-per-node=4
 #SBATCH --mail-user=xue20@wfu.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
