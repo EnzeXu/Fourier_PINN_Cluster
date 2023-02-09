@@ -6,4 +6,6 @@ test/*
 __pycache__/*
 test_match.py
 zjx*
+test_tc.py
+test_tc/*
 #test.py
