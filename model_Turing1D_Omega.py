@@ -363,64 +363,6 @@ class PINNModel(FourierModel):
         y = torch.cat((results_u, results_v), -1)
         return y
 
-    def ode_gradient(self, x, y):
-        # y: 1 * T_N * N * M * 2
-        y = y[0]
-        shapes = y.shape
-        reaction_part = torch.zeros([shapes[0], shapes[1], shapes[2], 2]).to(self.config.device)
-        reaction_part[:, :, :, 0] = self.config.params.c1 - self.config.params.c_1 * y[:, :, :,
-                                                                                     0] + self.config.params.c3 * (
-                                            y[:, :, :, 0] ** 2) * y[:, :, :, 1]
-        reaction_part[:, :, :, 1] = self.config.params.c2 - self.config.params.c3 * (y[:, :, :, 0] ** 2) * y[:, :, :, 1]
-
-        y_from_left = torch.roll(y, 1, 2)
-        y_from_left[:, :, :1] = y[:, :, :1]
-        y_from_right = torch.roll(y, -1, 2)
-        y_from_right[:, :, -1:] = y[:, :, -1:]
-
-        y_from_top = torch.roll(y, 1, 1)
-        y_from_top[:, :1, :] = y[:, :1, :]
-        y_from_bottom = torch.roll(y, -1, 1)
-        y_from_bottom[:, -1:, :] = y[:, -1:, :]
-
-        diffusion_part = torch.zeros([shapes[0], shapes[1], shapes[2], 2]).to(self.config.device)
-        diffusion_part[:, :, :, 0] = self.config.params.d1 * (((y_from_left[:, :, :, 0] + y_from_right[:, :, :, 0] - y[
-                                                                                                                     :,
-                                                                                                                     :,
-                                                                                                                     :,
-                                                                                                                     0] * 2) / (
-                                                                       self.config.params.l ** 2)) + ((y_from_top[:,
-                                                                                                       :, :,
-                                                                                                       0] + y_from_bottom[
-                                                                                                            :, :, :,
-                                                                                                            0] - y[
-                                                                                                                 :,
-                                                                                                                 :,
-                                                                                                                 :,
-                                                                                                                 0] * 2) / (
-                                                                                                              self.config.params.w ** 2)))
-        diffusion_part[:, :, :, 1] = self.config.params.d2 * (((y_from_left[:, :, :, 1] + y_from_right[:, :, :, 1] - y[
-                                                                                                                     :,
-                                                                                                                     :,
-                                                                                                                     :,
-                                                                                                                     1] * 2) / (
-                                                                       self.config.params.l ** 2)) + ((y_from_top[:,
-                                                                                                       :, :,
-                                                                                                       1] + y_from_bottom[
-                                                                                                            :, :, :,
-                                                                                                            1] - y[
-                                                                                                                 :,
-                                                                                                                 :,
-                                                                                                                 :,
-                                                                                                                 1] * 2) / (
-                                                                                                              self.config.params.w ** 2)))
-
-        y_t_theory = reaction_part + diffusion_part
-
-        y_t = torch.gradient(y, spacing=(self.config.t_torch,), dim=0)[0]
-
-        return y_t - y_t_theory
-
 
 if __name__ == "__main__":
     run(Config, FourierModel, PINNModel)
