@@ -50,8 +50,8 @@ class Config(ConfigTemplate):
         self.params = Parameters
         self.args = TrainArgs
 
-        self.T_before = 24  # 30
-        self.T = 10
+        self.T_before = 32  # 30
+        self.T = 2
         self.T_unit = 2e-3
         self.T_N_before = int(self.T_before / self.T_unit)
         self.T_N = int(self.T / self.T_unit)
