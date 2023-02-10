@@ -690,6 +690,8 @@ class SpectralConv3d(nn.Module):
     # Complex multiplication
     def compl_mul3d(self, input, weights):
         # (batch, in_channel, x,y,t ), (in_channel, out_channel, x,y,t) -> (batch, out_channel, x,y,t)
+        # print(input.shape)
+        # print(weights.shape
         return torch.einsum("bixyz,ioxyz->boxyz", input, weights)
 
     def forward(self, x):
@@ -736,7 +738,7 @@ class FNO3d(nn.Module):
         self.modes3 = self.config.modes3
         self.width = self.config.width
         self.padding = 6  # pad the domain if input is non-periodic
-        self.fc0 = nn.Linear(3, self.width)
+        self.fc0 = nn.Linear(3 + 3, self.width)
         # input channel is 12: the solution of the first 10 timesteps + 3 locations (u(1, x, y), ..., u(10, x, y),  x, y, t)
 
         self.conv0 = SpectralConv3d(self.config)
@@ -761,10 +763,10 @@ class FNO3d(nn.Module):
         self.fc2 = nn.Linear(128, 2)
 
     def forward(self, x):
-        # grid = self.get_grid(x.shape, x.device)
+        grid = self.get_grid(x.shape, x.device)
         # x = grid
 
-        # x = torch.cat((x, grid), dim=-1)
+        x = torch.cat((x, grid), dim=-1)
         # print("cp1", x.shape)
         x = self.fc0(x)
         # print("cp2", x.shape)

@@ -39,10 +39,11 @@ python {1} {2}
 draft_head = """#!/bin/bash
 #SBATCH --job-name="{0}"
 #SBATCH --partition=gpu
+#SBATCH --constraint="cascade|skylake"
 #SBATCH --nodes=1
 #SBATCH --time=1-00:00:00
 #SBATCH --gres=gpu:1
-#SBATCH --mem=30GB
+#SBATCH --mem=32GB
 #SBATCH --ntasks-per-node=4
 #SBATCH --mail-user=xue20@wfu.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
@@ -627,6 +628,7 @@ def one_time_build_omega(module_name_short, start_seed, end_seed):
         # [0, "adaptive", 0, 0, 0, 0, 0.01],
         # # [0, "adaptive_3", 0, 0, 0, 0, None],
         [0, "gelu", 0, 0, 0, 1, None],
+        [0, "gelu", 0, 1, 0, 0, None],
         # [0, "gelu", 1, 0, 0, 0, None],
         # [0, "gelu", 0, 1, 0, 0, None],
         # [0, "adaptive_5", 0, 0, 0, 0, 0.001],
@@ -683,7 +685,8 @@ if __name__ == "__main__":
     # one_time_build_omega("REP6", 0,10)
     # one_time_build_omega("REP3", 0,10)
     # one_time_build_omega("Turing2D", 0, 5)
-    one_time_build_omega("Turing1DGM", 0, 5)
+    one_time_build_omega("Turing1D", 0, 3)
+    one_time_build_omega("Turing2D", 0, 3)
 
     # one_time_build_rep3_omega_activations()
     # one_time_build_rep6_omega_activations()
