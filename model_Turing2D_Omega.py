@@ -276,9 +276,9 @@ class FourierModel(FourierModelTemplate):
                            y[:, :, i] - self.config.boundary_list[i][0]) +
             self.criterion(torch.abs(self.config.boundary_list[i][1] - y[:, :, i]),
                            self.config.boundary_list[i][1] - y[:, :, i]) for i in range(self.config.prob_dim)]))
-        print("dy max", torch.max(dy[int(0.9 * self.config.T_N):]))
-        print("dy min", torch.min(dy[int(0.9 * self.config.T_N):]))
-        print("dy avg", torch.mean(dy[int(0.9 * self.config.T_N):]))
+        # print("dy max", torch.max(dy[int(0.9 * self.config.T_N):]))
+        # print("dy min", torch.min(dy[int(0.9 * self.config.T_N):]))
+        # print("dy avg", torch.mean(dy[int(0.9 * self.config.T_N):]))
         stable_period = 0.9
         stable_iteration = int(0.3 * self.config.args.iteration)
         loss5 = (1.0 if self.config.stable and iteration > stable_iteration else 0) * self.criterion(
