@@ -614,17 +614,17 @@ def one_time_build_omega(module_name_short, start_seed, end_seed):
         # pinn / activation / cyclic / stable / derivative / boundary /init_lr
         # [1, "gelu", 0, 0, 0, 0, lr],
         [0, "gelu", 0, 0, 0, 0, lr],
-        # [0, "relu", 0, 0, 0, 0, lr],
-        # [0, "elu", 0, 0, 0, 0, lr],
-        # [0, "tanh", 0, 0, 0, 0, lr],
+        [0, "relu", 0, 0, 0, 0, lr],
+        [0, "elu", 0, 0, 0, 0, lr],
+        [0, "tanh", 0, 0, 0, 0, lr],
         [0, "sin", 0, 0, 0, 0, lr],
-        # [0, "softplus", 0, 0, 0, 0, lr],
+        [0, "softplus", 0, 0, 0, 0, lr],
         [0, "adaptive_2", 0, 0, 0, 0, lr],
-        # [0, "adaptive", 0, 0, 0, 0, 0.001],
-        # [0, "adaptive", 0, 0, 0, 0, 0.003],
-        # [0, "adaptive", 0, 0, 0, 0, 0.005],
+        [0, "adaptive_6", 0, 0, 0, 0, 0.001],
+        # [0, "adaptive_6", 0, 0, 0, 0, 0.003],
+        # [0, "adaptive_6", 0, 0, 0, 0, 0.005],
         # [0, "adaptive", 0, 0, 0, 0, 0.01],
-        # [0, "adaptive_5", 0, 0, 0, 0, 0.001],
+        [0, "adaptive_5", 0, 0, 0, 0, 0.001],
         # [0, "adaptive_5", 0, 0, 0, 0, 0.003],
         # [0, "adaptive_5", 0, 0, 0, 0, 0.005],
         # [0, "adaptive_5", 0, 0, 0, 0, 0.01],
@@ -689,7 +689,7 @@ if __name__ == "__main__":
     # one_time_build_omega("REP6", 0,10)
     # one_time_build_omega("REP3", 0,10)
     # one_time_build_omega("Turing2D", 0, 5)
-    one_time_build_omega("Turing1D", 3, 5)
+    one_time_build_omega("Turing1D", 0, 5)
     # one_time_build_omega("Turing2D", 0, 5)
 
     # one_time_build_rep3_omega_activations()
