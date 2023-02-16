@@ -619,6 +619,7 @@ def one_time_build_omega(module_name_short, start_seed, end_seed):
         [0, "tanh", 0, 0, 0, 0, lr],
         [0, "sin", 0, 0, 0, 0, lr],
         [0, "softplus", 0, 0, 0, 0, lr],
+        [0, "adaptive_2", 0, 0, 0, 0, lr],
         # [0, "adaptive", 0, 0, 0, 0, 0.001],
         # [0, "adaptive", 0, 0, 0, 0, 0.003],
         # [0, "adaptive", 0, 0, 0, 0, 0.005],
