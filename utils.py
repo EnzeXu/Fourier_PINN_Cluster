@@ -344,7 +344,7 @@ class MultiSubplotDraw:
             scatter_marker_color=None
     ):
         # assert len(list(y_lists[0])) == len(list(x_list)), "Dimension of y should be same to that of x"
-        assert len(y_lists) == len(line_style_list) == len(color_list), "number of lines should be fixed"
+        assert len(y_lists) == len(line_style_list) == len(color_list), "number of lines should be fixed. Got {} / {} / {}".format(len(y_lists), len(line_style_list), len(color_list))
         y_count = len(y_lists)
         self.subplot_index += 1
         ax = self.fig.add_subplot(self.row, self.col, self.subplot_index)

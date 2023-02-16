@@ -109,6 +109,8 @@ class FourierModelTemplate(nn.Module):
         self.real_loss_nmse_record_tmp = None
         self.time_record_tmp = None
 
+        self.activation_weights_record = None
+
         self.figure_save_path_folder = "{0}/saves/figure/{1}_{2}/".format(self.config.args.main_path,
                                                                           self.config.model_name, self.time_string)
         self.train_save_path_folder = "{0}/saves/train/{1}_{2}/".format(self.config.args.main_path,
@@ -118,6 +120,7 @@ class FourierModelTemplate(nn.Module):
         if not os.path.exists(self.train_save_path_folder):
             os.makedirs(self.train_save_path_folder)
         self.default_colors = ColorCandidate().get_color_list(self.config.prob_dim, 0.5)
+        self.default_colors_10 = ColorCandidate().get_color_list(10, 0.5)
         # self.default_colors = ["red", "blue", "green", "orange", "cyan", "purple", "pink", "indigo", "brown", "grey", "indigo", "olive"]
 
         myprint("using {}".format(str(self.config.device)), self.config.args.log_path)
@@ -283,6 +286,24 @@ class FourierModelTemplate(nn.Module):
         loss_list = [loss1, loss2, loss3]
         return loss, loss_list
 
+    def plot_activation_weights(self):
+        # self.activation_weights_record
+        activation_weights_save_path = "{}/activation_weights.png".format(self.figure_save_path_folder)
+        m = MultiSubplotDraw(row=2, col=2, fig_size=(16, 12), tight_layout_flag=True, show_flag=False, save_flag=True, save_path=activation_weights_save_path)
+        activation_n = self.activation_weights_record.shape[2]
+        for i in range(4):
+            m.add_subplot(
+                y_lists=[self.activation_weights_record[i, :, activation_id].flatten() for activation_id in range(activation_n)],
+                x_list=range(1, self.config.args.iteration + 1),
+                color_list=self.default_colors_10[:activation_n],
+                legend_list=self.activate_block0.activate_list,
+                line_style_list=["solid"] * activation_n,
+                fig_title="activation block {}".format(i))
+        m.draw()
+        myprint("initial: \n{}".format(self.activation_weights_record[:, 0, :]), self.config.args.log_path)
+        myprint("end: \n{}".format(self.activation_weights_record[:, -1, :]), self.config.args.log_path)
+
+
     def train_model(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.config.args.initial_lr, weight_decay=1e-4)
         # scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda e: 1 / (e / 1000 + 1))
@@ -296,6 +317,11 @@ class FourierModelTemplate(nn.Module):
         real_loss_nmse_record = []
         time_record = []
 
+        adaptive_weights_record_0 = []
+        adaptive_weights_record_1 = []
+        adaptive_weights_record_2 = []
+        adaptive_weights_record_3 = []
+
         for epoch in range(1, self.config.args.iteration + 1):
             optimizer.zero_grad()
 
@@ -306,8 +332,15 @@ class FourierModelTemplate(nn.Module):
             real_loss_mse_record.append(real_loss_mse.item())
             real_loss_nmse_record.append(real_loss_nmse.item())
 
-            torch.autograd.set_detect_anomaly(True)
-            loss.backward(retain_graph=True)  # retain_graph=True
+            if "adaptive" in self.config.activation:
+                adaptive_weights_record_0.append(list(self.activate_block0.activate_weights.cpu().detach().numpy()))
+                adaptive_weights_record_1.append(list(self.activate_block1.activate_weights.cpu().detach().numpy()))
+                adaptive_weights_record_2.append(list(self.activate_block2.activate_weights.cpu().detach().numpy()))
+                adaptive_weights_record_3.append(list(self.activate_block3.activate_weights.cpu().detach().numpy()))
+
+            # torch.autograd.set_detect_anomaly(True)
+            # loss.backward(retain_graph=True)  # retain_graph=True
+            loss.backward()
             optimizer.step()
             scheduler.step()
 
@@ -331,6 +364,8 @@ class FourierModelTemplate(nn.Module):
                     self.real_loss_mse_record_tmp = real_loss_mse_record
                     self.real_loss_nmse_record_tmp = real_loss_nmse_record
                     self.time_record_tmp = time_record
+
+                    self.activation_weights_record = np.asarray([adaptive_weights_record_0, adaptive_weights_record_1, adaptive_weights_record_2, adaptive_weights_record_3])
                     self.test_model()
                     # save_path_loss = "{}/{}_{}_loss.npy".format(self.train_save_path_folder, self.config.model_name, self.time_string)
                     # np.save(save_path_loss, np.asarray(loss_record))
@@ -358,24 +393,25 @@ class FourierModelTemplate(nn.Module):
                         "y_shape": self.config.truth.shape,
                         # "config": self.config,
                         "time_string": self.time_string,
-                        "weights_raw": np.asarray([
-                            self.activate_block0.activate_weights_raw.cpu().detach().numpy(),
-                            self.activate_block1.activate_weights_raw.cpu().detach().numpy(),
-                            self.activate_block2.activate_weights_raw.cpu().detach().numpy(),
-                            self.activate_block3.activate_weights_raw.cpu().detach().numpy(),
-                        ]),
-                        "weights": np.asarray([
-                            self.activate_block0.activate_weights.cpu().detach().numpy(),
-                            self.activate_block1.activate_weights.cpu().detach().numpy(),
-                            self.activate_block2.activate_weights.cpu().detach().numpy(),
-                            self.activate_block3.activate_weights.cpu().detach().numpy(),
-                        ]),
-                        "sin_weight": np.asarray([
-                            self.activate_block0.activates[0].omega.cpu().detach().numpy(),
-                            self.activate_block1.activates[0].omega.cpu().detach().numpy(),
-                            self.activate_block2.activates[0].omega.cpu().detach().numpy(),
-                            self.activate_block3.activates[0].omega.cpu().detach().numpy(),
-                        ]),
+                        # "weights_raw": np.asarray([
+                        #     self.activate_block0.activate_weights_raw.cpu().detach().numpy(),
+                        #     self.activate_block1.activate_weights_raw.cpu().detach().numpy(),
+                        #     self.activate_block2.activate_weights_raw.cpu().detach().numpy(),
+                        #     self.activate_block3.activate_weights_raw.cpu().detach().numpy(),
+                        # ]),
+                        # "weights": np.asarray([
+                        #     self.activate_block0.activate_weights.cpu().detach().numpy(),
+                        #     self.activate_block1.activate_weights.cpu().detach().numpy(),
+                        #     self.activate_block2.activate_weights.cpu().detach().numpy(),
+                        #     self.activate_block3.activate_weights.cpu().detach().numpy(),
+                        # ]),
+                        # "sin_weight": np.asarray([
+                        #     self.activate_block0.activates[0].omega.cpu().detach().numpy(),
+                        #     self.activate_block1.activates[0].omega.cpu().detach().numpy(),
+                        #     self.activate_block2.activates[0].omega.cpu().detach().numpy(),
+                        #     self.activate_block3.activates[0].omega.cpu().detach().numpy(),
+                        # ]),
+                        "activation_weights_record": self.activation_weights_record,
                     }
                     train_info_path_loss = "{}/{}_{}_info.npy".format(self.train_save_path_folder,
                                                                       self.config.model_name, self.time_string)
@@ -391,6 +427,7 @@ class FourierModelTemplate(nn.Module):
                     if epoch == self.config.args.iteration or self.early_stop():
                         # myprint(str(train_info), self.config.args.log_path)
                         self.write_finish_log()
+                        self.plot_activation_weights()
                         myprint("Finished.", self.config.args.log_path)
                         break
 
@@ -535,31 +572,37 @@ class ActivationBlock(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.config = config
-        self.activate_list = ["sin", "tanh", "relu", "gelu", "softplus", "elu"]
+        self.activate_list_6 = ["sin", "tanh", "relu", "gelu", "softplus", "elu"]
         self.activate_list_5 = ["tanh", "relu", "gelu", "softplus", "elu"]
         self.activate_list_3 = ["gelu", "softplus", "elu"]
-        assert self.config.activation in self.activate_list + ["adaptive", "adaptive_3", "adaptive_5"]
-        self.activates = nn.ModuleList([activation_func(item).to(config.device) for item in self.activate_list])
-        self.activate_weights_raw = nn.Parameter(torch.rand(len(self.activate_list)).to(self.config.device), requires_grad=True)
-        self.activates_3 = nn.ModuleList([activation_func(item).to(config.device) for item in self.activate_list_3])
-        self.activate_weights_raw_3 = nn.Parameter(torch.rand(3).to(self.config.device), requires_grad=True)
-        self.activates_5 = nn.ModuleList([activation_func(item).to(config.device) for item in self.activate_list_5])
-        self.activate_weights_raw_5 = nn.Parameter(torch.rand(5).to(self.config.device), requires_grad=True)
+        self.activate_list_2 = ["gelu", "sin"]
+        assert self.config.activation in self.activate_list_6 + ["adaptive_6", "adaptive_3", "adaptive_5", "adaptive_2"]
+        if "adaptive" in self.config.activation:
+            if self.config.activation == "adaptive_6":
+                self.activate_list = self.activate_list_6
+            elif self.config.activation == "adaptive_3":
+                self.activate_list = self.activate_list_3
+            elif self.config.activation == "adaptive_5":
+                self.activate_list = self.activate_list_5
+            elif self.config.activation == "adaptive_2":
+                self.activate_list = self.activate_list_2
+
+            self.activates = nn.ModuleList([activation_func(item).to(config.device) for item in self.activate_list])
+
+            if self.config.activation == "adaptive_2":
+                self.activate_weights_raw = nn.Parameter(torch.tensor([10.0, 0.0]).to(self.config.device), requires_grad=True)
+            else:
+                self.activate_weights_raw = nn.Parameter(torch.rand(len(self.activate_list)).to(self.config.device), requires_grad=True)
+            self.activate_weights = my_softmax(self.activate_weights_raw)
 
         self.my_sin = activation_func("sin")
         self.my_softplus = activation_func("softplus")
 
-        self.activate_weights = my_softmax(self.activate_weights_raw)
-        self.activate_weights_3 = my_softmax(self.activate_weights_raw_3)
-        self.activate_weights_5 = my_softmax(self.activate_weights_raw_5)
-        # assert self.config.strategy in [0, 1, 2]
-        # if self.config.strategy == 0:
-        #     self.balance_weights = torch.tensor([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]).to(self.config.device)
-        # elif self.config.strategy == 1:
-        #     self.balance_weights = torch.tensor([10.0, 10.0, 1.0, 1.0, 1.0, 1.0]).to(self.config.device)
-        # else:
-        #     self.balance_weights = nn.Parameter(torch.tensor([10.0, 10.0, 1.0, 1.0, 1.0, 1.0]).to(self.config.device), requires_grad=True)
-        # print("self.activate_weights device = {}".format(self.activate_weights.device))
+        # self.activate_weights_6 = my_softmax(self.activate_weights_raw_6)
+        # self.activate_weights_3 = my_softmax(self.activate_weights_raw_3)
+        # self.activate_weights_5 = my_softmax(self.activate_weights_raw_5)
+        # self.activate_weights_2 = my_softmax(self.activate_weights_raw_2)
+
 
     def forward(self, x):
         if self.config.activation == "gelu":
@@ -576,29 +619,42 @@ class ActivationBlock(nn.Module):
             return self.my_softplus(x)
         elif self.config.activation == "selu":
             return nn.functional.selu(x)
+
+        assert "adaptive" in self.config.activation, "activation = {} not satisfied".format(self.config.activation)
         activation_res = 0.0
-        if self.config.activation == "adaptive":
-            self.activate_weights = my_softmax(self.activate_weights_raw)
-            for i in range(len(self.activate_list)):
-                tmp_sum = self.activate_weights[i] * self.activates[i](x)
-                activation_res += tmp_sum
-        elif self.config.activation == "adaptive_3":  # adaptive_3
-            self.activate_weights_3 = my_softmax(self.activate_weights_raw_3)
-            for i in range(len(self.activate_list_3)):
-                tmp_sum = self.activate_weights_3[i] * self.activates_3[i](x)
-                activation_res += tmp_sum
-        else:  # adaptive_5
-            self.activate_weights_5 = my_softmax(self.activate_weights_raw_5)
-            for i in range(len(self.activate_list_5)):
-                tmp_sum = self.activate_weights_5[i] * self.activates_5[i](x)
-                activation_res += tmp_sum
+        self.activate_weights = my_softmax(self.activate_weights_raw)
+        for i in range(len(self.activate_list)):
+            tmp_sum = self.activate_weights[i] * self.activates[i](x)
+            activation_res += tmp_sum
+        # if self.config.activation == "adaptive_6":
+        #     self.activate_weights_6 = my_softmax(self.activate_weights_raw_6)
+        #     for i in range(len(self.activate_list_6)):
+        #         tmp_sum = self.activate_weights_6[i] * self.activates_6[i](x)
+        #         activation_res += tmp_sum
+        # elif self.config.activation == "adaptive_3":  # adaptive_3
+        #     self.activate_weights_3 = my_softmax(self.activate_weights_raw_3)
+        #     for i in range(len(self.activate_list_3)):
+        #         tmp_sum = self.activate_weights_3[i] * self.activates_3[i](x)
+        #         activation_res += tmp_sum
+        # elif self.config.activation == "adaptive_5":
+        #     self.activate_weights_5 = my_softmax(self.activate_weights_raw_5)
+        #     for i in range(len(self.activate_list_5)):
+        #         tmp_sum = self.activate_weights_5[i] * self.activates_5[i](x)
+        #         activation_res += tmp_sum
+        # elif self.config.activation == "adaptive_2":
+        #     self.activate_weights_2 = my_softmax(self.activate_weights_raw_2)
+        #     for i in range(len(self.activate_list_2)):
+        #         tmp_sum = self.activate_weights_2[i] * self.activates_2[i](x)
+        #         activation_res += tmp_sum
         return activation_res
 
 
 def my_softmax(x):
-    exponent_vector = torch.exp(x)
-    sum_of_exponents = torch.sum(exponent_vector)
-    softmax_vector = exponent_vector / sum_of_exponents
+    # exponent_vector = torch.exp(x)
+    # sum_of_exponents = torch.sum(exponent_vector)
+    # softmax_vector = exponent_vector / sum_of_exponents
+    softmax = nn.Softmax(dim=0)
+    softmax_vector = softmax(x)
     return softmax_vector
 
 
@@ -608,7 +664,7 @@ def run(config, fourier_model, pinn_model):
     parser.add_argument("--main_path", default="./", help="main_path")
     parser.add_argument("--seed", type=int, default=0, help="seed")
     parser.add_argument("--pinn", type=int, default=0, help="0=off 1=on")
-    parser.add_argument("--activation", choices=["gelu", "elu", "relu", "sin", "tanh", "softplus", "adaptive", "adaptive_3", "adaptive_5", "selu"],
+    parser.add_argument("--activation", choices=["gelu", "elu", "relu", "sin", "tanh", "softplus", "adaptive_6", "adaptive_3", "adaptive_5", "adaptive_2", "selu"],
                         type=str, help="activation plan")
     parser.add_argument("--cyclic", type=int, choices=[0, 1, 2], help="0=off 1=on")
     parser.add_argument("--stable", type=int, choices=[0, 1], help="0=off 1=on")
@@ -639,9 +695,9 @@ def run(config, fourier_model, pinn_model):
     if opt.init_lr:
         config.args.initial_lr = opt.init_lr
     if opt.test:
-        config.args.iteration = 10
-        config.args.epoch_step = 1  # 1000  # 1000
-        config.args.test_step = config.args.epoch_step * 10
+        config.args.iteration = 10000
+        config.args.epoch_step = 200  # 1000  # 1000
+        config.args.test_step = 2000
         if not opt.pinn:
             model = fourier_model(config).to(config.device)
         else:
