@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name="o_turing1d_elu"
 #SBATCH --partition=gpu
-#SBATCH --constraint="cascade"
+#SBATCH --constraint="cascade|skylake"
 #SBATCH --nodes=1
 #SBATCH --time=2-00:00:00
 #SBATCH --gres=gpu:1
