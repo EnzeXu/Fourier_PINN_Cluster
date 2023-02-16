@@ -539,7 +539,8 @@ class MLP(nn.Module):
 class MySin(nn.Module):
     def __init__(self):
         super().__init__()
-        self.omega = nn.Parameter(torch.tensor([1.0]))
+        # self.omega = nn.Parameter(torch.tensor([1.0]))
+        self.omega = 1.0
 
     def forward(self, x):
         return torch.sin(self.omega * x)
@@ -562,7 +563,7 @@ def activation_func(activation):
         "selu": nn.SELU(),
         "sin": MySin(),
         "tanh": nn.Tanh(),
-        "softplus": MySoftplus(),
+        "softplus": nn.Softplus(beta=1),  # MySoftplus(),
         "elu": nn.ELU(),
         "none": nn.Identity(),
     })[activation]
