@@ -76,7 +76,8 @@ if __name__ == "__main__":
     # print("plan3:")
     # one_time_detail_check("SIR_Fourier_Lambda", sir_plan3_time_strings, 10000)
     # one_time_build_from_record()
-    with open("saves/train/REP6_Fourier_Omega_20230216_042856_947217/REP6_Fourier_Omega_20230216_042856_947217_info.npy", "rb") as f:
+    # with open("saves/train/REP6_Fourier_Omega_20230216_042856_947217/REP6_Fourier_Omega_20230216_042856_947217_info.npy", "rb") as f:
+    with open("saves/train/REP6_Fourier_Omega_20230216_050531_233472/REP6_Fourier_Omega_20230216_050531_233472_info.npy", "rb") as f:
         dic = pickle.load(f)
     import matplotlib.pyplot as plt
     plt.plot(range(1, 10001), dic["activation_weights_record"][0,:,0].flatten())

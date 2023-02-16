@@ -539,8 +539,8 @@ class MLP(nn.Module):
 class MySin(nn.Module):
     def __init__(self):
         super().__init__()
-        # self.omega = nn.Parameter(torch.tensor([1.0]))
-        self.omega = 1.0
+        self.omega = nn.Parameter(torch.tensor([1.0]))
+        # self.omega = 1.0
 
     def forward(self, x):
         return torch.sin(self.omega * x)
