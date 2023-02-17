@@ -576,7 +576,7 @@ class ActivationBlock(nn.Module):
         self.activate_list_6 = ["sin", "tanh", "relu", "gelu", "softplus", "elu"]
         self.activate_list_5 = ["tanh", "relu", "gelu", "softplus", "elu"]
         self.activate_list_3 = ["gelu", "softplus", "elu"]
-        self.activate_list_2 = ["gelu", "sin"]
+        self.activate_list_2 = ["gelu", "softplus"]
         assert self.config.activation in self.activate_list_6 + ["adaptive_6", "adaptive_3", "adaptive_5", "adaptive_2"]
         if "adaptive" in self.config.activation:
             if self.config.activation == "adaptive_6":
