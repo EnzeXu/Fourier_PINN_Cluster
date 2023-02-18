@@ -611,7 +611,7 @@ def one_time_build_siraged_omega_activations():
 def one_time_build_omega(module_name_short, start_seed, end_seed):
     lr = 0.001
     plans = [
-        # pinn / activation / cyclic / stable / derivative / boundary /init_lr
+        # pinn / activation / cyclic / stable / derivative / boundary /init_lr / init_weights / init_weights_strategy
         # [1, "gelu", 0, 0, 0, 0, lr],
         # [0, "gelu", 0, 0, 0, 0, lr],
         # [0, "relu", 0, 0, 0, 0, lr],
@@ -619,7 +619,30 @@ def one_time_build_omega(module_name_short, start_seed, end_seed):
         # [0, "tanh", 0, 0, 0, 0, lr],
         # [0, "sin", 0, 0, 0, 0, lr],
         # [0, "softplus", 0, 0, 0, 0, lr],
-        [0, "adaptive_2", 0, 0, 0, 0, lr],
+        [0, "adaptive_2", 0, 0, 0, 0, 0.01, "avg", "trainable"],
+        [0, "adaptive_2", 0, 0, 0, 0, 0.01, "gelu", "trainable"],
+        [0, "adaptive_2", 0, 0, 0, 0, 0.01, "softplus", "trainable"],
+
+        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "avg", "trainable"],
+        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "sin", "trainable"],
+        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "tanh", "trainable"],
+        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "relu", "trainable"],
+        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "gelu", "trainable"],
+        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "softplus", "trainable"],
+        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "elu", "trainable"],
+
+        [0, "adaptive_2", 0, 0, 0, 0, 0.01, "avg", "fixed"],
+        [0, "adaptive_2", 0, 0, 0, 0, 0.01, "gelu", "fixed"],
+        [0, "adaptive_2", 0, 0, 0, 0, 0.01, "softplus", "fixed"],
+
+        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "avg", "fixed"],
+        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "sin", "fixed"],
+        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "tanh", "fixed"],
+        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "relu", "fixed"],
+        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "gelu", "fixed"],
+        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "softplus", "fixed"],
+        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "elu", "fixed"],
+
         # [0, "adaptive_6", 0, 0, 0, 0, 0.001],
         # [0, "adaptive_6", 0, 0, 0, 0, 0.003],
         # [0, "adaptive_6", 0, 0, 0, 0, 0.005],
@@ -654,7 +677,10 @@ def one_time_build_omega(module_name_short, start_seed, end_seed):
         dic["boundary"] = one_plan[5]
         if one_plan[6]:
             dic["init_lr"] = one_plan[6]
-
+        if one_plan[7]:
+            dic["init_weights"] = one_plan[7]
+        if one_plan[8]:
+            dic["init_weights_strategy"] = one_plan[8]
         if one_plan[0]:
             title_format = "o_{}_pinn".format(module_name_short.lower())
         elif one_plan[5]:
@@ -666,7 +692,7 @@ def one_time_build_omega(module_name_short, start_seed, end_seed):
         elif one_plan[4]:
             title_format = "o_{}_derivative".format(module_name_short.lower())
         else:
-            title_format = "o_{}_{}".format(module_name_short.lower(), one_plan[1] + ("_" + str(one_plan[6]) if "adaptive" in dic["activation"] else ""))
+            title_format = "o_{}_{}".format(module_name_short.lower(), one_plan[1] + ("_" + str(one_plan[6]) + "_" + str(one_plan[7] + "_" + str(one_plan[8])) if "adaptive" in dic["activation"] else ""))
         title_format_log = title_format + "_{}"
 
         one_slurm_multi_seed(
