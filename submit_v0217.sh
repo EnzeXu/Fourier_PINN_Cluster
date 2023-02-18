@@ -2,7 +2,7 @@
 
 for model_name in "turing1d"
 do
-    for activation in "adaptive_2"
+    for activation in "adaptive_2_0.01"
     do
         for weights in "avg" "gelu" "softplus"
         do
@@ -16,7 +16,7 @@ done
 
 for model_name in "turing1d"
 do
-    for activation in "adaptive_6"
+    for activation in "adaptive_6_0.01"
     do
         for weights in "avg" "gelu" "softplus" "relu" "elu" "tanh" "sin"
         do
