@@ -336,7 +336,7 @@ class FourierModelTemplate(nn.Module):
 
             if "adaptive" in self.config.activation:
                 if "Turing" in self.config.model_name:
-                    myprint("Turing branch", self.config.args.log_path)
+                    # myprint("Turing branch", self.config.args.log_path)
                     adaptive_weights_record_0.append(list(self.f_model.activate_block1.activate_weights.cpu().detach().numpy()))
                     adaptive_weights_record_1.append(list(self.f_model.activate_block2.activate_weights.cpu().detach().numpy()))
                     adaptive_weights_record_2.append(list(self.f_model.activate_block3.activate_weights.cpu().detach().numpy()))
@@ -901,13 +901,13 @@ class FNO3d(nn.Module):
         x2 = self.w1(x)
         x = x1 + x2
         # x = F.gelu(x)
-        x = self.activate_block2(x)
+        x = self.activate_block1(x)  # self.activate_block2(x)
 
         x1 = self.conv2(x)
         x2 = self.w2(x)
         x = x1 + x2
         # x = F.gelu(x)
-        x = self.activate_block3(x)
+        x = self.activate_block1(x)  # self.activate_block3(x)
 
         x1 = self.conv3(x)
         x2 = self.w3(x)
@@ -917,7 +917,7 @@ class FNO3d(nn.Module):
 
         x = self.fc1(x)
 
-        x = self.activate_block4(x)
+        x = self.activate_block1(x)  # self.activate_block4(x)
 
         x = self.fc2(x)
 
