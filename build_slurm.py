@@ -612,36 +612,53 @@ def one_time_build_omega(module_name_short, start_seed, end_seed):
     lr = 0.001
     plans = [
         # pinn / activation / cyclic / stable / derivative / boundary /init_lr / init_weights / init_weights_strategy
-        # [1, "gelu", 0, 0, 0, 0, lr],
-        # [0, "gelu", 0, 0, 0, 0, lr],
-        # [0, "relu", 0, 0, 0, 0, lr],
-        # [0, "elu", 0, 0, 0, 0, lr],
-        # [0, "tanh", 0, 0, 0, 0, lr],
-        # [0, "sin", 0, 0, 0, 0, lr],
-        # [0, "softplus", 0, 0, 0, 0, lr],
-        [0, "adaptive_2", 0, 0, 0, 0, 0.01, "avg", "trainable"],
-        [0, "adaptive_2", 0, 0, 0, 0, 0.01, "gelu", "trainable"],
-        [0, "adaptive_2", 0, 0, 0, 0, 0.01, "softplus", "trainable"],
+        [1, "gelu", 0, 0, 0, 0, lr],
+        [0, "gelu", 0, 0, 0, 0, lr],
+        [0, "relu", 0, 0, 0, 0, lr],
+        [0, "elu", 0, 0, 0, 0, lr],
+        [0, "tanh", 0, 0, 0, 0, lr],
+        [0, "sin", 0, 0, 0, 0, lr],
+        [0, "softplus", 0, 0, 0, 0, lr],
 
+        [0, "adaptive_6", 0, 0, 0, 0, 0.001, "avg", "trainable"],
+        [0, "adaptive_6", 0, 0, 0, 0, 0.003, "avg", "trainable"],
+        [0, "adaptive_6", 0, 0, 0, 0, 0.005, "avg", "trainable"],
         [0, "adaptive_6", 0, 0, 0, 0, 0.01, "avg", "trainable"],
-        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "sin", "trainable"],
-        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "tanh", "trainable"],
-        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "relu", "trainable"],
-        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "gelu", "trainable"],
-        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "softplus", "trainable"],
-        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "elu", "trainable"],
 
-        [0, "adaptive_2", 0, 0, 0, 0, 0.01, "avg", "fixed"],
-        [0, "adaptive_2", 0, 0, 0, 0, 0.01, "gelu", "fixed"],
-        [0, "adaptive_2", 0, 0, 0, 0, 0.01, "softplus", "fixed"],
 
-        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "avg", "fixed"],
-        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "sin", "fixed"],
-        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "tanh", "fixed"],
-        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "relu", "fixed"],
-        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "gelu", "fixed"],
-        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "softplus", "fixed"],
-        [0, "adaptive_6", 0, 0, 0, 0, 0.01, "elu", "fixed"],
+        [0, "adaptive_5", 0, 0, 0, 0, 0.001, "avg", "trainable"],
+        [0, "adaptive_5", 0, 0, 0, 0, 0.003, "avg", "trainable"],
+        [0, "adaptive_5", 0, 0, 0, 0, 0.005, "avg", "trainable"],
+        [0, "adaptive_5", 0, 0, 0, 0, 0.01, "avg", "trainable"],
+
+
+        [0, "gelu", 0, 1, 0, 0, lr],
+        [0, "gelu", 0, 0, 0, 1, lr],
+
+
+        # [0, "adaptive_2", 0, 0, 0, 0, 0.01, "avg", "trainable"],
+        # [0, "adaptive_2", 0, 0, 0, 0, 0.01, "gelu", "trainable"],
+        # [0, "adaptive_2", 0, 0, 0, 0, 0.01, "softplus", "trainable"],
+        #
+        # [0, "adaptive_6", 0, 0, 0, 0, 0.01, "avg", "trainable"],
+        # [0, "adaptive_6", 0, 0, 0, 0, 0.01, "sin", "trainable"],
+        # [0, "adaptive_6", 0, 0, 0, 0, 0.01, "tanh", "trainable"],
+        # [0, "adaptive_6", 0, 0, 0, 0, 0.01, "relu", "trainable"],
+        # [0, "adaptive_6", 0, 0, 0, 0, 0.01, "gelu", "trainable"],
+        # [0, "adaptive_6", 0, 0, 0, 0, 0.01, "softplus", "trainable"],
+        # [0, "adaptive_6", 0, 0, 0, 0, 0.01, "elu", "trainable"],
+        #
+        # [0, "adaptive_2", 0, 0, 0, 0, 0.01, "avg", "fixed"],
+        # [0, "adaptive_2", 0, 0, 0, 0, 0.01, "gelu", "fixed"],
+        # [0, "adaptive_2", 0, 0, 0, 0, 0.01, "softplus", "fixed"],
+        #
+        # [0, "adaptive_6", 0, 0, 0, 0, 0.01, "avg", "fixed"],
+        # [0, "adaptive_6", 0, 0, 0, 0, 0.01, "sin", "fixed"],
+        # [0, "adaptive_6", 0, 0, 0, 0, 0.01, "tanh", "fixed"],
+        # [0, "adaptive_6", 0, 0, 0, 0, 0.01, "relu", "fixed"],
+        # [0, "adaptive_6", 0, 0, 0, 0, 0.01, "gelu", "fixed"],
+        # [0, "adaptive_6", 0, 0, 0, 0, 0.01, "softplus", "fixed"],
+        # [0, "adaptive_6", 0, 0, 0, 0, 0.01, "elu", "fixed"],
 
         # [0, "adaptive_6", 0, 0, 0, 0, 0.001],
         # [0, "adaptive_6", 0, 0, 0, 0, 0.003],
@@ -675,11 +692,11 @@ def one_time_build_omega(module_name_short, start_seed, end_seed):
         dic["stable"] = one_plan[3]
         dic["derivative"] = one_plan[4]
         dic["boundary"] = one_plan[5]
-        if one_plan[6]:
+        if len(one_plan) > 6:
             dic["init_lr"] = one_plan[6]
-        if one_plan[7]:
+        if len(one_plan) > 7:
             dic["init_weights"] = one_plan[7]
-        if one_plan[8]:
+        if len(one_plan) > 8:
             dic["init_weights_strategy"] = one_plan[8]
         if one_plan[0]:
             title_format = "o_{}_pinn".format(module_name_short.lower())
@@ -715,7 +732,7 @@ if __name__ == "__main__":
     # one_time_build_omega("REP6", 0,10)
     # one_time_build_omega("REP3", 0,10)
     # one_time_build_omega("Turing2D", 0, 5)
-    one_time_build_omega("Turing1D", 0, 1)
+    one_time_build_omega("Turing1D", 1, 5)
     # one_time_build_omega("Turing2D", 0, 5)
 
     # one_time_build_rep3_omega_activations()

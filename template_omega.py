@@ -197,13 +197,13 @@ class FourierModelTemplate(nn.Module):
         x1 = self.mlp1(x1)
         x2 = self.w1(x)
         x = x1 + x2
-        x = self.activate_block1(x)
+        x = self.activate_block0(x)#x = self.activate_block1(x)
 
         x1 = self.conv2(x)
         x1 = self.mlp2(x1)
         x2 = self.w2(x)
         x = x1 + x2
-        x = self.activate_block2(x)
+        x = self.activate_block0(x)#x = self.activate_block2(x)
 
         x1 = self.conv3(x)
         x1 = self.mlp3(x1)
@@ -212,7 +212,7 @@ class FourierModelTemplate(nn.Module):
 
         x = x.permute(0, 2, 1)
         x = self.fc1(x)
-        x = self.activate_block3(x)
+        x = self.activate_block0(x)#x = self.activate_block3(x)
         x = self.fc2(x)
         return x
 
@@ -497,6 +497,30 @@ class FourierModelTemplate(nn.Module):
                 self.config.init_weights_strategy,
             ))
 
+    def write_fail_log(self):
+        with open(os.path.join(self.config.args.main_path, "saves/record_omega.txt"), "a") as f:
+            f.write("{0},{1},{2},{3:.2f},{4},{5:.6f},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18}\n".format(
+                self.config.model_name,  # 0
+                self.time_string,  # 1
+                self.config.seed,  # 2
+                self.time_record_tmp[-1] / 60.0,  # 3
+                self.config.args.iteration,  # 4
+                self.config.args.initial_lr,  # 5
+                "fail",  # 6
+                "fail",  # 7
+                "fail",  # 8
+                self.config.pinn,  # 9
+                self.config.activation,  # 10
+                self.config.stable,  # 11
+                self.config.cyclic,  # 12
+                self.config.derivative,  # 13
+                self.config.boundary,  # 14
+                self.config.loss_average_length,  # 15
+                "{}-{}".format(self.config.args.iteration - self.config.loss_average_length, self.config.args.iteration),  # 16
+                self.config.init_weights,
+                self.config.init_weights_strategy,
+            ))
+
     @staticmethod
     def draw_loss_multi(loss_list, last_rate_list):
         m = MultiSubplotDraw(row=1, col=len(last_rate_list), fig_size=(8 * len(last_rate_list), 6),
@@ -735,14 +759,17 @@ def run(config, fourier_model, pinn_model):
             model = pinn_model(config).to(config.device)
         model.train_model()
         return
+
+    if not opt.pinn:
+        model = fourier_model(config).to(config.device)
+    else:
+        model = pinn_model(config).to(config.device)
+
     try:
-        if not opt.pinn:
-            model = fourier_model(config).to(config.device)
-        else:
-            model = pinn_model(config).to(config.device)
         model.train_model()
     except Exception as e:
         print("[Error]", e)
+        model.write_fail_log()
 
 
 def penalty_func(x):
