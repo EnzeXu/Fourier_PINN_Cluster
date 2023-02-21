@@ -17,8 +17,8 @@ from template_omega import *
 
 
 class Parameters:
-    N = 30
-    M = 30
+    N = 20
+    M = 20
     d1 = 1
     d2 = 40
     c1 = 0.1  # 0.1
@@ -30,8 +30,8 @@ class Parameters:
 
 
 class TrainArgs:
-    iteration = 5000  # 3000->10000
-    epoch_step = 10  # 1000
+    iteration = 20000  # 3000->10000
+    epoch_step = 100  # 1000
     test_step = epoch_step * 10
     initial_lr = 0.01
     ignore_save_flag = True
