@@ -17,8 +17,8 @@ from template_omega import *
 
 
 class Parameters:
-    N = 20
-    M = 20
+    N = 30
+    M = 30
     d1 = 1
     d2 = 40
     c1 = 0.1  # 0.1
