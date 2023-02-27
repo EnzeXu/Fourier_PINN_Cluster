@@ -47,6 +47,7 @@ class ConfigTemplate:
         self.loss_average_length = None
         self.init_weights = None
         self.init_weights_strategy = None
+        self.scheduler = None
 
 
     def setup(self):
@@ -309,7 +310,11 @@ class FourierModelTemplate(nn.Module):
     def train_model(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.config.args.initial_lr, weight_decay=1e-4)
         # scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda e: 1 / (e / 1000 + 1))
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.config.args.iteration)
+        assert self.config.scheduler in ["cosine", "decade"]
+        if self.config.scheduler == "cosine":
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.config.args.iteration)
+        else:
+            scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda e: 1 / (e / 1000 + 1))
         self.train()
 
         start_time = time.time()
@@ -475,7 +480,7 @@ class FourierModelTemplate(nn.Module):
 
     def write_finish_log(self):
         with open(os.path.join(self.config.args.main_path, "saves/record_omega.txt"), "a") as f:
-            f.write("{0},{1},{2},{3:.2f},{4},{5:.6f},{6:.12f},{7:.12f},{8:.12f},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18}\n".format(
+            f.write("{0},{1},{2},{3:.2f},{4},{5:.6f},{6:.12f},{7:.12f},{8:.12f},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},{22},{23},{24},{25}\n".format(
                 self.config.model_name,  # 0
                 self.time_string,  # 1
                 self.config.seed,  # 2
@@ -493,8 +498,15 @@ class FourierModelTemplate(nn.Module):
                 self.config.boundary,  # 14
                 self.config.loss_average_length,  # 15
                 "{}-{}".format(self.config.args.iteration - self.config.loss_average_length, self.config.args.iteration),  # 16
-                self.config.init_weights,
-                self.config.init_weights_strategy,
+                self.config.init_weights,  # 17
+                self.config.init_weights_strategy,  # 18
+                self.config.scheduler,  # 19
+                self.activation_weights_record[0][-1][0] if self.config.activation in ["adaptive_5", "adaptive_6"] else None,  # 20
+                self.activation_weights_record[0][-1][1] if self.config.activation in ["adaptive_5", "adaptive_6"] else None,  # 21
+                self.activation_weights_record[0][-1][2] if self.config.activation in ["adaptive_5", "adaptive_6"] else None,  # 22
+                self.activation_weights_record[0][-1][3] if self.config.activation in ["adaptive_5", "adaptive_6"] else None,  # 23
+                self.activation_weights_record[0][-1][4] if self.config.activation in ["adaptive_5", "adaptive_6"] else None,  # 24
+                self.activation_weights_record[0][-1][5] if self.config.activation in ["adaptive_6"] else None,  # 25
             ))
 
     def write_fail_log(self):
@@ -726,6 +738,7 @@ def run(config, fourier_model, pinn_model):
     parser.add_argument("--init_lr", type=float, default=None, help="forced initial learning rate")
     parser.add_argument("--init_weights", type=str, default=None, choices=[None, "avg", "gelu", "elu", "relu", "sin", "tanh", "softplus"], help="init_weights")
     parser.add_argument("--init_weights_strategy", type=str, default=None, help="init_weights_strategy")
+    parser.add_argument("--scheduler", type=str, default="cosine", choices=["cosine", "decade"], help="scheduler")
     # parser.add_argument("--strategy", type=int, default=0, help="0=ones 1=fixed 2=adaptive")
     # parser.add_argument("--layer", type=int, default=8, help="number of layer")
     opt = parser.parse_args()
@@ -745,6 +758,7 @@ def run(config, fourier_model, pinn_model):
     config.pinn = opt.pinn
     config.init_weights = opt.init_weights
     config.init_weights_strategy = opt.init_weights_strategy
+    config.scheduler = opt.scheduler
     config.args.main_path = opt.main_path
     config.args.log_path = opt.log_path
     if opt.init_lr:
