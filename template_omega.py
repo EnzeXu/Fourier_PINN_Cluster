@@ -310,11 +310,13 @@ class FourierModelTemplate(nn.Module):
     def train_model(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.config.args.initial_lr, weight_decay=1e-4)
         # scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda e: 1 / (e / 1000 + 1))
-        assert self.config.scheduler in ["cosine", "decade"]
+        assert self.config.scheduler in ["cosine", "decade", "fixed"]
         if self.config.scheduler == "cosine":
             scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.config.args.iteration)
-        else:
+        elif self.config.scheduler == "decade":
             scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda e: 1 / (e / 1000 + 1))
+        else:
+            scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda e: 1.0)
         self.train()
 
         start_time = time.time()
@@ -738,7 +740,7 @@ def run(config, fourier_model, pinn_model):
     parser.add_argument("--init_lr", type=float, default=None, help="forced initial learning rate")
     parser.add_argument("--init_weights", type=str, default=None, choices=[None, "avg", "gelu", "elu", "relu", "sin", "tanh", "softplus"], help="init_weights")
     parser.add_argument("--init_weights_strategy", type=str, default=None, help="init_weights_strategy")
-    parser.add_argument("--scheduler", type=str, default="cosine", choices=["cosine", "decade"], help="scheduler")
+    parser.add_argument("--scheduler", type=str, default="cosine", choices=["cosine", "decade", "fixed"], help="scheduler")
     # parser.add_argument("--strategy", type=int, default=0, help="0=ones 1=fixed 2=adaptive")
     # parser.add_argument("--layer", type=int, default=8, help="number of layer")
     opt = parser.parse_args()
