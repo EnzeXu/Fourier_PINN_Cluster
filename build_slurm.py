@@ -626,10 +626,10 @@ def one_time_build_omega(module_name_short, start_seed, end_seed):
         [0, "adaptive_6", 0, 0, 0, 0, 0.01, "decade", "avg", "trainable"],
 
 
-        # [0, "adaptive_5", 0, 0, 0, 0, 0.001, "avg", "trainable"],
-        # [0, "adaptive_5", 0, 0, 0, 0, 0.003, "avg", "trainable"],
-        # [0, "adaptive_5", 0, 0, 0, 0, 0.005, "avg", "trainable"],
-        # [0, "adaptive_5", 0, 0, 0, 0, 0.01, "avg", "trainable"],
+        [0, "adaptive_5", 0, 0, 0, 0, 0.001, "decade", "avg", "trainable"],
+        [0, "adaptive_5", 0, 0, 0, 0, 0.003, "decade", "avg", "trainable"],
+        [0, "adaptive_5", 0, 0, 0, 0, 0.005, "decade", "avg", "trainable"],
+        [0, "adaptive_5", 0, 0, 0, 0, 0.01, "decade", "avg", "trainable"],
 
 
         # [0, "gelu", 0, 1, 0, 0, lr],
