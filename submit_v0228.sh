@@ -21,7 +21,7 @@ do
     do
         for adaptive_activation in "gelu" "relu" "elu" "tanh" "sin" "softplus"
         do
-            sbatch jobs/o_${model_name}_decade_${adaptive_activation}_${seed}.slurm
+            sbatch jobs/o_${model_name}_fixed_${adaptive_activation}_${seed}.slurm
         done
     done
 done
