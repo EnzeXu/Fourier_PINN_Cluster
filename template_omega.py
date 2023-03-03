@@ -198,13 +198,13 @@ class FourierModelTemplate(nn.Module):
         x1 = self.mlp1(x1)
         x2 = self.w1(x)
         x = x1 + x2
-        x = self.activate_block0(x)#x = self.activate_block1(x)
+        x = self.activate_block1(x)
 
         x1 = self.conv2(x)
         x1 = self.mlp2(x1)
         x2 = self.w2(x)
         x = x1 + x2
-        x = self.activate_block0(x)#x = self.activate_block2(x)
+        x = self.activate_block2(x)
 
         x1 = self.conv3(x)
         x1 = self.mlp3(x1)
@@ -213,7 +213,7 @@ class FourierModelTemplate(nn.Module):
 
         x = x.permute(0, 2, 1)
         x = self.fc1(x)
-        x = self.activate_block0(x)#x = self.activate_block3(x)
+        x = self.activate_block3(x)
         x = self.fc2(x)
         return x
 
@@ -917,13 +917,13 @@ class FNO3d(nn.Module):
         x2 = self.w1(x)
         x = x1 + x2
         # x = F.gelu(x)
-        x = self.activate_block1(x)  # self.activate_block2(x)
+        x = self.activate_block2(x)
 
         x1 = self.conv2(x)
         x2 = self.w2(x)
         x = x1 + x2
         # x = F.gelu(x)
-        x = self.activate_block1(x)  # self.activate_block3(x)
+        x = self.activate_block3(x)
 
         x1 = self.conv3(x)
         x2 = self.w3(x)
@@ -933,7 +933,7 @@ class FNO3d(nn.Module):
 
         x = self.fc1(x)
 
-        x = self.activate_block1(x)  # self.activate_block4(x)
+        x = self.activate_block4(x)
 
         x = self.fc2(x)
 
