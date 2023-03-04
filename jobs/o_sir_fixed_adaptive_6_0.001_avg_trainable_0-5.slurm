@@ -7,6 +7,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --mem=32GB
 #SBATCH --ntasks-per-node=4
+#SBATCH --account=chenGrp
 #SBATCH --mail-user=xue20@wfu.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --output="jobs_oe/o_sir_fixed_adaptive_6_0.001_avg_trainable-%j.o"

@@ -47,6 +47,7 @@ draft_head = """#!/bin/bash
 #SBATCH --gres=gpu:1
 #SBATCH --mem=32GB
 #SBATCH --ntasks-per-node=4
+#SBATCH --account=chenGrp
 #SBATCH --mail-user=xue20@wfu.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --output="jobs_oe/{0}-%j.o"
@@ -611,16 +612,16 @@ def one_time_build_siraged_omega_activations():
 
 def one_time_build_omega(module_name_short, start_seed, end_seed):
     lr = 0.001
-    scheduler = "decade"
+    scheduler = "cosine"
     plans = [
         # pinn / activation / cyclic / stable / derivative / boundary /init_lr / init_weights / init_weights_strategy / scheduler
         # [1, "gelu", 0, 0, 0, 0, lr],
-        [0, "gelu", 0, 0, 0, 0, lr, scheduler],
-        [0, "relu", 0, 0, 0, 0, lr, scheduler],
-        [0, "elu", 0, 0, 0, 0, lr, scheduler],
-        [0, "tanh", 0, 0, 0, 0, lr, scheduler],
-        [0, "sin", 0, 0, 0, 0, lr, scheduler],
-        [0, "softplus", 0, 0, 0, 0, lr, scheduler],
+        # [0, "gelu", 0, 0, 0, 0, lr, scheduler],
+        # [0, "relu", 0, 0, 0, 0, lr, scheduler],
+        # [0, "elu", 0, 0, 0, 0, lr, scheduler],
+        # [0, "tanh", 0, 0, 0, 0, lr, scheduler],
+        # [0, "sin", 0, 0, 0, 0, lr, scheduler],
+        # [0, "softplus", 0, 0, 0, 0, lr, scheduler],
 
         [0, "adaptive_6", 0, 0, 0, 0, 0.001, scheduler, "avg", "trainable"],
         [0, "adaptive_6", 0, 0, 0, 0, 0.003, scheduler, "avg", "trainable"],
@@ -740,10 +741,12 @@ if __name__ == "__main__":
     # one_time_build_omega("Turing1D", 15, 20)
     # one_time_build_omega("Turing1D", 20, 25)
     # one_time_build_omega("Turing1D", 25, 30)
-    one_time_build_omega("Turing1D", 0, 3)
-    one_time_build_omega("Turing1D", 3, 5)
-    one_time_build_omega("Turing2D", 0, 3)
-    one_time_build_omega("Turing2D", 3, 5)
+    one_time_build_omega("Turing1D", 0, 5)
+    one_time_build_omega("Turing2D", 0, 5)
+    one_time_build_omega("SIR", 0, 5)
+    one_time_build_omega("SIRAged", 0, 5)
+    one_time_build_omega("REP6", 0, 5)
+    one_time_build_omega("REP3", 0, 5)
 
     # one_time_build_omega("SIR", 0, 5)
     # one_time_build_omega("SIRAged", 0, 5)
