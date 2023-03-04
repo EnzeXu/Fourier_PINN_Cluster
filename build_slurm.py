@@ -7,6 +7,7 @@ draft = """#!/bin/bash
 #SBATCH --gres=gpu:1
 #SBATCH --mem=8GB
 #SBATCH --ntasks-per-node=8
+#SBATCH --account=chenGrp
 #SBATCH --mail-user=xue20@wfu.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --output="jobs_oe/{0}-%j.o"

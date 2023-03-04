@@ -6,6 +6,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --mem=32GB
 #SBATCH --ntasks-per-node=8
+#SBATCH --account=chenGrp
 #SBATCH --mail-user=xue20@wfu.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --output="jobs_oe/o_turing1d_test-%j.o"
