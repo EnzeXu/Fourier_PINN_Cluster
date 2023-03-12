@@ -90,10 +90,10 @@ class FourierModelTemplate(nn.Module):
         self.w1 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
         self.w2 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
         self.w3 = nn.Conv1d(self.config.width, self.config.width, 1).to(self.config.device)
-        self.mlp0 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
-        self.mlp1 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
-        self.mlp2 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
-        self.mlp3 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
+        # self.mlp0 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
+        # self.mlp1 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
+        # self.mlp2 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
+        # self.mlp3 = MLP(self.config.width, self.config.width, self.config.width).to(self.config.device)
         self.activate_block0 = ActivationBlock(self.config).to(self.config.device)
         self.activate_block1 = ActivationBlock(self.config).to(self.config.device)
         self.activate_block2 = ActivationBlock(self.config).to(self.config.device)
@@ -189,25 +189,25 @@ class FourierModelTemplate(nn.Module):
         x = x.permute(0, 2, 1)
 
         x1 = self.conv0(x)
-        x1 = self.mlp0(x1)
+        # x1 = self.mlp0(x1)
         x2 = self.w0(x)
         x = x1 + x2
         x = self.activate_block0(x)
 
         x1 = self.conv1(x)
-        x1 = self.mlp1(x1)
+        # x1 = self.mlp1(x1)
         x2 = self.w1(x)
         x = x1 + x2
         x = self.activate_block1(x)
 
         x1 = self.conv2(x)
-        x1 = self.mlp2(x1)
+        # x1 = self.mlp2(x1)
         x2 = self.w2(x)
         x = x1 + x2
         x = self.activate_block2(x)
 
         x1 = self.conv3(x)
-        x1 = self.mlp3(x1)
+        # x1 = self.mlp3(x1)
         x2 = self.w3(x)
         x = x1 + x2
 
