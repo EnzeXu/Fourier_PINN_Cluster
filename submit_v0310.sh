@@ -10,7 +10,7 @@ do
             do
                 for init_lr in "0.001" "0.003" "0.005" "0.01"
                 do
-                    sbatch jobs/o_${model_name}_${scheduler}_${adaptive_activation}_${init_lr}_avg_trainable_${seed}.slurm
+                    sbatch jobs/o_${model_name}_${scheduler}_${adaptive_activation}_${init_lr}_${seed}.slurm
                 done
             done
 
