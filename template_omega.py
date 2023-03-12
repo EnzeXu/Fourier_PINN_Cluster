@@ -739,7 +739,7 @@ def run(config, fourier_model, pinn_model):
     parser.add_argument("--test", type=int, default=0, help="test will take epoch as 10")
     parser.add_argument("--init_lr", type=float, default=None, help="forced initial learning rate")
     parser.add_argument("--init_weights", type=str, default=None, choices=[None, "avg", "gelu", "elu", "relu", "sin", "tanh", "softplus"], help="init_weights")
-    parser.add_argument("--init_weights_strategy", type=str, default=None, help="init_weights_strategy")
+    parser.add_argument("--init_weights_strategy", type=str, default="trainable", help="init_weights_strategy")
     parser.add_argument("--scheduler", type=str, default="cosine", choices=["cosine", "decade", "fixed"], help="scheduler")
     # parser.add_argument("--strategy", type=int, default=0, help="0=ones 1=fixed 2=adaptive")
     # parser.add_argument("--layer", type=int, default=8, help="number of layer")

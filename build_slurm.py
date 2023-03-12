@@ -623,6 +623,17 @@ def one_time_build_omega(module_name_short, start_seed, end_seed):
         [0, "sin", 0, 0, 0, 0, lr, scheduler],
         [0, "softplus", 0, 0, 0, 0, lr, scheduler],
 
+        [0, "adaptive_6", 0, 0, 0, 0, 0.001, scheduler],
+        [0, "adaptive_6", 0, 0, 0, 0, 0.003, scheduler],
+        [0, "adaptive_6", 0, 0, 0, 0, 0.005, scheduler],
+        [0, "adaptive_6", 0, 0, 0, 0, 0.01, scheduler],
+
+
+        [0, "adaptive_5", 0, 0, 0, 0, 0.001, scheduler],
+        [0, "adaptive_5", 0, 0, 0, 0, 0.003, scheduler],
+        [0, "adaptive_5", 0, 0, 0, 0, 0.005, scheduler],
+        [0, "adaptive_5", 0, 0, 0, 0, 0.01, scheduler],
+
         # [0, "adaptive_6", 0, 0, 0, 0, 0.001, scheduler, "avg", "trainable"],
         # [0, "adaptive_6", 0, 0, 0, 0, 0.003, scheduler, "avg", "trainable"],
         # [0, "adaptive_6", 0, 0, 0, 0, 0.005, scheduler, "avg", "trainable"],
@@ -713,8 +724,10 @@ def one_time_build_omega(module_name_short, start_seed, end_seed):
             title_format = "o_{}_stable".format(module_name_short.lower())
         elif one_plan[4]:
             title_format = "o_{}_derivative".format(module_name_short.lower())
-        else:
+        elif len(one_plan) > 8:
             title_format = "o_{}_{}_{}".format(module_name_short.lower(), one_plan[7], one_plan[1] + ("_" + str(one_plan[6]) + "_" + str(one_plan[8] + "_" + str(one_plan[9])) if "adaptive" in dic["activation"] else ""))
+        else:
+            title_format = "o_{}_{}_{}".format(module_name_short.lower(), one_plan[7], one_plan[1] + (("_" + str(one_plan[6])) if "adaptive" in dic["activation"] else ""))
         title_format_log = title_format + "_{}"
 
         one_slurm_multi_seed(
@@ -741,8 +754,12 @@ if __name__ == "__main__":
     # one_time_build_omega("Turing1D", 15, 20)
     # one_time_build_omega("Turing1D", 20, 25)
     # one_time_build_omega("Turing1D", 25, 30)
-    one_time_build_omega("Turing1D", 0, 5)
-    one_time_build_omega("Turing2D", 0, 5)
+    one_time_build_omega("SIRAged", 0, 3)
+    one_time_build_omega("SIR", 0, 3)
+    one_time_build_omega("REP6", 0, 3)
+    one_time_build_omega("REP3", 0, 3)
+    one_time_build_omega("Turing1D", 0, 3)
+    one_time_build_omega("Turing2D", 0, 3)
     # one_time_build_omega("SIR", 0, 5)
     # one_time_build_omega("SIRAged", 0, 5)
     # one_time_build_omega("REP6", 0, 5)
