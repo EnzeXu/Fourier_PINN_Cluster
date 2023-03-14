@@ -733,8 +733,8 @@ def one_time_build_omega(module_name_short, start_seed, end_seed):
             dic["init_weights_strategy"] = one_plan[9]
         if one_plan[0]:
             title_format = "o_{}_pinn".format(module_name_short.lower())
-        elif one_plan[5]:
-            title_format = "o_{}_boundary".format(module_name_short.lower())
+        # elif one_plan[5]:
+        #     title_format = "o_{}_boundary".format(module_name_short.lower())
         elif one_plan[2]:
             title_format = "o_{}_cyclic".format(module_name_short.lower())
         elif one_plan[3]:
@@ -745,6 +745,8 @@ def one_time_build_omega(module_name_short, start_seed, end_seed):
             title_format = "o_{}_{}_{}".format(module_name_short.lower(), one_plan[7], one_plan[1] + ("_" + str(one_plan[6]) + "_" + str(one_plan[8] + "_" + str(one_plan[9])) if "adaptive" in dic["activation"] else ""))
         else:
             title_format = "o_{}_{}_{}".format(module_name_short.lower(), one_plan[7], one_plan[1] + (("_" + str(one_plan[6])) if "adaptive" in dic["activation"] else ""))
+        if one_plan[5]:
+            title_format += "_boundary"
         title_format_log = title_format + "_{}"
 
         one_slurm_multi_seed(
