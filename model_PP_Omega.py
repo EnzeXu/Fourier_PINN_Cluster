@@ -43,7 +43,7 @@ class Config(ConfigTemplate):
 
         self.T = 20
         self.T_unit = 1e-3
-        self.y0 = np.asarray([10.0, 5.0])
+        self.y0 = np.asarray([64.73002741, 6.13106793])
         # self.boundary_list = np.asarray([[0.0, 10.0], [0.0, 10.0], [0.0, 10.0], [0.0, 10.0], [0.0, 10.0], [0.0, 10.0]])
         self.boundary_list = np.asarray([[9, 100], [0, 100]])
 
@@ -103,7 +103,7 @@ class FourierModel(FourierModelTemplate):
         loss1 = self.criterion(y0_pred, y0_true)
         loss2 = 1.0 * (self.criterion(ode_n, zeros_nD))
 
-        boundary_iteration = int(0.3 * self.config.args.iteration)  # 1.0 if self.config.boundary and iteration > boundary_iteration else 0.0
+        boundary_iteration = int(0.0 * self.config.args.iteration)  # 1.0 if self.config.boundary and iteration > boundary_iteration else 0.0
         loss3 = (1.0 if self.config.boundary and iteration > boundary_iteration else 0.0) * (sum([
             self.criterion(torch.abs(y[:, :, i] - self.config.boundary_list[i][0]),
                            y[:, :, i] - self.config.boundary_list[i][0]) +

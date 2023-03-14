@@ -457,26 +457,27 @@ class FourierModelTemplate(nn.Module):
             myprint("(Skipped drawing)", self.config.args.log_path)
             return
 
-        # y_draw = self.y_tmp[0].cpu().detach().numpy().swapaxes(0, 1)
-        # x_draw = self.config.t
-        # y_draw_truth = self.config.truth.swapaxes(0, 1)
-        # save_path = "{}/{}_{}_epoch={}.png".format(self.figure_save_path_folder, self.config.model_name,
-        #                                            self.time_string, self.epoch_tmp)
-        # draw_two_dimension(
-        #     y_lists=np.concatenate([y_draw, y_draw_truth], axis=0),
-        #     x_list=x_draw,
-        #     color_list=self.default_colors[: 2 * self.config.prob_dim],
-        #     legend_list=self.config.curve_names + ["{}_true".format(item) for item in self.config.curve_names],
-        #     line_style_list=["solid"] * self.config.prob_dim + ["dashed"] * self.config.prob_dim,
-        #     fig_title="{}_{}_epoch={}".format(self.config.model_name, self.time_string, self.epoch_tmp),
-        #     fig_size=(8, 6),
-        #     show_flag=True,
-        #     save_flag=False,
-        #     save_path=save_path,
-        #     save_dpi=300,
-        #     legend_loc="center right",
-        # )
-        # myprint("Figure is saved to {}".format(save_path), self.config.args.log_path)
+        if "turing" not in self.config.model_name:
+            y_draw = self.y_tmp[0].cpu().detach().numpy().swapaxes(0, 1)
+            x_draw = self.config.t
+            y_draw_truth = self.config.truth.swapaxes(0, 1)
+            save_path = "{}/{}_{}_epoch={}.png".format(self.figure_save_path_folder, self.config.model_name,
+                                                       self.time_string, self.epoch_tmp)
+            draw_two_dimension(
+                y_lists=np.concatenate([y_draw, y_draw_truth], axis=0),
+                x_list=x_draw,
+                color_list=self.default_colors[: 2 * self.config.prob_dim],
+                legend_list=self.config.curve_names + ["{}_true".format(item) for item in self.config.curve_names],
+                line_style_list=["solid"] * self.config.prob_dim + ["dashed"] * self.config.prob_dim,
+                fig_title="{}_{}_epoch={}".format(self.config.model_name, self.time_string, self.epoch_tmp),
+                fig_size=(8, 6),
+                show_flag=True,
+                save_flag=False,
+                save_path=save_path,
+                save_dpi=200,
+                legend_loc="center right",
+            )
+            myprint("Figure is saved to {}".format(save_path), self.config.args.log_path)
         self.draw_loss_multi(self.loss_record_tmp, [1.0, 0.5, 0.25, 0.125])
         self.draw_loss_multi(self.real_loss_nmse_record_tmp, [1.0, 0.5, 0.25, 0.125])
 
