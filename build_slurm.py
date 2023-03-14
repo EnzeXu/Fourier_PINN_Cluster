@@ -612,7 +612,7 @@ def one_time_build_siraged_omega_activations():
 
 def one_time_build_omega(module_name_short, start_seed, end_seed):
     lr = 0.01
-    scheduler = "decade"
+    scheduler = "decade_pp"
     plans = [
         # pinn / activation / cyclic / stable / derivative / boundary /init_lr / init_weights / init_weights_strategy / scheduler
         # [1, "gelu", 0, 0, 0, 0, lr],
@@ -780,7 +780,8 @@ if __name__ == "__main__":
     # one_time_build_omega("Turing1D", 0, 3)
     # one_time_build_omega("Turing2D", 0, 3)
 
-    one_time_build_omega("PP", 0, 1)
+    one_time_build_omega("PP", 0, 3)
+    one_time_build_omega("PP", 3, 5)
     # one_time_build_omega("SIR", 0, 5)
     # one_time_build_omega("SIRAged", 0, 5)
     # one_time_build_omega("REP6", 0, 5)
