@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
 
+from matplotlib.legend_handler import HandlerBase
+from matplotlib.text import Text
+
 from utils import smooth_conv, MultiSubplotDraw, ColorCandidate
 
 
@@ -270,7 +273,23 @@ def draw_paper_figure_best(**kwargs):
                      linestyle=(["solid"] * config.prob_dim + ["dashed"] * config.prob_dim)[j],
                      label=show_legend[j],
                      )
-        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=20)
+
+        if len(y) >= 20:# handler_map={Text: TextHandler()},
+            legend = plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=13 if len(y) >= 20 else 20,
+                       ncol=2 if len(y) >= 20 else 1)
+            # handles, labels = legend.legendHandles, legend.get_texts()
+            #
+            # # Set the height of each label
+            # heights = [2] * 2
+            # print(len(legend._legend_handle_box.get_children()))
+            # for ii, label in enumerate(labels):
+            #
+            #     # legend.legendHandles[ii]._legmarker.set_markersize(10)  # increase the marker size
+            #
+            #     legend._legend_handle_box.get_children()[ii].set_height(heights[ii])
+        else:
+            plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=20,
+                       ncol=1)
         plt.xlabel("Time", fontsize=30)
         # plt.xlabel("Value", fontsize=20)
         plt.tick_params(labelsize=30)
@@ -751,6 +770,13 @@ def one_time_plot_rep3(time_string=None, all_flag=False):
     model_name_short = "REP3"
     time_string = get_now_string() if not time_string else time_string
     timestring_dict = {
+        # v0314
+        "PINN": ["20230128_132415_707985", "20230128_135000_392929", "20230128_141554_433679"],
+        "FNN": ["20230128_040824_447494", "20230128_044611_723213", "20230128_052428_207371"],
+        "SB-FNN": ["20230131_182930_515704", "20230131_192028_822094", "20230131_201138_197869"],
+        "SB-FNN+Cyclic": ["20230129_153951_486804", "20230129_162015_334574", "20230130_185949_591221", "20230130_194035_088247", "20230130_202051_103568"],
+
+
         # # "SB-FNN (adaptive6-0.001)": ["20230128_011324_123287", "20230128_024550_162651", "20230128_041753_489833"],
         # # "SB-FNN (adaptive6-0.003)": ["20230128_011327_019707", "20230128_020711_591318", "20230128_030130_257367"],
         # # "SB-FNN (adaptive6-0.005)": ["20230128_011327_071545", "20230128_020748_568768", "20230128_030138_384136"],
@@ -773,17 +799,17 @@ def one_time_plot_rep3(time_string=None, all_flag=False):
         # "PINN": ["20230128_132415_707985", "20230128_135000_392929", "20230128_141554_433679"],
 
         #v0131-ablation
-        "SB-FNN (gelu)": ["20230128_040824_447494", "20230128_044611_723213", "20230128_052428_207371",
-                          "20230130_185949_556191", "20230130_194009_456974", "20230130_202049_747812",
-                          "20230130_210137_730567", "20230130_214157_850237", "20230130_222216_809292",
-                          "20230130_230325_481540"],
-        "SB-FNN (gelu+boundary)": ["20230129_150002_419674", "20230129_154035_439917", "20230129_162034_395080",
-                                   "20230130_185947_398502", "20230130_201126_140762", "20230130_212220_429313",
-                                   "20230130_223301_587141", "20230130_234225_531951", "",
-                                   "20230131_020148_484337"],
-        "SB-FNN (gelu+cyclic)": ["20230129_153951_486804", "20230129_162015_334574", "",
-                                 "20230130_194035_088247", "20230130_202051_103568", "",
-                                 "20230130_214110_257371", "20230130_222107_977432", ""],
+        # "SB-FNN (gelu)": ["20230128_040824_447494", "20230128_044611_723213", "20230128_052428_207371",
+        #                   "20230130_185949_556191", "20230130_194009_456974", "20230130_202049_747812",
+        #                   "20230130_210137_730567", "20230130_214157_850237", "20230130_222216_809292",
+        #                   "20230130_230325_481540"],
+        # "SB-FNN (gelu+boundary)": ["20230129_150002_419674", "20230129_154035_439917", "20230129_162034_395080",
+        #                            "20230130_185947_398502", "20230130_201126_140762", "20230130_212220_429313",
+        #                            "20230130_223301_587141", "20230130_234225_531951", "",
+        #                            "20230131_020148_484337"],
+        # "SB-FNN (gelu+cyclic)": ["20230129_153951_486804", "20230129_162015_334574", "",
+        #                          "20230130_194035_088247", "20230130_202051_103568", "",
+        #                          "20230130_214110_257371", "20230130_222107_977432", ""],
 
         # # "PINN": ["20230125_073943_141220", "20230125_001001_585981"],
         # # "SB-FNN (adaptive_6)": ["20230126_031827_311142", "20230126_040929_770175", "20230126_031826_378280"],
@@ -826,20 +852,20 @@ def one_time_plot_rep3(time_string=None, all_flag=False):
         timestring=time_string,
         all_flag=all_flag,
     )
-    # draw_paper_figure_best(
-    #     timestring_dict=timestring_dict,
-    #     info_path_format_dict={
-    #         "PINN": "./saves/train/{0}_PINN_Omega_{{0}}/{0}_PINN_Omega_{{0}}_info.npy".format(model_name_short),
-    #         "default": "./saves/train/{0}_Fourier_Omega_{{0}}/{0}_Fourier_Omega_{{0}}_info.npy".format(model_name_short),
-    #     },
-    #     model_name_short=model_name_short,
-    #     config=Config(),
-    #     loss_average_length=5000,
-    #     fontsize=30,
-    #     timestring=time_string,
-    #     show_legend=["${}$".format(item) for item in ["\hat{P}_{cI}", "\hat{P}_{lacI}", "\hat{P}_{tetR}"]] + ["${}$".format(item) for item in ["P_{cI}", "P_{lacI}", "P_{tetR}"]],
-    #     all_flag=all_flag,
-    # )
+    draw_paper_figure_best(
+        timestring_dict=timestring_dict,
+        info_path_format_dict={
+            "PINN": "./saves/train/{0}_PINN_Omega_{{0}}/{0}_PINN_Omega_{{0}}_info.npy".format(model_name_short),
+            "default": "./saves/train/{0}_Fourier_Omega_{{0}}/{0}_Fourier_Omega_{{0}}_info.npy".format(model_name_short),
+        },
+        model_name_short=model_name_short,
+        config=Config(),
+        loss_average_length=5000,
+        fontsize=30,
+        timestring=time_string,
+        show_legend=["${}$".format(item) for item in ["\hat{P}_{cI}", "\hat{P}_{lacI}", "\hat{P}_{tetR}"]] + ["${}$".format(item) for item in ["P_{cI}", "P_{lacI}", "P_{tetR}"]],
+        all_flag=all_flag,
+    )
 
 def one_time_plot_rep6(time_string=None, all_flag=False):
     from model_REP6_Omega import Config
@@ -947,11 +973,20 @@ def one_time_plot_sir(time_string=None, all_flag=False):
     model_name_short = "SIR"
     time_string = get_now_string() if not time_string else time_string
     timestring_dict = {
-        # onetime - zjx
-        "SB-FNN (gelu)": ["20230208_054923_480735", "20230208_055021_547672", "20230208_055103_605752", "20230208_055219_605214", "20230208_055200_731571"],
-        "SB-FNN (gelu+boundary)": ["20230208_055814_242722", "20230208_055755_360284", "20230208_055618_221568", "20230208_055646_216024", "20230208_055705_623117"],
-        "SB-FNN (gelu+stable)": ["20230208_065158_534423", "20230208_065213_586001", "20230208_065006_982076", "20230208_065033_016574", "20230208_065125_891344"],
+        # v0314
+        "PINN": ["20230128_143508_308883", "20230128_150313_980414", "20230128_153117_802370"],
+        # "FNN": ["20230128_091516_720660", "20230128_100029_406401", "20230128_104552_276076", "20230130_185949_434835",
+        #         "20230130_194728_424445", "20230130_203533_142938", "20230130_212239_690945", "20230130_221008_035357",
+        #         "20230130_225744_487058", "20230130_234550_867261"],
+        "FNN": ["20230130_221008_035357", "20230130_225744_487058", "20230130_234550_867261"],
+        "SB-FNN": ["20230131_210316_463371", "20230131_220240_229268", "20230131_230129_205798",
+                   "20230201_000031_882412", "20230201_005932_886872"],
 
+        # onetime - zjx
+        # "SB-FNN (gelu)": ["20230208_054923_480735", "20230208_055021_547672", "20230208_055103_605752", "20230208_055219_605214", "20230208_055200_731571"],
+        # "SB-FNN (gelu+boundary)": ["20230208_055814_242722", "20230208_055755_360284", "20230208_055618_221568", "20230208_055646_216024", "20230208_055705_623117"],
+        # "SB-FNN (gelu+stable)": ["20230208_065158_534423", "20230208_065213_586001", "20230208_065006_982076", "20230208_065033_016574", "20230208_065125_891344"],
+        #
 
 
         # # "SB-FNN (adaptive6-0.001)": ["20230128_011326_699415", "20230128_021151_384559", "20230128_030959_396809"],
@@ -1018,56 +1053,88 @@ def one_time_plot_sir(time_string=None, all_flag=False):
             "default": "./saves/train/{0}_Fourier_Omega_{{0}}/{0}_Fourier_Omega_{{0}}_info.npy".format(model_name_short),
         },
         model_name_short=model_name_short,
-        kernel_size=5000,
+        kernel_size=500,
         mask_gap=1,
         epoch_max=50000,
-        y_ticks=[-9.0 + 2 * item for item in range(6-4)],
-        ylim=[-9.5, 1.5-8],
+        y_ticks=[-7.0 + 1 * item for item in range(8)],
+        ylim=[-7.5, 0.5],
         y_ticks_format="$10^{%d}$",
         ncol=2,
         legend_fontsize=18,
         timestring=time_string,
         all_flag=all_flag,
     )
-    # draw_paper_figure_best(
-    #     timestring_dict=timestring_dict,
-    #     info_path_format_dict={
-    #         "PINN": "./saves/train/{0}_PINN_Omega_{{0}}/{0}_PINN_Omega_{{0}}_info.npy".format(model_name_short),
-    #         "default": "./saves/train/{0}_Fourier_Omega_{{0}}/{0}_Fourier_Omega_{{0}}_info.npy".format(model_name_short),
-    #     },
-    #     model_name_short=model_name_short,
-    #     config=Config(),
-    #     loss_average_length=5000,
-    #     fontsize=30,
-    #     timestring=time_string,
-    #     show_legend=["${}$".format(item) for item in ["\hat{P}_{cI}", "\hat{P}_{lacI}", "\hat{P}_{tetR}"]] + ["${}$".format(item) for item in ["P_{cI}", "P_{lacI}", "P_{tetR}"]],
-    #     all_flag=all_flag,
-    # )
+    draw_paper_figure_best(
+        timestring_dict=timestring_dict,
+        info_path_format_dict={
+            "PINN": "./saves/train/{0}_PINN_Omega_{{0}}/{0}_PINN_Omega_{{0}}_info.npy".format(model_name_short),
+            "default": "./saves/train/{0}_Fourier_Omega_{{0}}/{0}_Fourier_Omega_{{0}}_info.npy".format(model_name_short),
+        },
+        model_name_short=model_name_short,
+        config=Config(),
+        loss_average_length=5000,
+        fontsize=30,
+        timestring=time_string,
+        show_legend=["$\hat{{{}}}$".format(item) for item in ["S", "I", "R"]] + ["${}$".format(item) for item in ["S", "I", "R"]],
+        all_flag=all_flag,
+    )
+
+class TextHandler(HandlerBase):
+    def __init__(self, spacing=1.5):
+        self._spacing = spacing
+
+    def create_artists(self, legend, text, xdescent, ydescent,
+                        width, height, fontsize, trans):
+        # Count the number of "\hat{}" commands in the label
+        num_hats = text.count(r'\hat{}')
+
+        # Compute the total height of the label
+        total_height = height + num_hats * self._spacing
+
+        # Create a text object with the modified height
+        tx = Text(width/2., total_height/2., text, fontsize=fontsize,
+                  ha="center", va="center", usetex=True)
+
+        # Add extra spacing below the text for each "\hat{}" command
+        for i in range(num_hats):
+            extra_tx = Text(width/2., (i + 1) * self._spacing,
+                             r'\phantom{X}', fontsize=fontsize,
+                             ha="center", va="center", usetex=True)
+            tx._text += extra_tx._text
+            tx._renderer = None
+
+        return [tx]
 
 def one_time_plot_siraged(time_string=None, all_flag=False):
     from model_SIRAged_Omega import Config
     model_name_short = "SIRAged"
     time_string = get_now_string() if not time_string else time_string
     timestring_dict = {
-        # "SB-FNN (adaptive6-0.001)": ["20230128_011326_697583", "20230128_035729_248775", "20230128_064107_455848"],
-        # "SB-FNN (adaptive6-0.003)": ["20230128_011326_705516", "20230128_034916_299300", "20230128_062530_304271"],
-        # "SB-FNN (adaptive6-0.005)": ["20230128_011326_548136", "20230128_035416_807507", "20230128_063426_256672"],
-        # "SB-FNN (adaptive6-0.01)": ["20230128_011326_709593", "20230128_040013_951309", "20230128_064841_923259"],
-        # "SB-FNN (adaptive5-0.001)": ["20230131_164752_938162", "20230131_192832_142281", "20230131_220930_754450",
-        #                              "20230201_004859_938518", "20230201_033059_868656"],
-        "SB-FNN (adaptive5-0.003)": ["20230131_164752_941184", "20230131_192209_296531", "20230131_215511_427133",
-                                     "20230201_002758_020263", "20230201_025943_799657"],
-        # "SB-FNN (adaptive5-0.005)": ["20230131_164752_795731", "20230131_192442_645006", "20230131_220117_608189",
-        #                              "20230201_003722_604087", "20230201_031158_741267"],
-        # "SB-FNN (adaptive5-0.01)": ["20230131_164752_024554", "20230131_193350_890739", "20230131_221256_530091",
-        #                             "20230201_005552_673289", "20230201_033747_066292"],
-        "SB-FNN (elu)": ["20230128_070558_945088", "20230128_093801_649410", "20230128_120942_202556"],
-        "SB-FNN (gelu)": ["20230128_070418_503196", "20230128_093542_268374", "20230128_120455_802352"],
-        "SB-FNN (relu)": ["20230128_091236_314042", "20230128_113752_476917", "20230128_140220_962851"],
-        "SB-FNN (sin)": ["20230128_090203_328731", "20230128_112632_971170", "20230128_134946_160376"],
-        "SB-FNN (softplus)": ["20230128_084613_159434", "20230128_111130_459877", "20230128_133509_082130"],
-        "SB-FNN (tanh)": ["20230128_091157_356709", "20230128_132455_105304", "20230128_174038_972809"],
+        # v0314
         "PINN": ["20230128_142935_605095", "20230128_171642_896138", "20230128_200057_375788"],
+        "FNN": ["20230128_070418_503196", "20230128_093542_268374", "20230128_120455_802352"],
+        "SB-FNN": ["20230131_164752_941184", "20230131_192209_296531", "20230131_215511_427133",
+                   "20230201_002758_020263", "20230201_025943_799657"],
+
+        # # "SB-FNN (adaptive6-0.001)": ["20230128_011326_697583", "20230128_035729_248775", "20230128_064107_455848"],
+        # # "SB-FNN (adaptive6-0.003)": ["20230128_011326_705516", "20230128_034916_299300", "20230128_062530_304271"],
+        # # "SB-FNN (adaptive6-0.005)": ["20230128_011326_548136", "20230128_035416_807507", "20230128_063426_256672"],
+        # # "SB-FNN (adaptive6-0.01)": ["20230128_011326_709593", "20230128_040013_951309", "20230128_064841_923259"],
+        # # "SB-FNN (adaptive5-0.001)": ["20230131_164752_938162", "20230131_192832_142281", "20230131_220930_754450",
+        # #                              "20230201_004859_938518", "20230201_033059_868656"],
+        # "SB-FNN (adaptive5-0.003)": ["20230131_164752_941184", "20230131_192209_296531", "20230131_215511_427133",
+        #                              "20230201_002758_020263", "20230201_025943_799657"],
+        # # "SB-FNN (adaptive5-0.005)": ["20230131_164752_795731", "20230131_192442_645006", "20230131_220117_608189",
+        # #                              "20230201_003722_604087", "20230201_031158_741267"],
+        # # "SB-FNN (adaptive5-0.01)": ["20230131_164752_024554", "20230131_193350_890739", "20230131_221256_530091",
+        # #                             "20230201_005552_673289", "20230201_033747_066292"],
+        # "SB-FNN (elu)": ["20230128_070558_945088", "20230128_093801_649410", "20230128_120942_202556"],
+        # "SB-FNN (gelu)": ["20230128_070418_503196", "20230128_093542_268374", "20230128_120455_802352"],
+        # "SB-FNN (relu)": ["20230128_091236_314042", "20230128_113752_476917", "20230128_140220_962851"],
+        # "SB-FNN (sin)": ["20230128_090203_328731", "20230128_112632_971170", "20230128_134946_160376"],
+        # "SB-FNN (softplus)": ["20230128_084613_159434", "20230128_111130_459877", "20230128_133509_082130"],
+        # "SB-FNN (tanh)": ["20230128_091157_356709", "20230128_132455_105304", "20230128_174038_972809"],
+        # "PINN": ["20230128_142935_605095", "20230128_171642_896138", "20230128_200057_375788"],
 
         # "SB-FNN (gelu)": ["20230128_070418_503196", "20230128_093542_268374", "20230128_120455_802352",
         #                   "20230130_185949_367867", "20230130_212908_371733", "20230130_235756_035880",
@@ -1102,7 +1169,7 @@ def one_time_plot_siraged(time_string=None, all_flag=False):
             "default": "./saves/train/{0}_Fourier_Omega_{{0}}/{0}_Fourier_Omega_{{0}}_info.npy".format(model_name_short),
         },
         model_name_short=model_name_short,
-        kernel_size=3000,
+        kernel_size=500,
         mask_gap=1,
         epoch_max=50000,
         y_ticks=None,#[-9.0 + 2 * item for item in range(6)],
@@ -1113,20 +1180,20 @@ def one_time_plot_siraged(time_string=None, all_flag=False):
         timestring=time_string,
         all_flag=all_flag,
     )
-    # draw_paper_figure_best(
-    #     timestring_dict=timestring_dict,
-    #     info_path_format_dict={
-    #         "PINN": "./saves/train/{0}_PINN_Omega_{{0}}/{0}_PINN_Omega_{{0}}_info.npy".format(model_name_short),
-    #         "default": "./saves/train/{0}_Fourier_Omega_{{0}}/{0}_Fourier_Omega_{{0}}_info.npy".format(model_name_short),
-    #     },
-    #     model_name_short=model_name_short,
-    #     config=Config(),
-    #     loss_average_length=5000,
-    #     fontsize=30,
-    #     timestring=time_string,
-    #     show_legend=["${}$".format(item) for item in ["\hat{P}_{cI}", "\hat{P}_{lacI}", "\hat{P}_{tetR}"]] + ["${}$".format(item) for item in ["P_{cI}", "P_{lacI}", "P_{tetR}"]],
-    #     all_flag=all_flag,
-    # )
+    draw_paper_figure_best(
+        timestring_dict=timestring_dict,
+        info_path_format_dict={
+            "PINN": "./saves/train/{0}_PINN_Omega_{{0}}/{0}_PINN_Omega_{{0}}_info.npy".format(model_name_short),
+            "default": "./saves/train/{0}_Fourier_Omega_{{0}}/{0}_Fourier_Omega_{{0}}_info.npy".format(model_name_short),
+        },
+        model_name_short=model_name_short,
+        config=Config(),
+        loss_average_length=5000,
+        fontsize=30,
+        timestring=time_string,
+        show_legend=["${}$".format(item) for item in ["\hat{{S}}_{{{}}}".format(i) for i in range(1, 6)] + ["\hat{{I}}_{{{}}}".format(i) for i in range(1, 6)] + ["\hat{{R}}_{{{}}}".format(i) for i in range(1, 6)]] + ["${}$".format(item) for item in ["S_{{{}}}".format(i) for i in range(1, 6)] + ["I_{{{}}}".format(i) for i in range(1, 6)] + ["R_{{{}}}".format(i) for i in range(1, 6)]],
+        all_flag=all_flag,
+    )
 
 
 def one_time_plot_turing1d(time_string=None, all_flag=False):
@@ -1243,127 +1310,187 @@ def one_time_plot_turing1d(time_string=None, all_flag=False):
     #     all_flag=all_flag,
     # )
 
+
+def one_time_plot_pp(time_string=None, all_flag=False):
+    from model_PP_Omega import Config
+    model_name_short = "PP"
+    time_string = get_now_string() if not time_string else time_string
+    timestring_dict = {
+        "FNN": ["20230315_004953_732230"],
+    }
+    draw_paper_figure_loss(
+        timestring_dict=timestring_dict,
+        info_path_format_dict={
+            "PINN": "./saves/train/{0}_PINN_Omega_{{0}}/{0}_PINN_Omega_{{0}}_info.npy".format(model_name_short),
+            "default": "./saves/train/{0}_Fourier_Omega_{{0}}/{0}_Fourier_Omega_{{0}}_info.npy".format(model_name_short),
+        },
+        model_name_short=model_name_short,
+        kernel_size=500,
+        mask_gap=1,
+        epoch_max=500000,
+        y_ticks=None,#[-9.0 + 2 * item for item in range(6)],
+        ylim=None,#[-9.5, 1.5],
+        y_ticks_format="$10^{%d}$",
+        ncol=2,
+        legend_fontsize=18,
+        timestring=time_string,
+        all_flag=all_flag,
+    )
+    draw_paper_figure_best(
+        timestring_dict=timestring_dict,
+        info_path_format_dict={
+            "PINN": "./saves/train/{0}_PINN_Omega_{{0}}/{0}_PINN_Omega_{{0}}_info.npy".format(model_name_short),
+            "default": "./saves/train/{0}_Fourier_Omega_{{0}}/{0}_Fourier_Omega_{{0}}_info.npy".format(model_name_short),
+        },
+        model_name_short=model_name_short,
+        config=Config(),
+        loss_average_length=5000,
+        fontsize=30,
+        timestring=time_string,
+        show_legend=["$\hat{{{}}}$".format(item) for item in ["U", "V"]] + ["${}$".format(item) for item in ["U", "V"]],
+        all_flag=all_flag,
+    )
+
 strings = {
     "PINN": """
-20230211_060537_797828
-20230211_065947_380670
-20230211_075158_672358
-20230211_084148_046944
-20230211_093100_362313
+20230128_142935_605095
+20230128_171642_896138
+20230128_200057_375788
     """,
-    "SB-FNN (gelu)": """
-20230211_060537_756402
-20230211_062031_666596
-20230211_063531_481589
-20230211_065028_757798
-20230211_070525_245486
+    "FNN": """
+20230128_070418_503196
+20230128_093542_268374
+20230128_120455_802352
     """,
-    "SB-FNN (gelu+boundary)": """
-20230211_064602_738746
-20230211_070053_695387
-20230211_071548_943831
-20230211_073031_247541
-20230211_074508_183149
+
+    "SB-FNN": """
+20230131_164752_941184
+20230131_192209_296531
+20230131_215511_427133
+20230201_002758_020263
+20230201_025943_799657
     """,
-    "SB-FNN (gelu+stable)": """
-20230211_071953_563191
-20230211_073428_487170
-20230211_074901_798770
-20230211_080336_311850
-20230211_081806_466066
-    """,
-    "SB-FNN (adaptive6-0.001)": """
-20230210_053235_252677
-20230210_055449_182694
-20230210_061709_908943
-20230210_090520_710998
-20230210_092738_336913
-    """,
-    "SB-FNN (adaptive6-0.003)": """
-20230210_053239_970816
-20230210_055459_628107
-20230210_061720_875008
-20230210_093202_653412
-20230210_095432_917211
-    """,
-    "SB-FNN (adaptive6-0.005)": """
-20230210_053242_251538
-20230210_055503_531315
-20230210_061724_273860
-20230210_093439_498185
-20230210_095639_026788
-    """,
-    "SB-FNN (adaptive6-0.01)": """
-20230210_053244_087759
-20230210_055511_930725
-20230210_061734_098059
-20230210_095001_654763
-20230210_101218_812323
-    """,
-"SB-FNN (adaptive5-0.001)": """
-20230210_053302_243597
-20230210_055332_390196
-20230210_061358_676147
-20230210_101653_805491
-20230210_103730_422439
-    """,
-    "SB-FNN (adaptive5-0.003)": """
-20230210_053352_954182
-20230210_055412_926830
-20230210_061437_911260
-20230210_101839_219881
-20230210_103852_428083
-    """,
-    "SB-FNN (adaptive5-0.005)": """
-20230210_063425_469481
-20230210_065453_141425
-20230210_071526_427995
-20230210_103436_476600
-20230210_105506_495511
-    """,
-    "SB-FNN (adaptive5-0.01)": """
-20230210_063501_588006
-20230210_065516_749927
-20230210_071531_856634
-20230210_105805_604766
-20230210_111841_145092
-    """,
-    "SB-FNN (elu)": """
-20230211_060537_111345
-20230211_062040_256413
-20230211_063542_703509
-20230211_065045_221379
-20230211_070546_083010
-    """,
-#     "SB-FNN (gelu)": """
-#     20230128_070418_503196
-# 20230128_093542_268374
-# 20230128_120455_802352
+
+#     "SB-FNN+Cyclic": """
+# 20230129_153951_486804
+# 20230129_162015_334574
+# 20230130_185949_591221
+# 20230130_194035_088247
+# 20230130_202051_103568
 #     """,
-    "SB-FNN (relu)": """
-20230211_060537_988802
-20230211_062034_163633
-20230211_063528_427728
-20230211_065025_572317
-20230211_070524_312738
-    """,
-    "SB-FNN (sin)": """
-20230211_060537_064092
-20230211_213808_075609
-20230212_112915_697248
-    """,
-    "SB-FNN (softplus)": """
-20230211_060537_016669
-20230211_205131_548476
-20230212_095528_981594
-    """,
-    "SB-FNN (tanh)": """
-20230211_060537_195249
-20230211_062029_636234
-20230211_063522_031876
-20230211_065011_524859
-20230211_070501_047691
-    """,
+#     "SB-FNN (gelu)": """
+# 20230211_060537_756402
+# 20230211_062031_666596
+# 20230211_063531_481589
+# 20230211_065028_757798
+# 20230211_070525_245486
+#     """,
+#     "SB-FNN (gelu+boundary)": """
+# 20230211_064602_738746
+# 20230211_070053_695387
+# 20230211_071548_943831
+# 20230211_073031_247541
+# 20230211_074508_183149
+#     """,
+#     "SB-FNN (gelu+stable)": """
+# 20230211_071953_563191
+# 20230211_073428_487170
+# 20230211_074901_798770
+# 20230211_080336_311850
+# 20230211_081806_466066
+#     """,
+#     "SB-FNN (adaptive6-0.001)": """
+# 20230210_053235_252677
+# 20230210_055449_182694
+# 20230210_061709_908943
+# 20230210_090520_710998
+# 20230210_092738_336913
+#     """,
+#     "SB-FNN (adaptive6-0.003)": """
+# 20230210_053239_970816
+# 20230210_055459_628107
+# 20230210_061720_875008
+# 20230210_093202_653412
+# 20230210_095432_917211
+#     """,
+#     "SB-FNN (adaptive6-0.005)": """
+# 20230210_053242_251538
+# 20230210_055503_531315
+# 20230210_061724_273860
+# 20230210_093439_498185
+# 20230210_095639_026788
+#     """,
+#     "SB-FNN (adaptive6-0.01)": """
+# 20230210_053244_087759
+# 20230210_055511_930725
+# 20230210_061734_098059
+# 20230210_095001_654763
+# 20230210_101218_812323
+#     """,
+# "SB-FNN (adaptive5-0.001)": """
+# 20230210_053302_243597
+# 20230210_055332_390196
+# 20230210_061358_676147
+# 20230210_101653_805491
+# 20230210_103730_422439
+#     """,
+#     "SB-FNN (adaptive5-0.003)": """
+# 20230210_053352_954182
+# 20230210_055412_926830
+# 20230210_061437_911260
+# 20230210_101839_219881
+# 20230210_103852_428083
+#     """,
+#     "SB-FNN (adaptive5-0.005)": """
+# 20230210_063425_469481
+# 20230210_065453_141425
+# 20230210_071526_427995
+# 20230210_103436_476600
+# 20230210_105506_495511
+#     """,
+#     "SB-FNN (adaptive5-0.01)": """
+# 20230210_063501_588006
+# 20230210_065516_749927
+# 20230210_071531_856634
+# 20230210_105805_604766
+# 20230210_111841_145092
+#     """,
+#     "SB-FNN (elu)": """
+# 20230211_060537_111345
+# 20230211_062040_256413
+# 20230211_063542_703509
+# 20230211_065045_221379
+# 20230211_070546_083010
+#     """,
+# #     "SB-FNN (gelu)": """
+# #     20230128_070418_503196
+# # 20230128_093542_268374
+# # 20230128_120455_802352
+# #     """,
+#     "SB-FNN (relu)": """
+# 20230211_060537_988802
+# 20230211_062034_163633
+# 20230211_063528_427728
+# 20230211_065025_572317
+# 20230211_070524_312738
+#     """,
+#     "SB-FNN (sin)": """
+# 20230211_060537_064092
+# 20230211_213808_075609
+# 20230212_112915_697248
+#     """,
+#     "SB-FNN (softplus)": """
+# 20230211_060537_016669
+# 20230211_205131_548476
+# 20230212_095528_981594
+#     """,
+#     "SB-FNN (tanh)": """
+# 20230211_060537_195249
+# 20230211_062029_636234
+# 20230211_063522_031876
+# 20230211_065011_524859
+# 20230211_070501_047691
+#     """,
 # "PINN": """
 #     20230202_023033_517692
 # 20230202_031447_656804
@@ -1387,8 +1514,9 @@ if __name__ == "__main__":
     # one_time_plot_rep6(time_string)
     # one_time_plot_sir(time_string)
     # one_time_plot_siraged(time_string)
-    # clear_reformat_dictionary(strings)
-    one_time_plot_turing1d(time_string)
+    one_time_plot_pp(time_string)
+    clear_reformat_dictionary(strings)
+    # one_time_plot_turing1d(time_string)
     # one_time_plot_turing_best()
     # one_time_plot_sir_best()
     # one_time_plot_rep_best()

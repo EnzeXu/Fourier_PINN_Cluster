@@ -780,8 +780,8 @@ if __name__ == "__main__":
     # one_time_build_omega("Turing1D", 0, 3)
     # one_time_build_omega("Turing2D", 0, 3)
 
-    one_time_build_omega("PP", 0, 3)
-    one_time_build_omega("PP", 3, 5)
+    one_time_build_omega("PP", 0, 1)
+    one_time_build_omega("PP", 1, 5)
     # one_time_build_omega("SIR", 0, 5)
     # one_time_build_omega("SIRAged", 0, 5)
     # one_time_build_omega("REP6", 0, 5)

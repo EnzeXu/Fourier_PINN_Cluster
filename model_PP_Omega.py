@@ -41,9 +41,9 @@ class Config(ConfigTemplate):
         self.params = Parameters
         self.args = TrainArgs
 
-        self.T = 20
+        self.T = 12
         self.T_unit = 1e-3
-        self.y0 = np.asarray([64.73002741, 6.13106793])
+        self.y0 = np.asarray([10, 5])
         # self.boundary_list = np.asarray([[0.0, 10.0], [0.0, 10.0], [0.0, 10.0], [0.0, 10.0], [0.0, 10.0], [0.0, 10.0]])
         self.boundary_list = np.asarray([[9, 100], [0, 100]])
 
